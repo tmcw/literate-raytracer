@@ -1,0 +1,22 @@
+{
+  "name": "literate-raytracer",
+  "version": "0.0.0",
+  "description": "a literate raytracer implementation",
+  "main": "raytracer.js",
+  "scripts": {
+    "doc": "docco raytracer.js"
+  },
+  "keywords": [
+    "raytracer",
+    "literate",
+    "3d"
+  ],
+  "author": "",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "docco": "~0.6.2"
+  },
+  "dependencies": {
+    "docco": "~0.6.2"
+  }
+}

@@ -35,6 +35,11 @@ Vector.WHITE = {
     z: 255
 };
 
+Vector.reflectThrough = function(a, normal) {
+    var d = Vector.scale(normal, Vector.dotProduct(a, normal));
+    return Vector.subtract(Vector.scale(d, 2), a);
+};
+
 Vector.ZEROcp = function() {
     return {
         x: 0,

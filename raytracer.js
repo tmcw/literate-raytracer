@@ -16,17 +16,38 @@ var intersection = {
 var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
-var lights = [{ x: -30, y: -30, z: 20 }];
+var lights = [{ x: -30, y: 2, z: 2 }];
 
-var objects = [{
-    type: 'sphere',
-    point: {
-        x: 1,
-        y: 3,
-        z: -10
-    },
-    radius: 2
-}];
+var objects = [];
+for (var x = 0; x < 2; x++) {
+    for (var y = 0; y < 2; y++) {
+        for (var z = 0; z < 2; z++) {
+            objects.push({
+                type: 'sphere',
+                point: {
+                    x: 2 - x * 3,
+                    y: 2 + y * 3,
+                    z: -5 - z * 2
+                },
+                color: {
+                    x: 255,
+                    y: 255,
+                    z: 255
+                },
+                specular: 0.2, // Math.random() > 0.8 ? Math.random() : 0,
+                radius: 1
+            });
+        }
+    }
+}
+
+function randomColor() {
+    return {
+        x: Math.random() * 255,
+        y: Math.random() * 255,
+        z: Math.random() * 255
+    }
+}
 
 var camera = {
     point: {
@@ -69,7 +90,7 @@ for (var x = 0; x < width; x++) {
             vector: Vector.unitVector(Vector.add(eyeVector, xcomp, ycomp))
         };
 
-        color = trace(ray, 1, 1);
+        color = trace(ray, 0);
         index = (x * 4) + (y * width * 4),
         data.data[index + 0] = color.x;
         data.data[index + 1] = color.y;
@@ -110,37 +131,76 @@ function sphereNormal(sphere, pos) {
         Vector.subtract(pos, sphere.point));
 }
 
-function trace(ray, depth, current_reflectance) {
-    if (depth > 10) return;
+function intersectScene(ray) {
+    return objects.reduce(function(mem, object) {
+        var dist = intersection[object.type](object, ray);
+        if (dist === undefined) return mem;
+        if (dist < mem[0]) {
+            return [dist, object];
+        } else {
+            return mem;
+        }
+    }, [Infinity, null]);
+}
+
+function trace(ray, depth) {
+    if (depth > 3) return;
 
     ray.hit = null;
 
-    var dist = intersection[objects[0].type](objects[0], ray);
-    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+    var distObject = intersectScene(ray);
 
-    if (dist) {
-        return surface(ray, pointAtTime, sphereNormal(objects[0], pointAtTime));
-    } else {
+    if (distObject[0] === Infinity) {
         return Vector.WHITE;
     }
+
+    var dist = distObject[0],
+        object = distObject[1];
+
+    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+
+    return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
 }
 
-function surface(ray, pointAtTime, normal) {
-    var b = { x: 20, y: 50, z: 255 },
+function visibleLight(pt) {
+    return function(light) {
+        return intersectScene({
+            point: pt,
+            vector: Vector.unitVector(Vector.subtract(pt, light))
+        })[1] !== null;
+    };
+}
+
+function surface(ray, object, pointAtTime, normal, depth) {
+    var b = object.color,
         c = Vector.ZEROcp();
-    var lambertCoefficient = 0.9;
+    var lambertCoefficient = 0.8,
+        reflectance = object.specular,
+        ambient = Math.max(1 - reflectance - lambertCoefficient, 0);
 
     var lambertAmount = 0;
-    lights.forEach(function(lightPoint) {
-        var contribution = Vector.dotProduct(Vector.unitVector(
-            Vector.subtract(lightPoint, pointAtTime)), normal);
-        if (contribution > 0) lambertAmount += contribution;
-    });
+    lights
+        .filter(visibleLight(pointAtTime))
+        .forEach(function(lightPoint) {
+            var contribution = Vector.dotProduct(Vector.unitVector(
+                Vector.subtract(lightPoint, pointAtTime)), normal);
+            if (contribution > 0) lambertAmount += contribution;
+        });
+
+    if (object.specular) {
+        var reflectedRay = {
+            point: pointAtTime,
+            vector: Vector.reflectThrough(ray.vector, normal)
+        };
+        var reflectedColor = trace(reflectedRay, ++depth);
+        if (reflectedColor) {
+            c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
+        }
+    }
 
     lambertAmount = Math.min(1, lambertAmount);
     c = Vector.add(c, Vector.scale(b, lambertCoefficient * lambertAmount));
 
-    // ambient coefficient
-    c = Vector.add(c, Vector.scale(b, 0.5));
+    c = Vector.add(c, Vector.scale(b, ambient));
     return c;
 }

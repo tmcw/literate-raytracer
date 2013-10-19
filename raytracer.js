@@ -1,6 +1,7 @@
+// # Setup
 var c = document.getElementById('c'),
-    width = 100,
-    height = 100;
+    width = 640,
+    height = 480;
 
 c.width = width;
 c.height = height;
@@ -15,61 +16,65 @@ var intersection = {
 var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
-var light = { x: 30, y: 30, z: 10 };
+var lights = [{ x: -30, y: -30, z: 20 }];
 
-var objects = [
-    {
-        type: 'sphere',
-        vector: {
-            x: 0,
-            y: 0,
-            z: 0
-        },
-        radius: 9
-    }
-];
+var objects = [{
+    type: 'sphere',
+    point: {
+        x: 1,
+        y: 3,
+        z: -10
+    },
+    radius: 2
+}];
 
 var camera = {
     point: {
-        x: 8,
-        y: 3,
-        z: 3
-    },
-    forward: unitVector({
-        x: 1,
-        y: 1,
-        z: 1
-    }),
-    lookAt: {
         x: 0,
-        y: 0,
+        y: 1.8,
+        z: 10
+    },
+    fieldOfView: 45,
+    vector: {
+        x: 0,
+        y: 3,
         z: 0
     }
 };
-
-camera.right = unitVector(crossProduct(camera.point, { x: 0, y: -1, z: 0 }));
-camera.up = unitVector(crossProduct(camera.point, camera.right));
 
 // # Throwing Rays
 //
 // For each pixel in the canvas, there needs to be at least one ray of light
 // that determines its color by bouncing through the scene.
+var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
+    fovRadians = Math.PI * (camera.fieldOfView / 2) / 180,
+    halfWidth = Math.tan(fovRadians),
+    halfHeight = (height/width) * halfWidth,
+    camerawidth = halfWidth * 2,
+    cameraheight = halfHeight * 2,
+    pixelWidth = camerawidth / (width - 1),
+    pixelHeight = cameraheight / (height - 1),
+    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
+    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+
 var index, ray, color;
 for (var x = 0; x < width; x++) {
     for (var y = 0; y < height; y++) {
 
-        index = (x * 4) + (y * width * 4),
+        var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
+            ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
+
         ray = {
-            vector: unitVector(add(camera.forward,
-                add(scale(camera.right, (x - width / 2) / 4),
-                    scale(camera.up, (y - height/2) / 4))))
+            point: camera.point,
+            vector: Vector.unitVector(Vector.add(eyeVector, xcomp, ycomp))
         };
 
         color = trace(ray, 1, 1);
-        data.data[index + 0] = color[0];
-        data.data[index + 1] = color[1];
-        data.data[index + 2] = color[2];
-        data.data[index + 3] = color[3];
+        index = (x * 4) + (y * width * 4),
+        data.data[index + 0] = color.x;
+        data.data[index + 1] = color.y;
+        data.data[index + 2] = color.z;
+        data.data[index + 3] = 255;
     }
 }
 
@@ -84,25 +89,25 @@ ctx.putImageData(data, 0, 0);
 // is pretty straightforward.
 function sphereIntersection(sphere, ray) {
 
-    var eye_to_center = subtract(camera.point, sphere.vector),
+    var eye_to_center = Vector.subtract(sphere.point, ray.point),
         // the length of a
         // hypoteneuse of a right triangle with points
         // at the eye and the center of the circle, and a right
         // angle at the other point.
-        v = dotProduct(ray.vector, eye_to_center),
-        eoDot = dotProduct(eye_to_center, eye_to_center),
-        // the radius of the sphere, squared.
-        r2 = sphere.radius * sphere.radius,
-        discriminant =  r2 - eoDot + (v * v);
+        v = Vector.dotProduct(eye_to_center, ray.vector),
+        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
+        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
 
-    var sqrt = Math.sqrt(discriminant);
-    if (discriminant) return -v - sqrt;
-    else if (discriminant) return -v + sqrt;
-    else return;
+    if (discriminant < 0) {
+        return;
+    } else {
+        return v - Math.sqrt(discriminant);
+    }
 }
 
 function sphereNormal(sphere, pos) {
-    return scale(this.vectorSub(pos, sphere.point), 1 / sphere.radius);
+    return Vector.unitVector(
+        Vector.subtract(pos, sphere.point));
 }
 
 function trace(ray, depth, current_reflectance) {
@@ -111,14 +116,31 @@ function trace(ray, depth, current_reflectance) {
     ray.hit = null;
 
     var dist = intersection[objects[0].type](objects[0], ray);
+    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     if (dist) {
-        var pos = add(camera.point, scale(ray.vector, dist));
-    }
-
-    if (dist) {
-        return [10, 10, 10, 255];
+        return surface(ray, pointAtTime, sphereNormal(objects[0], pointAtTime));
     } else {
-        return [255, 255, 255, 255];
+        return Vector.WHITE;
     }
+}
+
+function surface(ray, pointAtTime, normal) {
+    var b = { x: 20, y: 50, z: 255 },
+        c = Vector.ZEROcp();
+    var lambertCoefficient = 0.9;
+
+    var lambertAmount = 0;
+    lights.forEach(function(lightPoint) {
+        var contribution = Vector.dotProduct(Vector.unitVector(
+            Vector.subtract(lightPoint, pointAtTime)), normal);
+        if (contribution > 0) lambertAmount += contribution;
+    });
+
+    lambertAmount = Math.min(1, lambertAmount);
+    c = Vector.add(c, Vector.scale(b, lambertCoefficient * lambertAmount));
+
+    // ambient coefficient
+    c = Vector.add(c, Vector.scale(b, 0.5));
+    return c;
 }

@@ -7,3 +7,10 @@ understandable and thoroughly explained.
 ## Inspiration
 
 * [bwiklund/js1k-love-raytracer](https://github.com/bwiklund/js1k-love-raytracer).
+
+## Other Simple Raytracers
+
+(no comments)
+
+* [toy raytracer in python](http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python)
+* [toy raytracer in python ported to coffeescript still no comments](https://github.com/agend07/coffee_raytracer)

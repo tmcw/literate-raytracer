@@ -16,18 +16,18 @@ var intersection = {
 var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
-var lights = [{ x: -30, y: 2, z: 2 }];
+var lights = [{ x: -30, y: -10, z: 20 }];
 
 var objects = [];
-for (var x = 0; x < 2; x++) {
-    for (var y = 0; y < 2; y++) {
-        for (var z = 0; z < 2; z++) {
+for (var x = 0; x < 1; x++) {
+    for (var y = 0; y < 1; y++) {
+        for (var z = 0; z < 1; z++) {
             objects.push({
                 type: 'sphere',
                 point: {
-                    x: 2 - x * 3,
-                    y: 2 + y * 3,
-                    z: -5 - z * 2
+                    x: x * 3,
+                    y: 5 + y * 3,
+                    z: -5 + z * 2
                 },
                 color: {
                     x: 255,
@@ -35,7 +35,7 @@ for (var x = 0; x < 2; x++) {
                     z: 255
                 },
                 specular: 0.2, // Math.random() > 0.8 ? Math.random() : 0,
-                radius: 1
+                radius: 3
             });
         }
     }
@@ -46,7 +46,7 @@ function randomColor() {
         x: Math.random() * 255,
         y: Math.random() * 255,
         z: Math.random() * 255
-    }
+    };
 }
 
 var camera = {

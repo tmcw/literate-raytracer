@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>raytracer.js</title>
+  <title>Setup</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="docco.css" />
@@ -11,49 +11,23 @@
   <div id="container">
     <div id="background"></div>
     
-      <ul id="jump_to">
-        <li>
-          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
-          <a class="small" href="javascript:void(0);">+</a>
-          <div id="jump_wrapper">
-          <div id="jump_page">
-            
-              
-              <a class="source" href="raytracer.html">
-                raytracer.js
-              </a>
-            
-              
-              <a class="source" href="vector.html">
-                vector.js
-              </a>
-            
-          </div>
-        </li>
-      </ul>
-    
     <ul class="sections">
-        
-          <li id="title">
-              <div class="annotation">
-                  <h1>raytracer.js</h1>
-              </div>
-          </li>
         
         
         
         <li id="section-1">
             <div class="annotation">
               
-              <div class="pilwrap ">
+              <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              
+              <h1>Setup</h1>
+
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="keyword">var</span> c = document.getElementById(<span class="string">'c'</span>),
-    width = <span class="number">100</span>,
-    height = <span class="number">100</span>;
+    width = <span class="number">640</span>,
+    height = <span class="number">480</span>;
 
 c.width = width;
 c.height = height;
@@ -80,40 +54,52 @@ raytracer will directly compute pixel data and then put it into an image.</p>
             <div class="content"><div class='highlight'><pre><span class="keyword">var</span> ctx = c.getContext(<span class="string">'2d'</span>),
     data = ctx.getImageData(<span class="number">0</span>, <span class="number">0</span>, width, height);
 
-<span class="keyword">var</span> light = { x: <span class="number">30</span>, y: <span class="number">30</span>, z: <span class="number">10</span> };
+<span class="keyword">var</span> lights = [{ x: -<span class="number">30</span>, y: -<span class="number">10</span>, z: <span class="number">20</span> }];
 
-<span class="keyword">var</span> objects = [
-    {
-        type: <span class="string">'sphere'</span>,
-        vector: {
-            x: <span class="number">0</span>,
-            y: <span class="number">0</span>,
-            z: <span class="number">0</span>
-        },
-        radius: <span class="number">9</span>
+<span class="keyword">var</span> objects = [];
+<span class="keyword">for</span> (<span class="keyword">var</span> x = <span class="number">0</span>; x &lt; <span class="number">1</span>; x++) {
+    <span class="keyword">for</span> (<span class="keyword">var</span> y = <span class="number">0</span>; y &lt; <span class="number">1</span>; y++) {
+        <span class="keyword">for</span> (<span class="keyword">var</span> z = <span class="number">0</span>; z &lt; <span class="number">1</span>; z++) {
+            objects.push({
+                type: <span class="string">'sphere'</span>,
+                point: {
+                    x: x * <span class="number">3</span>,
+                    y: <span class="number">5</span> + y * <span class="number">3</span>,
+                    z: -<span class="number">5</span> + z * <span class="number">2</span>
+                },
+                color: {
+                    x: <span class="number">255</span>,
+                    y: <span class="number">255</span>,
+                    z: <span class="number">255</span>
+                },
+                specular: <span class="number">0.2</span>, <span class="comment">// Math.random() &gt; 0.8 ? Math.random() : 0,</span>
+                radius: <span class="number">3</span>
+            });
+        }
     }
-];
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">randomColor</span><span class="params">()</span> {</span>
+    <span class="keyword">return</span> {
+        x: Math.random() * <span class="number">255</span>,
+        y: Math.random() * <span class="number">255</span>,
+        z: Math.random() * <span class="number">255</span>
+    };
+}
 
 <span class="keyword">var</span> camera = {
     point: {
-        x: <span class="number">8</span>,
-        y: <span class="number">3</span>,
-        z: <span class="number">3</span>
-    },
-    forward: unitVector({
-        x: <span class="number">1</span>,
-        y: <span class="number">1</span>,
-        z: <span class="number">1</span>
-    }),
-    lookAt: {
         x: <span class="number">0</span>,
-        y: <span class="number">0</span>,
+        y: <span class="number">1.8</span>,
+        z: <span class="number">10</span>
+    },
+    fieldOfView: <span class="number">45</span>,
+    vector: {
+        x: <span class="number">0</span>,
+        y: <span class="number">3</span>,
         z: <span class="number">0</span>
     }
-};
-
-camera.right = unitVector(crossProduct(camera.point, { x: <span class="number">0</span>, y: -<span class="number">1</span>, z: <span class="number">0</span> }));
-camera.up = unitVector(crossProduct(camera.point, camera.right));</pre></div></div>
+};</pre></div></div>
             
         </li>
         
@@ -130,22 +116,35 @@ that determines its color by bouncing through the scene.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> index, ray, color;
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
+    fovRadians = Math.PI * (camera.fieldOfView / <span class="number">2</span>) / <span class="number">180</span>,
+    halfWidth = Math.tan(fovRadians),
+    halfHeight = (height/width) * halfWidth,
+    camerawidth = halfWidth * <span class="number">2</span>,
+    cameraheight = halfHeight * <span class="number">2</span>,
+    pixelWidth = camerawidth / (width - <span class="number">1</span>),
+    pixelHeight = cameraheight / (height - <span class="number">1</span>),
+    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
+    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+
+<span class="keyword">var</span> index, ray, color;
 <span class="keyword">for</span> (<span class="keyword">var</span> x = <span class="number">0</span>; x &lt; width; x++) {
     <span class="keyword">for</span> (<span class="keyword">var</span> y = <span class="number">0</span>; y &lt; height; y++) {
 
-        index = (x * <span class="number">4</span>) + (y * width * <span class="number">4</span>),
+        <span class="keyword">var</span> xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
+            ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
+
         ray = {
-            vector: unitVector(add(camera.forward,
-                add(scale(camera.right, (x - width / <span class="number">2</span>) / <span class="number">4</span>),
-                    scale(camera.up, (y - height/<span class="number">2</span>) / <span class="number">4</span>))))
+            point: camera.point,
+            vector: Vector.unitVector(Vector.add(eyeVector, xcomp, ycomp))
         };
 
-        color = trace(ray, <span class="number">1</span>, <span class="number">1</span>);
-        data.data[index + <span class="number">0</span>] = color[<span class="number">0</span>];
-        data.data[index + <span class="number">1</span>] = color[<span class="number">1</span>];
-        data.data[index + <span class="number">2</span>] = color[<span class="number">2</span>];
-        data.data[index + <span class="number">3</span>] = color[<span class="number">3</span>];
+        color = trace(ray, <span class="number">0</span>);
+        index = (x * <span class="number">4</span>) + (y * width * <span class="number">4</span>),
+        data.data[index + <span class="number">0</span>] = color.x;
+        data.data[index + <span class="number">1</span>] = color.y;
+        data.data[index + <span class="number">2</span>] = color.z;
+        data.data[index + <span class="number">3</span>] = <span class="number">255</span>;
     }
 }</pre></div></div>
             
@@ -183,7 +182,7 @@ is pretty straightforward.</p>
             
             <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereIntersection</span><span class="params">(sphere, ray)</span> {</span>
 
-    <span class="keyword">var</span> eye_to_center = subtract(camera.point, sphere.vector),</pre></div></div>
+    <span class="keyword">var</span> eye_to_center = Vector.subtract(sphere.point, ray.point),</pre></div></div>
             
         </li>
         
@@ -201,51 +200,94 @@ angle at the other point.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        v = dotProduct(ray.vector, eye_to_center),
-        eoDot = dotProduct(eye_to_center, eye_to_center),</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-7">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
-              </div>
-              <p>the radius of the sphere, squared.</p>
+            <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),
+        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
+        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        r2 = sphere.radius * sphere.radius,
-        discriminant =  r2 - eoDot + (v * v);
-
-    <span class="keyword">var</span> sqrt = Math.sqrt(discriminant);
-    <span class="keyword">if</span> (discriminant) <span class="keyword">return</span> -v - sqrt;
-    <span class="keyword">else</span> <span class="keyword">if</span> (discriminant) <span class="keyword">return</span> -v + sqrt;
-    <span class="keyword">else</span> <span class="keyword">return</span>;
+    <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
+        <span class="keyword">return</span>;
+    } <span class="keyword">else</span> {
+        <span class="keyword">return</span> v - Math.sqrt(discriminant);
+    }
 }
 
 <span class="function"><span class="keyword">function</span> <span class="title">sphereNormal</span><span class="params">(sphere, pos)</span> {</span>
-    <span class="keyword">return</span> scale(<span class="keyword">this</span>.vectorSub(pos, sphere.point), <span class="number">1</span> / sphere.radius);
+    <span class="keyword">return</span> Vector.unitVector(
+        Vector.subtract(pos, sphere.point));
 }
 
-<span class="function"><span class="keyword">function</span> <span class="title">trace</span><span class="params">(ray, depth, current_reflectance)</span> {</span>
-    <span class="keyword">if</span> (depth &gt; <span class="number">10</span>) <span class="keyword">return</span>;
+<span class="function"><span class="keyword">function</span> <span class="title">intersectScene</span><span class="params">(ray)</span> {</span>
+    <span class="keyword">return</span> objects.reduce(<span class="keyword">function</span>(mem, object) {
+        <span class="keyword">var</span> dist = intersection[object.type](object, ray);
+        <span class="keyword">if</span> (dist === <span class="literal">undefined</span>) <span class="keyword">return</span> mem;
+        <span class="keyword">if</span> (dist &lt; mem[<span class="number">0</span>]) {
+            <span class="keyword">return</span> [dist, object];
+        } <span class="keyword">else</span> {
+            <span class="keyword">return</span> mem;
+        }
+    }, [<span class="literal">Infinity</span>, <span class="literal">null</span>]);
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">trace</span><span class="params">(ray, depth)</span> {</span>
+    <span class="keyword">if</span> (depth &gt; <span class="number">3</span>) <span class="keyword">return</span>;
 
     ray.hit = <span class="literal">null</span>;
 
-    <span class="keyword">var</span> dist = intersection[objects[<span class="number">0</span>].type](objects[<span class="number">0</span>], ray);
+    <span class="keyword">var</span> distObject = intersectScene(ray);
 
-    <span class="keyword">if</span> (dist) {
-        <span class="keyword">var</span> pos = add(camera.point, scale(ray.vector, dist));
+    <span class="keyword">if</span> (distObject[<span class="number">0</span>] === <span class="literal">Infinity</span>) {
+        <span class="keyword">return</span> Vector.WHITE;
     }
 
-    <span class="keyword">if</span> (dist) {
-        <span class="keyword">return</span> [<span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">255</span>];
-    } <span class="keyword">else</span> {
-        <span class="keyword">return</span> [<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>];
+    <span class="keyword">var</span> dist = distObject[<span class="number">0</span>],
+        object = distObject[<span class="number">1</span>];
+
+    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+
+    <span class="keyword">return</span> surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">visibleLight</span><span class="params">(pt)</span> {</span>
+    <span class="keyword">return</span> <span class="keyword">function</span>(light) {
+        <span class="keyword">return</span> intersectScene({
+            point: pt,
+            vector: Vector.unitVector(Vector.subtract(pt, light))
+        })[<span class="number">1</span>] !== <span class="literal">null</span>;
+    };
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">surface</span><span class="params">(ray, object, pointAtTime, normal, depth)</span> {</span>
+    <span class="keyword">var</span> b = object.color,
+        c = Vector.ZEROcp();
+    <span class="keyword">var</span> lambertCoefficient = <span class="number">0.8</span>,
+        reflectance = object.specular,
+        ambient = Math.max(<span class="number">1</span> - reflectance - lambertCoefficient, <span class="number">0</span>);
+
+    <span class="keyword">var</span> lambertAmount = <span class="number">0</span>;
+    lights
+        .filter(visibleLight(pointAtTime))
+        .forEach(<span class="keyword">function</span>(lightPoint) {
+            <span class="keyword">var</span> contribution = Vector.dotProduct(Vector.unitVector(
+                Vector.subtract(lightPoint, pointAtTime)), normal);
+            <span class="keyword">if</span> (contribution &gt; <span class="number">0</span>) lambertAmount += contribution;
+        });
+
+    <span class="keyword">if</span> (object.specular) {
+        <span class="keyword">var</span> reflectedRay = {
+            point: pointAtTime,
+            vector: Vector.reflectThrough(ray.vector, normal)
+        };
+        <span class="keyword">var</span> reflectedColor = trace(reflectedRay, ++depth);
+        <span class="keyword">if</span> (reflectedColor) {
+            c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
+        }
     }
+
+    lambertAmount = Math.min(<span class="number">1</span>, lambertAmount);
+    c = Vector.add(c, Vector.scale(b, lambertCoefficient * lambertAmount));
+
+    c = Vector.add(c, Vector.scale(b, ambient));
+    <span class="keyword">return</span> c;
 }</pre></div></div>
             
         </li>

@@ -4,7 +4,7 @@
   "description": "a literate raytracer implementation",
   "main": "raytracer.js",
   "scripts": {
-    "doc": "docco raytracer.js"
+    "doc": "docco *.js"
   },
   "keywords": [
     "raytracer",

@@ -49,18 +49,10 @@ three-dimensional vectors represented as objects in the form</p>
 <p>Since we&#39;re not using traditional object oriented techniques, these
 functions take and return that sort of logic-less object, so you&#39;ll see
 <code>add(a, b)</code> rather than <code>a.add(b)</code>.</p>
-<h2><a href="https://en.wikipedia.org/wiki/Dot_product">Dot product</a></h2>
-<p>This takes two vectors and returns a single number that is
-the result of multiplying each dimension of the vectors
-together and adding the results.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">dotProduct</span><span class="params">(a, b)</span> {</span>
-    <span class="keyword">return</span> (a.x * b.x) +
-        (a.y * b.y) +
-        (a.z * b.z);
-}</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> Vector = {};</pre></div></div>
             
         </li>
         
@@ -68,22 +60,19 @@ together and adding the results.</p>
         <li id="section-2">
             <div class="annotation">
               
-              <div class="pilwrap for-h2">
+              <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <h2><a href="https://en.wikipedia.org/wiki/Cross_product">Cross Product</a></h2>
-<p>generates a new vector that&#39;s perpendicular to both of the vectors
-given.</p>
+              <h1>Constants</h1>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">crossProduct</span><span class="params">(a, b)</span> {</span>
-    <span class="keyword">return</span> {
-        x: a.y * b.z - a.z * b.y,
-        y: a.z * b.x - a.x * b.z,
-        z: a.x * b.y - a.y * b.x
-    };
-}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>Vector.UP = { x: <span class="number">0</span>, y: <span class="number">1</span>, z: <span class="number">0</span> };
+Vector.ZERO = { x: <span class="number">0</span>, y: <span class="number">0</span>, z: <span class="number">0</span> };
+Vector.WHITE = { x: <span class="number">255</span>, y: <span class="number">255</span>, z: <span class="number">255</span> };
+Vector.ZEROcp = <span class="keyword">function</span>() {
+    <span class="keyword">return</span> { x: <span class="number">0</span>, y: <span class="number">0</span>, z: <span class="number">0</span> };
+};</pre></div></div>
             
         </li>
         
@@ -91,20 +80,19 @@ given.</p>
         <li id="section-3">
             <div class="annotation">
               
-              <div class="pilwrap ">
+              <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p>Enlongate or shrink a vector by a factor of <code>t</code></p>
+              <h1>Operations</h1>
+<h2><a href="https://en.wikipedia.org/wiki/Dot_product">Dot Product</a></h2>
+<p>is different than the rest of these since it takes two vectors but
+returns a single number value.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">scale</span><span class="params">(a, t)</span> {</span>
-    <span class="keyword">return</span> {
-        x: a.x * t,
-        y: a.y * t,
-        z: a.z * t
-    };
-}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>Vector.dotProduct = <span class="keyword">function</span>(a, b) {
+    <span class="keyword">return</span> (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+};</pre></div></div>
             
         </li>
         
@@ -112,21 +100,22 @@ given.</p>
         <li id="section-4">
             <div class="annotation">
               
-              <div class="pilwrap ">
+              <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <p>Add two vectors to each other, by simply combining each
-of their components</p>
+              <h2><a href="https://en.wikipedia.org/wiki/Cross_product">Cross Product</a></h2>
+<p>generates a new vector that&#39;s perpendicular to both of the vectors
+given.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">add</span><span class="params">(a, b)</span> {</span>
+            <div class="content"><div class='highlight'><pre>Vector.crossProduct = <span class="keyword">function</span>(a, b) {
     <span class="keyword">return</span> {
-        x: a.x + b.x,
-        y: a.y + b.y,
-        z: a.z + b.z
+        x: (a.y * b.z) - (a.z * b.y),
+        y: (a.z * b.x) - (a.x * b.z),
+        z: (a.x * b.y) - (a.y * b.x)
     };
-}</pre></div></div>
+};</pre></div></div>
             
         </li>
         
@@ -137,17 +126,17 @@ of their components</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
-              <p>Subtract one vector from another, by subtracting each component</p>
+              <p>Enlongate or shrink a vector by a factor of <code>t</code></p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">subtract</span><span class="params">(a, b)</span> {</span>
+            <div class="content"><div class='highlight'><pre>Vector.scale = <span class="keyword">function</span>(a, t) {
     <span class="keyword">return</span> {
-        x: a.x - b.x,
-        y: a.y - b.y,
-        z: a.z - b.z
+        x: a.x * t,
+        y: a.y * t,
+        z: a.z * t
     };
-}</pre></div></div>
+};</pre></div></div>
             
         </li>
         
@@ -155,32 +144,103 @@ of their components</p>
         <li id="section-6">
             <div class="annotation">
               
-              <div class="pilwrap ">
+              <div class="pilwrap for-h2">
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
-              <p>Length, or magnitude</p>
-<p>As measured by <a href="https://en.wikipedia.org/wiki/Euclidean_vector#Length">Euclidean norm</a></p>
+              <h2><a href="http://en.wikipedia.org/wiki/Unit_vector">Unit Vector</a></h2>
+<p>Turn any vector into a vector that has a magnitude of 1.</p>
+<p>If you consider that a <a href="http://en.wikipedia.org/wiki/Unit_sphere">unit sphere</a>
+is a sphere with a radius of 1, a unit vector is like a vector from the
+center point (0, 0, 0) to any point on its surface.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">length</span><span class="params">(a)</span> {</span>
-    <span class="keyword">return</span> Math.sqrt(
-        Math.pow(a.x, <span class="number">2</span>) +
-        Math.pow(a.y, <span class="number">2</span>) +
-        Math.pow(a.z, <span class="number">2</span>)
-    );
-}
+            <div class="content"><div class='highlight'><pre>Vector.unitVector = <span class="keyword">function</span>(a) {
+    <span class="keyword">return</span> Vector.scale(a, <span class="number">1</span> / Vector.length(a));
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Add two vectors to each other, by simply combining each
+of their components</p>
 
-<span class="function"><span class="keyword">function</span> <span class="title">unitVector</span><span class="params">(a)</span> {</span>
-    <span class="keyword">var</span> len = length(a);
-    <span class="keyword">if</span> (!len) len = <span class="number">1</span>;
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.add = <span class="keyword">function</span>() {
+    <span class="keyword">var</span> args = [].slice.call(arguments);
+    <span class="keyword">return</span> args.reduce(<span class="keyword">function</span>(mem, vec) {
+        <span class="keyword">return</span> {
+            x: mem.x + vec.x,
+            y: mem.y + vec.y,
+            z: mem.z + vec.z
+        };
+    }, Vector.ZERO);
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Subtract one vector from another, by subtracting each component</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.subtract = <span class="keyword">function</span>(a, b) {
     <span class="keyword">return</span> {
-        x: a.x / len,
-        y: a.y / len,
-        z: a.z / len
+        x: a.x - b.x,
+        y: a.y - b.y,
+        z: a.z - b.z
     };
-}</pre></div></div>
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Length, or magnitude, measured by <a href="https://en.wikipedia.org/wiki/Euclidean_vector#Length">Euclidean norm</a></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.length = <span class="keyword">function</span>(a) {
+    <span class="keyword">return</span> Math.sqrt(Vector.dotProduct(a, a));
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Given a vector <code>a</code>, which is a point in space, and a <code>normal</code>, which is
+the angle the point hits a surface, returna  new vector that is reflect
+off of that surface</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.reflectThrough = <span class="keyword">function</span>(a, normal) {
+    <span class="keyword">var</span> d = Vector.scale(normal, Vector.dotProduct(a, normal));
+    <span class="keyword">return</span> Vector.subtract(Vector.scale(d, <span class="number">2</span>), a);
+};</pre></div></div>
             
         </li>
         

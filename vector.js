@@ -8,50 +8,23 @@
 // Since we're not using traditional object oriented techniques, these
 // functions take and return that sort of logic-less object, so you'll see
 // `add(a, b)` rather than `a.add(b)`.
-
-// ## [Dot product](https://en.wikipedia.org/wiki/Dot_product)
-//
-// This takes two vectors and returns a single number that is
-// the result of multiplying each dimension of the vectors
-// together and adding the results.
 var Vector = {};
 
-
-Vector.UP = {
-    x: 0,
-    y: 1,
-    z: 0
-};
-
-Vector.ZERO = {
-    x: 0,
-    y: 0,
-    z: 0
-};
-
-Vector.WHITE = {
-    x: 255,
-    y: 255,
-    z: 255
-};
-
-Vector.reflectThrough = function(a, normal) {
-    var d = Vector.scale(normal, Vector.dotProduct(a, normal));
-    return Vector.subtract(Vector.scale(d, 2), a);
-};
-
+// # Constants
+Vector.UP = { x: 0, y: 1, z: 0 };
+Vector.ZERO = { x: 0, y: 0, z: 0 };
+Vector.WHITE = { x: 255, y: 255, z: 255 };
 Vector.ZEROcp = function() {
-    return {
-        x: 0,
-        y: 0,
-        z: 0
-    };
+    return { x: 0, y: 0, z: 0 };
 };
 
+// # Operations
+//
+// ## [Dot Product](https://en.wikipedia.org/wiki/Dot_product)
+// is different than the rest of these since it takes two vectors but
+// returns a single number value.
 Vector.dotProduct = function(a, b) {
-    return (a.x * b.x) +
-        (a.y * b.y) +
-        (a.z * b.z);
+    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 };
 
 // ## [Cross Product](https://en.wikipedia.org/wiki/Cross_product)
@@ -73,6 +46,18 @@ Vector.scale = function(a, t) {
         y: a.y * t,
         z: a.z * t
     };
+};
+
+
+// ## [Unit Vector](http://en.wikipedia.org/wiki/Unit_vector)
+//
+// Turn any vector into a vector that has a magnitude of 1.
+//
+// If you consider that a [unit sphere](http://en.wikipedia.org/wiki/Unit_sphere)
+// is a sphere with a radius of 1, a unit vector is like a vector from the
+// center point (0, 0, 0) to any point on its surface.
+Vector.unitVector = function(a) {
+    return Vector.scale(a, 1 / Vector.length(a));
 };
 
 // Add two vectors to each other, by simply combining each
@@ -97,13 +82,16 @@ Vector.subtract = function(a, b) {
     };
 };
 
-// Length, or magnitude
-//
-// As measured by [Euclidean norm](https://en.wikipedia.org/wiki/Euclidean_vector#Length)
+// Length, or magnitude, measured by [Euclidean norm](https://en.wikipedia.org/wiki/Euclidean_vector#Length)
 Vector.length = function(a) {
     return Math.sqrt(Vector.dotProduct(a, a));
 };
 
-Vector.unitVector = function(a) {
-    return Vector.scale(a, 1 / Vector.length(a));
+
+// Given a vector `a`, which is a point in space, and a `normal`, which is
+// the angle the point hits a surface, returna  new vector that is reflect
+// off of that surface
+Vector.reflectThrough = function(a, normal) {
+    var d = Vector.scale(normal, Vector.dotProduct(a, normal));
+    return Vector.subtract(Vector.scale(d, 2), a);
 };

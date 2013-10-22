@@ -49,6 +49,10 @@ function randomColor() {
     };
 }
 
+// Just like the objects, the camera is defined in 3D space: it's the combination
+// of a point where it 'is', a direction it's pointed - `vector` - and
+// `fieldOfView`, which is the angle from one side of its field of view
+// to the other.
 var camera = {
     point: {
         x: 0,
@@ -91,6 +95,9 @@ for (var x = 0; x < width; x++) {
         };
 
         color = trace(ray, 0);
+        // Calculate the index into the pixel data array - each pixel
+        // is represented by `[r, g, b, a]` in the array - and assign this pixel
+        // a value we calculated by tracing a ray.
         index = (x * 4) + (y * width * 4),
         data.data[index + 0] = color.x;
         data.data[index + 1] = color.y;
@@ -131,33 +138,33 @@ function sphereNormal(sphere, pos) {
         Vector.subtract(pos, sphere.point));
 }
 
+// For a given ray, return the object that's closest to the camera and
+// the distance from the camera to that object.
 function intersectScene(ray) {
+    // `.reduce()` starts with `mem`, which is `[Infinity, null]`, and
+    // compares each item to this value to see if it's closer to the camera
+    // than infinity.
     return objects.reduce(function(mem, object) {
         var dist = intersection[object.type](object, ray);
-        if (dist === undefined) return mem;
-        if (dist < mem[0]) {
-            return [dist, object];
-        } else {
-            return mem;
-        }
+
+        // If no item is found, just return the existing `mem` value, since this
+        // isn't the closest. Otherwise, it's the new closest and assign
+        // it to `mem`.
+        if (dist === undefined || dist > mem[0]) return mem;
+        else return [dist, object];
     }, [Infinity, null]);
 }
 
 function trace(ray, depth) {
     if (depth > 3) return;
 
-    ray.hit = null;
-
     var distObject = intersectScene(ray);
 
-    if (distObject[0] === Infinity) {
-        return Vector.WHITE;
-    }
+    if (distObject[0] === Infinity) return Vector.WHITE;
 
     var dist = distObject[0],
-        object = distObject[1];
-
-    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+        object = distObject[1],
+        pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
 }

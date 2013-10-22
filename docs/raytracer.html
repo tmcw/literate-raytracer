@@ -11,6 +11,27 @@
   <div id="container">
     <div id="background"></div>
     
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="raytracer.html">
+                raytracer.js
+              </a>
+            
+              
+              <a class="source" href="vector.html">
+                vector.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
     <ul class="sections">
         
         
@@ -85,9 +106,25 @@ raytracer will directly compute pixel data and then put it into an image.</p>
         y: Math.random() * <span class="number">255</span>,
         z: Math.random() * <span class="number">255</span>
     };
-}
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Just like the objects, the camera is defined in 3D space: it&#39;s the combination
+of a point where it &#39;is&#39;, a direction it&#39;s pointed - <code>vector</code> - and
+<code>fieldOfView</code>, which is the angle from one side of its field of view
+to the other.</p>
 
-<span class="keyword">var</span> camera = {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> camera = {
     point: {
         x: <span class="number">0</span>,
         y: <span class="number">1.8</span>,
@@ -104,11 +141,11 @@ raytracer will directly compute pixel data and then put it into an image.</p>
         </li>
         
         
-        <li id="section-3">
+        <li id="section-4">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-3">&#182;</a>
+                <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
               <h1>Throwing Rays</h1>
 <p>For each pixel in the canvas, there needs to be at least one ray of light
@@ -139,8 +176,24 @@ that determines its color by bouncing through the scene.</p>
             vector: Vector.unitVector(Vector.add(eyeVector, xcomp, ycomp))
         };
 
-        color = trace(ray, <span class="number">0</span>);
-        index = (x * <span class="number">4</span>) + (y * width * <span class="number">4</span>),
+        color = trace(ray, <span class="number">0</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Calculate the index into the pixel data array - each pixel
+is represented by <code>[r, g, b, a]</code> in the array - and assign this pixel
+a value we calculated by tracing a ray.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        index = (x * <span class="number">4</span>) + (y * width * <span class="number">4</span>),
         data.data[index + <span class="number">0</span>] = color.x;
         data.data[index + <span class="number">1</span>] = color.y;
         data.data[index + <span class="number">2</span>] = color.z;
@@ -151,11 +204,11 @@ that determines its color by bouncing through the scene.</p>
         </li>
         
         
-        <li id="section-4">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-4">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>Now that each ray has returned and populated the <code>data</code> array with
 correctly lit colors, fill the canvas with the generated data.</p>
@@ -167,11 +220,11 @@ correctly lit colors, fill the canvas with the generated data.</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <h2>Sphere</h2>
 <p>Spheres are one of the simplest objects for rays to interact with, since
@@ -187,11 +240,11 @@ is pretty straightforward.</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>the length of a
 hypoteneuse of a right triangle with points
@@ -214,35 +267,72 @@ angle at the other point.</p>
 <span class="function"><span class="keyword">function</span> <span class="title">sphereNormal</span><span class="params">(sphere, pos)</span> {</span>
     <span class="keyword">return</span> Vector.unitVector(
         Vector.subtract(pos, sphere.point));
-}
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>For a given ray, return the object that&#39;s closest to the camera and
+the distance from the camera to that object.</p>
 
-<span class="function"><span class="keyword">function</span> <span class="title">intersectScene</span><span class="params">(ray)</span> {</span>
-    <span class="keyword">return</span> objects.reduce(<span class="keyword">function</span>(mem, object) {
-        <span class="keyword">var</span> dist = intersection[object.type](object, ray);
-        <span class="keyword">if</span> (dist === <span class="literal">undefined</span>) <span class="keyword">return</span> mem;
-        <span class="keyword">if</span> (dist &lt; mem[<span class="number">0</span>]) {
-            <span class="keyword">return</span> [dist, object];
-        } <span class="keyword">else</span> {
-            <span class="keyword">return</span> mem;
-        }
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">intersectScene</span><span class="params">(ray)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p><code>.reduce()</code> starts with <code>mem</code>, which is <code>[Infinity, null]</code>, and
+compares each item to this value to see if it&#39;s closer to the camera
+than infinity.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">return</span> objects.reduce(<span class="keyword">function</span>(mem, object) {
+        <span class="keyword">var</span> dist = intersection[object.type](object, ray);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>If no item is found, just return the existing <code>mem</code> value, since this
+isn&#39;t the closest. Otherwise, it&#39;s the new closest and assign
+it to <code>mem</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">if</span> (dist === <span class="literal">undefined</span> || dist &gt; mem[<span class="number">0</span>]) <span class="keyword">return</span> mem;
+        <span class="keyword">else</span> <span class="keyword">return</span> [dist, object];
     }, [<span class="literal">Infinity</span>, <span class="literal">null</span>]);
 }
 
 <span class="function"><span class="keyword">function</span> <span class="title">trace</span><span class="params">(ray, depth)</span> {</span>
     <span class="keyword">if</span> (depth &gt; <span class="number">3</span>) <span class="keyword">return</span>;
 
-    ray.hit = <span class="literal">null</span>;
-
     <span class="keyword">var</span> distObject = intersectScene(ray);
 
-    <span class="keyword">if</span> (distObject[<span class="number">0</span>] === <span class="literal">Infinity</span>) {
-        <span class="keyword">return</span> Vector.WHITE;
-    }
+    <span class="keyword">if</span> (distObject[<span class="number">0</span>] === <span class="literal">Infinity</span>) <span class="keyword">return</span> Vector.WHITE;
 
     <span class="keyword">var</span> dist = distObject[<span class="number">0</span>],
-        object = distObject[<span class="number">1</span>];
-
-    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+        object = distObject[<span class="number">1</span>],
+        pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     <span class="keyword">return</span> surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
 }

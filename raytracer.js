@@ -19,9 +19,9 @@ var ctx = c.getContext('2d'),
 var lights = [{ x: -30, y: -10, z: 20 }];
 
 var objects = [];
-for (var x = 0; x < 1; x++) {
-    for (var y = 0; y < 1; y++) {
-        for (var z = 0; z < 1; z++) {
+for (var x = 0; x < 2; x++) {
+    for (var y = 0; y < 2; y++) {
+        for (var z = 0; z < 2; z++) {
             objects.push({
                 type: 'sphere',
                 point: {
@@ -35,7 +35,7 @@ for (var x = 0; x < 1; x++) {
                     z: 255
                 },
                 specular: 0.2, // Math.random() > 0.8 ? Math.random() : 0,
-                radius: 3
+                radius: 1
             });
         }
     }
@@ -49,10 +49,6 @@ function randomColor() {
     };
 }
 
-// Just like the objects, the camera is defined in 3D space: it's the combination
-// of a point where it 'is', a direction it's pointed - `vector` - and
-// `fieldOfView`, which is the angle from one side of its field of view
-// to the other.
 var camera = {
     point: {
         x: 0,
@@ -82,22 +78,20 @@ var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
     vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
     vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
 
-var index, ray, color;
+console.time('render');
+var index, color;
+var ray = {
+    point: camera.point
+};
 for (var x = 0; x < width; x++) {
     for (var y = 0; y < height; y++) {
 
         var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
             ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
 
-        ray = {
-            point: camera.point,
-            vector: Vector.unitVector(Vector.add(eyeVector, xcomp, ycomp))
-        };
+        ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
 
         color = trace(ray, 0);
-        // Calculate the index into the pixel data array - each pixel
-        // is represented by `[r, g, b, a]` in the array - and assign this pixel
-        // a value we calculated by tracing a ray.
         index = (x * 4) + (y * width * 4),
         data.data[index + 0] = color.x;
         data.data[index + 1] = color.y;
@@ -105,6 +99,7 @@ for (var x = 0; x < width; x++) {
         data.data[index + 3] = 255;
     }
 }
+console.timeEnd('render');
 
 // Now that each ray has returned and populated the `data` array with
 // correctly lit colors, fill the canvas with the generated data.
@@ -138,21 +133,16 @@ function sphereNormal(sphere, pos) {
         Vector.subtract(pos, sphere.point));
 }
 
-// For a given ray, return the object that's closest to the camera and
-// the distance from the camera to that object.
 function intersectScene(ray) {
-    // `.reduce()` starts with `mem`, which is `[Infinity, null]`, and
-    // compares each item to this value to see if it's closer to the camera
-    // than infinity.
-    return objects.reduce(function(mem, object) {
+    var closest = [Infinity, null];
+    for (var i = 0; i < objects.length; i++) {
+        var object = objects[i];
         var dist = intersection[object.type](object, ray);
-
-        // If no item is found, just return the existing `mem` value, since this
-        // isn't the closest. Otherwise, it's the new closest and assign
-        // it to `mem`.
-        if (dist === undefined || dist > mem[0]) return mem;
-        else return [dist, object];
-    }, [Infinity, null]);
+        if (dist !== undefined && dist < closest[0]) {
+            closest = [dist, object];
+        }
+    }
+    return closest;
 }
 
 function trace(ray, depth) {
@@ -160,39 +150,40 @@ function trace(ray, depth) {
 
     var distObject = intersectScene(ray);
 
-    if (distObject[0] === Infinity) return Vector.WHITE;
+    if (distObject[0] === Infinity) {
+        return Vector.WHITE;
+    }
 
     var dist = distObject[0],
-        object = distObject[1],
-        pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+        object = distObject[1];
+
+    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
 }
 
-function visibleLight(pt) {
-    return function(light) {
-        return intersectScene({
-            point: pt,
-            vector: Vector.unitVector(Vector.subtract(pt, light))
-        })[1] !== null;
-    };
+function isLightVisible(pt, light) {
+    return intersectScene({
+        point: pt,
+        vector: Vector.unitVector(Vector.subtract(pt, light))
+    })[1] !== null;
 }
 
 function surface(ray, object, pointAtTime, normal, depth) {
     var b = object.color,
-        c = Vector.ZEROcp();
-    var lambertCoefficient = 0.8,
+        c = Vector.ZERO,
+        lambertCoefficient = 0.8,
         reflectance = object.specular,
-        ambient = Math.max(1 - reflectance - lambertCoefficient, 0);
+        ambient = Math.max(1 - reflectance - lambertCoefficient, 0),
+        lambertAmount = 0;
 
-    var lambertAmount = 0;
-    lights
-        .filter(visibleLight(pointAtTime))
-        .forEach(function(lightPoint) {
-            var contribution = Vector.dotProduct(Vector.unitVector(
-                Vector.subtract(lightPoint, pointAtTime)), normal);
-            if (contribution > 0) lambertAmount += contribution;
-        });
+    for (var i = 0; i < lights.length; i++) {
+        var lightPoint = lights[0];
+        if (!isLightVisible(pointAtTime, lightPoint)) continue;
+        var contribution = Vector.dotProduct(Vector.unitVector(
+            Vector.subtract(lightPoint, pointAtTime)), normal);
+        if (contribution > 0) lambertAmount += contribution;
+    }
 
     if (object.specular) {
         var reflectedRay = {
@@ -206,8 +197,8 @@ function surface(ray, object, pointAtTime, normal, depth) {
     }
 
     lambertAmount = Math.min(1, lambertAmount);
-    c = Vector.add(c, Vector.scale(b, lambertCoefficient * lambertAmount));
 
-    c = Vector.add(c, Vector.scale(b, ambient));
-    return c;
+    return Vector.add3(c,
+        Vector.scale(b, lambertCoefficient * lambertAmount),
+        Vector.scale(b, ambient));
 }

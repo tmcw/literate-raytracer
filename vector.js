@@ -62,15 +62,20 @@ Vector.unitVector = function(a) {
 
 // Add two vectors to each other, by simply combining each
 // of their components
-Vector.add = function() {
-    var args = [].slice.call(arguments);
-    return args.reduce(function(mem, vec) {
-        return {
-            x: mem.x + vec.x,
-            y: mem.y + vec.y,
-            z: mem.z + vec.z
-        };
-    }, Vector.ZERO);
+Vector.add = function(a, b) {
+    return {
+        x: a.x + b.x,
+        y: a.y + b.y,
+        z: a.z + b.z
+    };
+};
+
+Vector.add3 = function(a, b, c) {
+    return {
+        x: a.x + b.x + c.x,
+        y: a.y + b.y + c.y,
+        z: a.z + b.z + c.z
+    };
 };
 
 // Subtract one vector from another, by subtracting each component

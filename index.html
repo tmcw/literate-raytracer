@@ -2,9 +2,20 @@
 	<head>
 		<title>literate raytracer</title>
 		<meta charset="utf-8" />
+        <style>
+        body {
+            margin:0 auto;
+            width:640px;
+        }
+        </style>
 	</head>
 	<body>
-		<canvas id='c'></canvas>
+        <div>
+            <canvas id='c'></canvas>
+        </div>
+        <iframe frameborder='no' width='640' height='4500'
+            src='docs/raytracer.html'>
+        </iframe>
 		<script src='vector.js'></script>
 		<script src='raytracer.js'></script>
 	</body>

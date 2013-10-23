@@ -48,7 +48,6 @@ Vector.scale = function(a, t) {
     };
 };
 
-
 // ## [Unit Vector](http://en.wikipedia.org/wiki/Unit_vector)
 //
 // Turn any vector into a vector that has a magnitude of 1.
@@ -70,6 +69,10 @@ Vector.add = function(a, b) {
     };
 };
 
+// A version of `add` that adds three vectors at the same time. While
+// it's possible to write a clever version of `Vector.add` that takes
+// any number of arguments, it's not fast, so we're keeping it simple and
+// just making two versions.
 Vector.add3 = function(a, b, c) {
     return {
         x: a.x + b.x + c.x,
@@ -91,7 +94,6 @@ Vector.subtract = function(a, b) {
 Vector.length = function(a) {
     return Math.sqrt(Vector.dotProduct(a, a));
 };
-
 
 // Given a vector `a`, which is a point in space, and a `normal`, which is
 // the angle the point hits a surface, returna  new vector that is reflect

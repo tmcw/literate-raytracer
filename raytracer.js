@@ -6,49 +6,44 @@ var c = document.getElementById('c'),
 c.width = width;
 c.height = height;
 
-var intersection = {
-    sphere: sphereIntersection
-};
-
 // Get a context in order to generate a proper data array. We aren't going to
 // use traditional Canvas drawing functions like `fillRect` - instead this
 // raytracer will directly compute pixel data and then put it into an image.
 var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
+// # Lights
+//
+// Lights are defined only as points in space - surfaces that have lambert
+// shading will be affected by any visible lights.
 var lights = [{ x: -30, y: -10, z: 20 }];
 
-var objects = [];
-for (var x = 0; x < 2; x++) {
-    for (var y = 0; y < 2; y++) {
-        for (var z = 0; z < 2; z++) {
-            objects.push({
-                type: 'sphere',
-                point: {
-                    x: x * 3,
-                    y: 5 + y * 3,
-                    z: -5 + z * 2
-                },
-                color: {
-                    x: 255,
-                    y: 255,
-                    z: 255
-                },
-                specular: 0.2, // Math.random() > 0.8 ? Math.random() : 0,
-                radius: 1
-            });
-        }
-    }
-}
+// # Objects
+//
+// This raytracer handles sphere objects, with any color, position, radius,
+// and surface properties.
+var objects = [{
+    type: 'sphere',
+    point: {
+        x: 0,
+        y: 5,
+        z: -5
+    },
+    color: {
+        x: 255,
+        y: 255,
+        z: 255
+    },
+    specular: 0.2,
+    radius: 2
+}];
 
-function randomColor() {
-    return {
-        x: Math.random() * 255,
-        y: Math.random() * 255,
-        z: Math.random() * 255
-    };
-}
-
+// # The Camera
+//
+// Our camera is pretty simple: it's a point in space, where you can imagine
+// that the camera 'sits', a `fieldOfView`, which is the angle from the right
+// to the left side of its frame, and a `vector` which determines what
+// angle it points in.
 var camera = {
     point: {
         x: 0,
@@ -67,6 +62,11 @@ var camera = {
 //
 // For each pixel in the canvas, there needs to be at least one ray of light
 // that determines its color by bouncing through the scene.
+//
+// This process
+// is a bit odd, because there's a disconnect between pixels and vectors:
+// given the left and right, top and bottom rays, the rays we shoot are just
+// interpolated between them in little increments.
 var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
     fovRadians = Math.PI * (camera.fieldOfView / 2) / 180,
     halfWidth = Math.tan(fovRadians),
@@ -105,7 +105,7 @@ console.timeEnd('render');
 // correctly lit colors, fill the canvas with the generated data.
 ctx.putImageData(data, 0, 0);
 
-// ## Sphere
+// ## Sphere Intersection
 //
 // Spheres are one of the simplest objects for rays to interact with, since
 // the geometrical math for finding intersections and reflections with them
@@ -133,11 +133,19 @@ function sphereNormal(sphere, pos) {
         Vector.subtract(pos, sphere.point));
 }
 
+// # Tracing Rays to Objects
+//
+// Given a ray, let's figure out whether it hits anything, and if so,
+// what's the closest thing it hits.
 function intersectScene(ray) {
+    // The base case is that it hits nothing, and travels for `Infinity`
     var closest = [Infinity, null];
+    // But for each object, we check whether it has any intersection,
+    // and compare that intersection - is it closer than `Infinity` at first,
+    // and then is it closer than other objects that have been hit?
     for (var i = 0; i < objects.length; i++) {
-        var object = objects[i];
-        var dist = intersection[object.type](object, ray);
+        var object = objects[i],
+            dist = sphereIntersection(object, ray);
         if (dist !== undefined && dist < closest[0]) {
             closest = [dist, object];
         }
@@ -145,7 +153,14 @@ function intersectScene(ray) {
     return closest;
 }
 
+// Given a ray, shoot it until it hits an object and return that object's color,
+// or `Vector.WHITE` if no object is found.
 function trace(ray, depth) {
+    // This is a recursive method: if we hit something that's reflective,
+    // then the call to `surface()` at the bottom will return here and try
+    // to find what the ray reflected into. Since this could easily go
+    // on forever, first check that we haven't gone more than three bounces
+    // into a reflection.
     if (depth > 3) return;
 
     var distObject = intersectScene(ray);
@@ -169,6 +184,25 @@ function isLightVisible(pt, light) {
     })[1] !== null;
 }
 
+// # Surface
+//
+// The `trace()` function has figured out that something is hit by an ray,
+// and we're going to figure out what surface that thing has - what color
+// it'll send back to the camera.
+//
+// Objects have different sorts of surfaces:
+//
+// **Ambient** colors shine bright regardless of whether there's a light visible -
+// a circle with a totally ambient blue color will always just be a flat blue
+// circle.
+//
+// **[Lambert shading](http://en.wikipedia.org/wiki/Lambertian_reflectance)**
+// is our pretty shading, which shows gradations from the most lit point on
+// the object to the least.
+//
+// **[Specular](https://en.wikipedia.org/wiki/Specular_reflection)** is a fancy word for 'reflective': rays that hit objects
+// with specular surfaces bounce off and acquire the colors of other objects
+// they bounce into.
 function surface(ray, object, pointAtTime, normal, depth) {
     var b = object.color,
         c = Vector.ZERO,

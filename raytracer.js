@@ -26,7 +26,7 @@ var objects = [{
     type: 'sphere',
     point: {
         x: 0,
-        y: 5,
+        y: 3.5,
         z: -5
     },
     color: {
@@ -35,7 +35,7 @@ var objects = [{
         z: 255
     },
     specular: 0.2,
-    radius: 2
+    radius: 3
 }];
 
 // # The Camera

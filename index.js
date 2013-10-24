@@ -121,7 +121,7 @@ ctx.putImageData(data, 0, 0);
 
 // ## Sphere Intersection
 //
-// ![](../graphics/sphereintersection.png)
+// ![](graphics/sphereintersection.png)
 //
 // Spheres are one of the simplest objects for rays to interact with, since
 // the geometrical math for finding intersections and reflections with them

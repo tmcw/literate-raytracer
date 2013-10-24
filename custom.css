@@ -1,46 +1,22 @@
-/*--------------------- Typography ----------------------------*/
-
-@font-face {
-    font-family: 'aller-light';
-    src: url('public/fonts/aller-light.eot');
-    src: url('public/fonts/aller-light.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/aller-light.woff') format('woff'),
-         url('public/fonts/aller-light.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'aller-bold';
-    src: url('public/fonts/aller-bold.eot');
-    src: url('public/fonts/aller-bold.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/aller-bold.woff') format('woff'),
-         url('public/fonts/aller-bold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'novecento-bold';
-    src: url('public/fonts/novecento-bold.eot');
-    src: url('public/fonts/novecento-bold.eot?#iefix') format('embedded-opentype'),
-         url('public/fonts/novecento-bold.woff') format('woff'),
-         url('public/fonts/novecento-bold.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
 /*--------------------- Layout ----------------------------*/
 html { height: 100%; }
 body {
-  font-family: "aller-light";
+  font-family: "Helvetica Neue", "Helvetica";
   font-size: 14px;
   line-height: 18px;
   color: #30404f;
   margin: 0; padding: 0;
   height:100%;
 }
-#container { min-height: 100%; }
+#container {
+    min-height: 100%;
+    margin:0 auto;
+    width:640px;
+}
+
+img {
+    max-width:100%;
+}
 
 a {
   color: #000;
@@ -48,19 +24,16 @@ a {
 
 b, strong {
   font-weight: normal;
-  font-family: "aller-bold";
 }
 
 p, ul, ol {
-  margin: 15px 0 0px;
+  margin: 15px 0 15px 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
   color: #112233;
   line-height: 1em;
   font-weight: normal;
-  font-family: "novecento-bold";
-  text-transform: uppercase;
   margin: 30px 0 15px 0;
 }
 
@@ -85,9 +58,6 @@ pre, tt, code {
     margin: 0;
     padding: 7px 10px;
     background: #fcfcfc;
-    -moz-box-shadow:    inset 0 0 10px rgba(0,0,0,0.1);
-    -webkit-box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-    box-shadow:         inset 0 0 10px rgba(0,0,0,0.1);
     overflow-x: auto;
   }
     .annotation pre code {
@@ -204,11 +174,10 @@ ul.sections > li > div {
   }
 
   ul.sections > li > div.content {
-    background: #f5f5ff;
+    background: #f5f5f5;
+    border-top:2px solid #ccc;
+    border-bottom:2px solid #ccc;
     overflow-x:auto;
-    -webkit-box-shadow: inset 0 0 5px #e5e5ee;
-    box-shadow: inset 0 0 5px #e5e5ee;
-    border: 1px solid #dedede;
     margin:5px 10px 5px 10px;
     padding-bottom: 5px;
   }
@@ -363,3 +332,4 @@ pre .chunk {
 pre .tex .formula {
   opacity: 0.5;
 }
+

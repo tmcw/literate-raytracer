@@ -3,22 +3,55 @@ var c = document.getElementById('c'),
     width = 640,
     height = 480;
 
-c.width = width;
-c.height = height;
-
 // Get a context in order to generate a proper data array. We aren't going to
 // use traditional Canvas drawing functions like `fillRect` - instead this
 // raytracer will directly compute pixel data and then put it into an image.
+c.width = width;
+c.height = height;
 var ctx = c.getContext('2d'),
     data = ctx.getImageData(0, 0, width, height);
 
-// # Lights
+// # The Scene
+//
+// We need to define three different kinds of things in 3D space:
+// a **camera** from which we cast rays into the scene, **objects**
+// that can be hit by those rays and are drawn into the scene, and
+// **lights** that change the color of rays, by extension coloring objects.
+//
+// In this case, we define these objects as simple objects with vectors
+// defined as `{x, y, z}` objects.
+
+// ## The Camera
+//
+// Our camera is pretty simple: it's a point in space, where you can imagine
+// that the camera 'sits', a `fieldOfView`, which is the angle from the right
+// to the left side of its frame, and a `vector` which determines what
+// angle it points in.
+var camera = {
+    point: {
+        x: 0,
+        y: 1.8,
+        z: 10
+    },
+    fieldOfView: 45,
+    vector: {
+        x: 0,
+        y: 3,
+        z: 0
+    }
+};
+
+// ## Lights
 //
 // Lights are defined only as points in space - surfaces that have lambert
 // shading will be affected by any visible lights.
-var lights = [{ x: -30, y: -10, z: 20 }];
+var lights = [{
+    x: -30,
+    y: -10,
+    z: 20
+}];
 
-// # Objects
+// ## Objects
 //
 // This raytracer handles sphere objects, with any color, position, radius,
 // and surface properties.
@@ -38,25 +71,6 @@ var objects = [{
     radius: 3
 }];
 
-// # The Camera
-//
-// Our camera is pretty simple: it's a point in space, where you can imagine
-// that the camera 'sits', a `fieldOfView`, which is the angle from the right
-// to the left side of its frame, and a `vector` which determines what
-// angle it points in.
-var camera = {
-    point: {
-        x: 0,
-        y: 1.8,
-        z: 10
-    },
-    fieldOfView: 45,
-    vector: {
-        x: 0,
-        y: 3,
-        z: 0
-    }
-};
 
 // # Throwing Rays
 //
@@ -107,11 +121,12 @@ ctx.putImageData(data, 0, 0);
 
 // ## Sphere Intersection
 //
+// ![](../graphics/sphereintersection.png)
+//
 // Spheres are one of the simplest objects for rays to interact with, since
 // the geometrical math for finding intersections and reflections with them
 // is pretty straightforward.
 function sphereIntersection(sphere, ray) {
-
     var eye_to_center = Vector.subtract(sphere.point, ray.point),
         // the length of a
         // hypoteneuse of a right triangle with points
@@ -120,7 +135,6 @@ function sphereIntersection(sphere, ray) {
         v = Vector.dotProduct(eye_to_center, ray.vector),
         eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
         discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
-
     if (discriminant < 0) {
         return;
     } else {
@@ -128,6 +142,10 @@ function sphereIntersection(sphere, ray) {
     }
 }
 
+// A normal is, at each point on the surface of a sphere or some other object,
+// a vector that's perpendicular to the surface and radiates outward. We need
+// to know this so that we can calculate the way that a ray reflects off of
+// a sphere.
 function sphereNormal(sphere, pos) {
     return Vector.unitVector(
         Vector.subtract(pos, sphere.point));
@@ -165,6 +183,8 @@ function trace(ray, depth) {
 
     var distObject = intersectScene(ray);
 
+    // If we don't hit anything, fill this pixel with the background color -
+    // in this case, white.
     if (distObject[0] === Infinity) {
         return Vector.WHITE;
     }
@@ -189,20 +209,6 @@ function isLightVisible(pt, light) {
 // The `trace()` function has figured out that something is hit by an ray,
 // and we're going to figure out what surface that thing has - what color
 // it'll send back to the camera.
-//
-// Objects have different sorts of surfaces:
-//
-// **Ambient** colors shine bright regardless of whether there's a light visible -
-// a circle with a totally ambient blue color will always just be a flat blue
-// circle.
-//
-// **[Lambert shading](http://en.wikipedia.org/wiki/Lambertian_reflectance)**
-// is our pretty shading, which shows gradations from the most lit point on
-// the object to the least.
-//
-// **[Specular](https://en.wikipedia.org/wiki/Specular_reflection)** is a fancy word for 'reflective': rays that hit objects
-// with specular surfaces bounce off and acquire the colors of other objects
-// they bounce into.
 function surface(ray, object, pointAtTime, normal, depth) {
     var b = object.color,
         c = Vector.ZERO,
@@ -211,6 +217,9 @@ function surface(ray, object, pointAtTime, normal, depth) {
         ambient = Math.max(1 - reflectance - lambertCoefficient, 0),
         lambertAmount = 0;
 
+    // **[Lambert shading](http://en.wikipedia.org/wiki/Lambertian_reflectance)**
+    // is our pretty shading, which shows gradations from the most lit point on
+    // the object to the least.
     for (var i = 0; i < lights.length; i++) {
         var lightPoint = lights[0];
         if (!isLightVisible(pointAtTime, lightPoint)) continue;
@@ -219,6 +228,9 @@ function surface(ray, object, pointAtTime, normal, depth) {
         if (contribution > 0) lambertAmount += contribution;
     }
 
+    // **[Specular](https://en.wikipedia.org/wiki/Specular_reflection)** is a fancy word for 'reflective': rays that hit objects
+    // with specular surfaces bounce off and acquire the colors of other objects
+    // they bounce into.
     if (object.specular) {
         var reflectedRay = {
             point: pointAtTime,
@@ -232,6 +244,9 @@ function surface(ray, object, pointAtTime, normal, depth) {
 
     lambertAmount = Math.min(1, lambertAmount);
 
+    // **Ambient** colors shine bright regardless of whether there's a light visible -
+    // a circle with a totally ambient blue color will always just be a flat blue
+    // circle.
     return Vector.add3(c,
         Vector.scale(b, lambertCoefficient * lambertAmount),
         Vector.scale(b, ambient));

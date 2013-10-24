@@ -9,6 +9,10 @@
 </head>
 <body>
   <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>an open source project by tom macwright</a>
+    </div>
+    <canvas id='c'></canvas>
     <div id="background"></div>
     
       <ul id="jump_to">
@@ -48,10 +52,7 @@
             
             <div class="content"><div class='highlight'><pre><span class="keyword">var</span> c = document.getElementById(<span class="string">'c'</span>),
     width = <span class="number">640</span>,
-    height = <span class="number">480</span>;
-
-c.width = width;
-c.height = height;</pre></div></div>
+    height = <span class="number">480</span>;</pre></div></div>
             
         </li>
         
@@ -68,7 +69,9 @@ raytracer will directly compute pixel data and then put it into an image.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> ctx = c.getContext(<span class="string">'2d'</span>),
+            <div class="content"><div class='highlight'><pre>c.width = width;
+c.height = height;
+<span class="keyword">var</span> ctx = c.getContext(<span class="string">'2d'</span>),
     data = ctx.getImageData(<span class="number">0</span>, <span class="number">0</span>, width, height);</pre></div></div>
             
         </li>
@@ -80,55 +83,14 @@ raytracer will directly compute pixel data and then put it into an image.</p>
               <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <h1>Lights</h1>
-<p>Lights are defined only as points in space - surfaces that have lambert
-shading will be affected by any visible lights.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> lights = [{ x: -<span class="number">30</span>, y: -<span class="number">10</span>, z: <span class="number">20</span> }];</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-4">
-            <div class="annotation">
-              
-              <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-4">&#182;</a>
-              </div>
-              <h1>Objects</h1>
-<p>This raytracer handles sphere objects, with any color, position, radius,
-and surface properties.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> objects = [{
-    type: <span class="string">'sphere'</span>,
-    point: {
-        x: <span class="number">0</span>,
-        y: <span class="number">3.5</span>,
-        z: -<span class="number">5</span>
-    },
-    color: {
-        x: <span class="number">255</span>,
-        y: <span class="number">255</span>,
-        z: <span class="number">255</span>
-    },
-    specular: <span class="number">0.2</span>,
-    radius: <span class="number">3</span>
-}];</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-5">
-            <div class="annotation">
-              
-              <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-5">&#182;</a>
-              </div>
-              <h1>The Camera</h1>
+              <h1>The Scene</h1>
+<p>We need to define three different kinds of things in 3D space:
+a <strong>camera</strong> from which we cast rays into the scene, <strong>objects</strong>
+that can be hit by those rays and are drawn into the scene, and
+<strong>lights</strong> that change the color of rays, by extension coloring objects.</p>
+<p>In this case, we define these objects as simple objects with vectors
+defined as <code>{x, y, z}</code> objects.</p>
+<h2>The Camera</h2>
 <p>Our camera is pretty simple: it&#39;s a point in space, where you can imagine
 that the camera &#39;sits&#39;, a <code>fieldOfView</code>, which is the angle from the right
 to the left side of its frame, and a <code>vector</code> which determines what
@@ -149,6 +111,58 @@ angle it points in.</p>
         z: <span class="number">0</span>
     }
 };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2>Lights</h2>
+<p>Lights are defined only as points in space - surfaces that have lambert
+shading will be affected by any visible lights.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> lights = [{
+    x: -<span class="number">30</span>,
+    y: -<span class="number">10</span>,
+    z: <span class="number">20</span>
+}];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <h2>Objects</h2>
+<p>This raytracer handles sphere objects, with any color, position, radius,
+and surface properties.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> objects = [{
+    type: <span class="string">'sphere'</span>,
+    point: {
+        x: <span class="number">0</span>,
+        y: <span class="number">3.5</span>,
+        z: -<span class="number">5</span>
+    },
+    color: {
+        x: <span class="number">255</span>,
+        y: <span class="number">255</span>,
+        z: <span class="number">255</span>
+    },
+    specular: <span class="number">0.2</span>,
+    radius: <span class="number">3</span>
+}];</pre></div></div>
             
         </li>
         
@@ -229,6 +243,7 @@ correctly lit colors, fill the canvas with the generated data.</p>
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <h2>Sphere Intersection</h2>
+<p><img src="../graphics/sphereintersection.png" alt=""></p>
 <p>Spheres are one of the simplest objects for rays to interact with, since
 the geometrical math for finding intersections and reflections with them
 is pretty straightforward.</p>
@@ -236,7 +251,6 @@ is pretty straightforward.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereIntersection</span><span class="params">(sphere, ray)</span> {</span>
-
     <span class="keyword">var</span> eye_to_center = Vector.subtract(sphere.point, ray.point),</pre></div></div>
             
         </li>
@@ -258,7 +272,6 @@ angle at the other point.</p>
             <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),
         eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
         discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
-
     <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
         <span class="keyword">return</span>;
     } <span class="keyword">else</span> {
@@ -448,5 +461,7 @@ they bounce into.</p>
         
     </ul>
   </div>
+	<script src='vector.js'></script>
+	<script src='raytracer.js'></script>
 </body>
 </html>

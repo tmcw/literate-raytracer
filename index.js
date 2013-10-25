@@ -81,16 +81,35 @@ var objects = [{
 // is a bit odd, because there's a disconnect between pixels and vectors:
 // given the left and right, top and bottom rays, the rays we shoot are just
 // interpolated between them in little increments.
+
+// Starting with the height and width of the scene, the camera's place,
+// direction, and field of view, we calculate factors that create
+// `width*height` vectors for each ray
+
+// Start by creating a simple vector pointing in the direction the camera is
+// pointing - a unit vector
 var eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
+
+    // and then we'll rotate this by combining it with a version that's turned
+    // 90° right and one that's turned 90° up. Since the [cross product](http://en.wikipedia.org/wiki/Cross_product)
+    // takes two vectors and creates a third that's perpendicular to both,
+    // we use a pure 'UP' vector to turn the camera right, and that 'right'
+    // vector to turn the camera up.
+    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
+    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),
+
+    // The actual ending pixel dimensions of the image aren't important here -
+    // note that `width` and `height` are in pixels, but the numbers we compute
+    // here are just based on the ratio between them, `height/width`, and the
+    // `fieldOfView` of the camera.
     fovRadians = Math.PI * (camera.fieldOfView / 2) / 180,
+    heightWidthRatio = height / width,
     halfWidth = Math.tan(fovRadians),
-    halfHeight = (height/width) * halfWidth,
+    halfHeight = heightWidthRatio * halfWidth,
     camerawidth = halfWidth * 2,
     cameraheight = halfHeight * 2,
     pixelWidth = camerawidth / (width - 1),
-    pixelHeight = cameraheight / (height - 1),
-    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
-    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+    pixelHeight = cameraheight / (height - 1);
 
 console.time('render');
 var index, color;
@@ -100,11 +119,17 @@ var ray = {
 for (var x = 0; x < width; x++) {
     for (var y = 0; y < height; y++) {
 
+        // turn the raw pixel `x` and `y` values into values from -1 to 1
+        // and use these values to scale the facing-right and facing-up
+        // vectors so that we generate versions of the `eyeVector` that are
+        // skewed in each necessary direction.
         var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
             ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
 
         ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
 
+        // use the vector generated to raytrace the scene, returning a color
+        // as a `{x, y, z}` vector of RGB values
         color = trace(ray, 0);
         index = (x * 4) + (y * width * 4),
         data.data[index + 0] = color.x;
@@ -128,16 +153,27 @@ ctx.putImageData(data, 0, 0);
 // is pretty straightforward.
 function sphereIntersection(sphere, ray) {
     var eye_to_center = Vector.subtract(sphere.point, ray.point),
-        // the length of a
-        // hypoteneuse of a right triangle with points
-        // at the eye and the center of the circle, and a right
-        // angle at the other point.
+        // picture a triangle with one side going straight from the camera point
+        // to the center of the sphere, another side being the vector.
+        // the final side is a right angle.
+        //
+        // This equation first figures out the length of the vector side
         v = Vector.dotProduct(eye_to_center, ray.vector),
+        // then the length of the straight from the camera to the center
+        // of the sphere
         eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
+        // and compute a segment from the right angle of the triangle to a point
+        // on the `v` line that also intersects the circle
         discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
+    // If the discriminant is negative, that means that the sphere hasn't
+    // been hit by the ray
     if (discriminant < 0) {
         return;
     } else {
+        // otherwise, we return the distance from the camera point to the sphere
+        // `Math.sqrt(dotProduct(a, a))` is the length of a vector, so
+        // `v - Math.sqrt(discriminant)` means the length of the the vector
+        // just from the camera to the intersection point.
         return v - Math.sqrt(discriminant);
     }
 }
@@ -192,6 +228,10 @@ function trace(ray, depth) {
     var dist = distObject[0],
         object = distObject[1];
 
+    // The `pointAtTime` is another way of saying the 'intersection point'
+    // of this ray into this object. We compute this by simply taking
+    // the direction of the ray and making it as long as the distance
+    // returned by the intersection check.
     var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);

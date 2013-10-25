@@ -180,19 +180,60 @@ that determines its color by bouncing through the scene.</p>
 is a bit odd, because there&#39;s a disconnect between pixels and vectors:
 given the left and right, top and bottom rays, the rays we shoot are just
 interpolated between them in little increments.</p>
+<p>Starting with the height and width of the scene, the camera&#39;s place,
+direction, and field of view, we calculate factors that create
+<code>width*height</code> vectors for each ray</p>
+<p>Start by creating a simple vector pointing in the direction the camera is
+pointing - a unit vector</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),
-    fovRadians = Math.PI * (camera.fieldOfView / <span class="number">2</span>) / <span class="number">180</span>,
+            <div class="content"><div class='highlight'><pre><span class="keyword">var</span> eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point)),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>and then we&#39;ll rotate this by combining it with a version that&#39;s turned
+90° right and one that&#39;s turned 90° up. Since the <a href="http://en.wikipedia.org/wiki/Cross_product">cross product</a>
+takes two vectors and creates a third that&#39;s perpendicular to both,
+we use a pure &#39;UP&#39; vector to turn the camera right, and that &#39;right&#39;
+vector to turn the camera up.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
+    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>The actual ending pixel dimensions of the image aren&#39;t important here -
+note that <code>width</code> and <code>height</code> are in pixels, but the numbers we compute
+here are just based on the ratio between them, <code>height/width</code>, and the
+<code>fieldOfView</code> of the camera.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    fovRadians = Math.PI * (camera.fieldOfView / <span class="number">2</span>) / <span class="number">180</span>,
+    heightWidthRatio = height / width,
     halfWidth = Math.tan(fovRadians),
-    halfHeight = (height/width) * halfWidth,
+    halfHeight = heightWidthRatio * halfWidth,
     camerawidth = halfWidth * <span class="number">2</span>,
     cameraheight = halfHeight * <span class="number">2</span>,
     pixelWidth = camerawidth / (width - <span class="number">1</span>),
-    pixelHeight = cameraheight / (height - <span class="number">1</span>),
-    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
-    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+    pixelHeight = cameraheight / (height - <span class="number">1</span>);
 
 console.time(<span class="string">'render'</span>);
 <span class="keyword">var</span> index, color;
@@ -200,14 +241,44 @@ console.time(<span class="string">'render'</span>);
     point: camera.point
 };
 <span class="keyword">for</span> (<span class="keyword">var</span> x = <span class="number">0</span>; x &lt; width; x++) {
-    <span class="keyword">for</span> (<span class="keyword">var</span> y = <span class="number">0</span>; y &lt; height; y++) {
+    <span class="keyword">for</span> (<span class="keyword">var</span> y = <span class="number">0</span>; y &lt; height; y++) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>turn the raw pixel <code>x</code> and <code>y</code> values into values from -1 to 1
+and use these values to scale the facing-right and facing-up
+vectors so that we generate versions of the <code>eyeVector</code> that are
+skewed in each necessary direction.</p>
 
-        <span class="keyword">var</span> xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">var</span> xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
             ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
 
-        ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
+        ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>use the vector generated to raytrace the scene, returning a color
+as a <code>{x, y, z}</code> vector of RGB values</p>
 
-        color = trace(ray, <span class="number">0</span>);
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        color = trace(ray, <span class="number">0</span>);
         index = (x * <span class="number">4</span>) + (y * width * <span class="number">4</span>),
         data.data[index + <span class="number">0</span>] = color.x;
         data.data[index + <span class="number">1</span>] = color.y;
@@ -220,11 +291,11 @@ console.timeEnd(<span class="string">'render'</span>);</pre></div></div>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>Now that each ray has returned and populated the <code>data</code> array with
 correctly lit colors, fill the canvas with the generated data.</p>
@@ -236,11 +307,11 @@ correctly lit colors, fill the canvas with the generated data.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <h2>Sphere Intersection</h2>
 <p><img src="graphics/sphereintersection.png" alt=""></p>
@@ -256,37 +327,99 @@ is pretty straightforward.</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>the length of a
-hypoteneuse of a right triangle with points
-at the eye and the center of the circle, and a right
-angle at the other point.</p>
+              <p>picture a triangle with one side going straight from the camera point
+to the center of the sphere, another side being the vector.
+the final side is a right angle.</p>
+<p>This equation first figures out the length of the vector side</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),
-        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),
-        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
-    <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
+            <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>then the length of the straight from the camera to the center
+of the sphere</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>and compute a segment from the right angle of the triangle to a point
+on the <code>v</code> line that also intersects the circle</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>If the discriminant is negative, that means that the sphere hasn&#39;t
+been hit by the ray</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
         <span class="keyword">return</span>;
-    } <span class="keyword">else</span> {
-        <span class="keyword">return</span> v - Math.sqrt(discriminant);
+    } <span class="keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>otherwise, we return the distance from the camera point to the sphere
+<code>Math.sqrt(dotProduct(a, a))</code> is the length of a vector, so
+<code>v - Math.sqrt(discriminant)</code> means the length of the the vector
+just from the camera to the intersection point.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">return</span> v - Math.sqrt(discriminant);
     }
 }</pre></div></div>
             
         </li>
         
         
-        <li id="section-10">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>A normal is, at each point on the surface of a sphere or some other object,
 a vector that&#39;s perpendicular to the surface and radiates outward. We need
@@ -303,11 +436,11 @@ a sphere.</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <h1>Tracing Rays to Objects</h1>
 <p>Given a ray, let&#39;s figure out whether it hits anything, and if so,
@@ -320,11 +453,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>The base case is that it hits nothing, and travels for <code>Infinity</code></p>
 
@@ -335,11 +468,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>But for each object, we check whether it has any intersection,
 and compare that intersection - is it closer than <code>Infinity</code> at first,
@@ -360,11 +493,11 @@ and then is it closer than other objects that have been hit?</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>Given a ray, shoot it until it hits an object and return that object&#39;s color,
 or <code>Vector.WHITE</code> if no object is found.</p>
@@ -376,11 +509,11 @@ or <code>Vector.WHITE</code> if no object is found.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>This is a recursive method: if we hit something that&#39;s reflective,
 then the call to <code>surface()</code> at the bottom will return here and try
@@ -397,11 +530,11 @@ into a reflection.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>If we don&#39;t hit anything, fill this pixel with the background color -
 in this case, white.</p>
@@ -413,9 +546,25 @@ in this case, white.</p>
     }
 
     <span class="keyword">var</span> dist = distObject[<span class="number">0</span>],
-        object = distObject[<span class="number">1</span>];
+        object = distObject[<span class="number">1</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>The <code>pointAtTime</code> is another way of saying the &#39;intersection point&#39;
+of this ray into this object. We compute this by simply taking
+the direction of the ray and making it as long as the distance
+returned by the intersection check.</p>
 
-    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
 
     <span class="keyword">return</span> surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
 }
@@ -430,11 +579,11 @@ in this case, white.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <h1>Surface</h1>
 <p>The <code>trace()</code> function has figured out that something is hit by an ray,
@@ -454,11 +603,11 @@ it&#39;ll send back to the camera.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p><strong><a href="http://en.wikipedia.org/wiki/Lambertian_reflectance">Lambert shading</a></strong>
 is our pretty shading, which shows gradations from the most lit point on
@@ -477,11 +626,11 @@ the object to the least.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p><strong><a href="https://en.wikipedia.org/wiki/Specular_reflection">Specular</a></strong> is a fancy word for &#39;reflective&#39;: rays that hit objects
 with specular surfaces bounce off and acquire the colors of other objects
@@ -505,11 +654,11 @@ they bounce into.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <p><strong>Ambient</strong> colors shine bright regardless of whether there&#39;s a light visible -
 a circle with a totally ambient blue color will always just be a flat blue

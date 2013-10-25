@@ -105,6 +105,15 @@ var objects = [{
 
 // # Throwing Rays
 //
+// This is one part where we can't follow nature exactly: technically photons
+// come out of lights, bounce off of objects, and then some hit the 'eye'
+// and many don't. Simulating this - sending rays in all directions out of
+// each light and most not having any real effect - would be too inefficient.
+//
+// Luckily, the reverse is more efficient and has practically the same result -
+// instead of rays going 'from' lights to the eye, we follow rays from the eye
+// and see if they end up hitting any features and lights on their travels.
+//
 // For each pixel in the canvas, there needs to be at least one ray of light
 // that determines its color by bouncing through the scene.
 //
@@ -112,7 +121,7 @@ var objects = [{
 // is a bit odd, because there's a disconnect between pixels and vectors:
 // given the left and right, top and bottom rays, the rays we shoot are just
 // interpolated between them in little increments.
-
+//
 // Starting with the height and width of the scene, the camera's place,
 // direction, and field of view, we calculate factors that create
 // `width*height` vectors for each ray

@@ -198,6 +198,13 @@ and surface properties.</p>
                 <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <h1>Throwing Rays</h1>
+<p>This is one part where we can&#39;t follow nature exactly: technically photons
+come out of lights, bounce off of objects, and then some hit the &#39;eye&#39;
+and many don&#39;t. Simulating this - sending rays in all directions out of
+each light and most not having any real effect - would be too inefficient.</p>
+<p>Luckily, the reverse is more efficient and has practically the same result -
+instead of rays going &#39;from&#39; lights to the eye, we follow rays from the eye
+and see if they end up hitting any features and lights on their travels.</p>
 <p>For each pixel in the canvas, there needs to be at least one ray of light
 that determines its color by bouncing through the scene.</p>
 <p>This process

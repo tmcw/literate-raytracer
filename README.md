@@ -1,20 +1,23 @@
 # literate-raytracer
 
-This is an unfinished attempt to build a raytracer in the literate style,
-in Javascript. While certainly not the first raytracer, it aims to be
-understandable and thoroughly explained.
+This is a literate [raytracer](http://en.wikipedia.org/wiki/Ray_tracing_(graphics),
+written in Javascript. The [demo, code listing, and explanation](http://macwright.org/literate-raytracer/)
+are all one part: you can understand the implementation by reading it in combination
+with literate-style code comments.
+
+This is intended as a learning platform for those trying to connect the mathematical
+and engineering explanations of raytracing and understand the behavior of the algorithm
+well enough to do interesting things.
 
 ## Reading
 
 * [Ray Tracing: Graphics for the Masses](http://www.cs.unc.edu/~rademach/xroads-RT/RTarticle.html)
 
-## Inspiration
+## Other Raytracers
 
 * [bwiklund/js1k-love-raytracer](https://github.com/bwiklund/js1k-love-raytracer).
-
-## Other Simple Raytracers
-
-(no comments)
-
 * [toy raytracer in python](http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python)
 * [toy raytracer in python ported to coffeescript still no comments](https://github.com/agend07/coffee_raytracer)
+
+This code and accompanying text is released under CC0, or Public Domain where
+applicable.

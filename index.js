@@ -1,3 +1,34 @@
+// # Raytracing
+//
+// **Raytracing** is a relatively simple way to render images of 3D objects.
+// The core is an elegant idea, that one can simulate the real-world behavior
+// of photons of light bouncing off of surfaces and colors accumulating from
+// their paths. It's not inherently fast, but the simplicity of the core lets
+// it model interesting things like reflections and depth of field in ways
+// that mirror natural processes.
+//
+// ## CS 301: Raytracing
+// 
+// This happens to be a popular subject for education: implementing a raytracer
+// requires a student to understand vector math, fast code, and even recursion.
+// The reward is a pretty image - more compelling than the blasé debug output
+// that students get from most assignments.
+// 
+// But it's still hard to learn: explanations are written either in the
+// language of mathematics or programming, and rarely connect all the dots.
+// Raytracer implementations tend to extremes: one
+// [fits on a business card](http://fabiensanglard.net/rayTracing_back_of_business_card/),
+// another [supports nearly every potential feature](http://www.povray.org/),
+// and most of the rest are [homework assignments](https://github.com/search?q=raytracer+cs&ref=cmdform),
+// implemented just enough to run, never enough to have comments and documentation.
+// 
+// ## Literate Raytracer
+// 
+// [Literate raytracer](https://github.com/tmcw/literate-raytracer) is a
+// simple implementation of raytracing in Javascript. It's [made to be
+// read as a narrative](http://macwright.org/literate-raytracer/), and intends
+// to [explain vector operations](http://macwright.org/literate-raytracer/vector.html) as well.
+//
 // # Setup
 var c = document.getElementById('c'),
     width = 640,
@@ -139,12 +170,65 @@ for (var x = 0; x < width; x++) {
     }
 }
 console.timeEnd('render');
-
 // Now that each ray has returned and populated the `data` array with
 // correctly lit colors, fill the canvas with the generated data.
 ctx.putImageData(data, 0, 0);
 
-// ## Sphere Intersection
+// # Trace
+//
+// Given a ray, shoot it until it hits an object and return that object's color,
+// or `Vector.WHITE` if no object is found. This is the main function that's
+// called in order to draw the image, and it recurses into itself if rays
+// reflect off of objects and acquire more color.
+function trace(ray, depth) {
+    // This is a recursive method: if we hit something that's reflective,
+    // then the call to `surface()` at the bottom will return here and try
+    // to find what the ray reflected into. Since this could easily go
+    // on forever, first check that we haven't gone more than three bounces
+    // into a reflection.
+    if (depth > 3) return;
+
+    var distObject = intersectScene(ray);
+
+    // If we don't hit anything, fill this pixel with the background color -
+    // in this case, white.
+    if (distObject[0] === Infinity) {
+        return Vector.WHITE;
+    }
+
+    var dist = distObject[0],
+        object = distObject[1];
+
+    // The `pointAtTime` is another way of saying the 'intersection point'
+    // of this ray into this object. We compute this by simply taking
+    // the direction of the ray and making it as long as the distance
+    // returned by the intersection check.
+    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+
+    return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
+}
+
+// # Detecting collisions against all objects
+//
+// Given a ray, let's figure out whether it hits anything, and if so,
+// what's the closest thing it hits.
+function intersectScene(ray) {
+    // The base case is that it hits nothing, and travels for `Infinity`
+    var closest = [Infinity, null];
+    // But for each object, we check whether it has any intersection,
+    // and compare that intersection - is it closer than `Infinity` at first,
+    // and then is it closer than other objects that have been hit?
+    for (var i = 0; i < objects.length; i++) {
+        var object = objects[i],
+            dist = sphereIntersection(object, ray);
+        if (dist !== undefined && dist < closest[0]) {
+            closest = [dist, object];
+        }
+    }
+    return closest;
+}
+
+// ## Detecting collisions against a sphere
 //
 // ![](graphics/sphereintersection.png)
 //
@@ -187,68 +271,10 @@ function sphereNormal(sphere, pos) {
         Vector.subtract(pos, sphere.point));
 }
 
-// # Tracing Rays to Objects
-//
-// Given a ray, let's figure out whether it hits anything, and if so,
-// what's the closest thing it hits.
-function intersectScene(ray) {
-    // The base case is that it hits nothing, and travels for `Infinity`
-    var closest = [Infinity, null];
-    // But for each object, we check whether it has any intersection,
-    // and compare that intersection - is it closer than `Infinity` at first,
-    // and then is it closer than other objects that have been hit?
-    for (var i = 0; i < objects.length; i++) {
-        var object = objects[i],
-            dist = sphereIntersection(object, ray);
-        if (dist !== undefined && dist < closest[0]) {
-            closest = [dist, object];
-        }
-    }
-    return closest;
-}
-
-// Given a ray, shoot it until it hits an object and return that object's color,
-// or `Vector.WHITE` if no object is found.
-function trace(ray, depth) {
-    // This is a recursive method: if we hit something that's reflective,
-    // then the call to `surface()` at the bottom will return here and try
-    // to find what the ray reflected into. Since this could easily go
-    // on forever, first check that we haven't gone more than three bounces
-    // into a reflection.
-    if (depth > 3) return;
-
-    var distObject = intersectScene(ray);
-
-    // If we don't hit anything, fill this pixel with the background color -
-    // in this case, white.
-    if (distObject[0] === Infinity) {
-        return Vector.WHITE;
-    }
-
-    var dist = distObject[0],
-        object = distObject[1];
-
-    // The `pointAtTime` is another way of saying the 'intersection point'
-    // of this ray into this object. We compute this by simply taking
-    // the direction of the ray and making it as long as the distance
-    // returned by the intersection check.
-    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
-
-    return surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
-}
-
-function isLightVisible(pt, light) {
-    return intersectScene({
-        point: pt,
-        vector: Vector.unitVector(Vector.subtract(pt, light))
-    })[1] !== null;
-}
-
 // # Surface
 //
-// The `trace()` function has figured out that something is hit by an ray,
-// and we're going to figure out what surface that thing has - what color
-// it'll send back to the camera.
+// If `trace()` determines that a ray intersected with an object, `surface`
+// decides what color it acquires from the interaction.
 function surface(ray, object, pointAtTime, normal, depth) {
     var b = object.color,
         c = Vector.ZERO,
@@ -290,4 +316,11 @@ function surface(ray, object, pointAtTime, normal, depth) {
     return Vector.add3(c,
         Vector.scale(b, lambertCoefficient * lambertAmount),
         Vector.scale(b, ambient));
+}
+
+function isLightVisible(pt, light) {
+    return intersectScene({
+        point: pt,
+        vector: Vector.unitVector(Vector.subtract(pt, light))
+    })[1] !== null;
 }

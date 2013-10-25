@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>Setup</title>
+  <title>Raytracing</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="custom.css" />
@@ -46,7 +46,31 @@
               <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1>Setup</h1>
+              <h1>Raytracing</h1>
+<p><strong>Raytracing</strong> is a relatively simple way to render images of 3D objects.
+The core is an elegant idea, that one can simulate the real-world behavior
+of photons of light bouncing off of surfaces and colors accumulating from
+their paths. It&#39;s not inherently fast, but the simplicity of the core lets
+it model interesting things like reflections and depth of field in ways
+that mirror natural processes.</p>
+<h2>CS 301: Raytracing</h2>
+<p>This happens to be a popular subject for education: implementing a raytracer
+requires a student to understand vector math, fast code, and even recursion.
+The reward is a pretty image - more compelling than the blasé debug output
+that students get from most assignments.</p>
+<p>But it&#39;s still hard to learn: explanations are written either in the
+language of mathematics or programming, and rarely connect all the dots.
+Raytracer implementations tend to extremes: one
+<a href="http://fabiensanglard.net/rayTracing_back_of_business_card/">fits on a business card</a>,
+another <a href="http://www.povray.org/">supports nearly every potential feature</a>,
+and most of the rest are <a href="https://github.com/search?q=raytracer+cs&amp;ref=cmdform">homework assignments</a>,
+implemented just enough to run, never enough to have comments and documentation.</p>
+<h2>Literate Raytracer</h2>
+<p><a href="https://github.com/tmcw/literate-raytracer">Literate raytracer</a> is a
+simple implementation of raytracing in Javascript. It&#39;s <a href="http://macwright.org/literate-raytracer/">made to be
+read as a narrative</a>, and intends
+to <a href="http://macwright.org/literate-raytracer/vector.html">explain vector operations</a> as well.</p>
+<h1>Setup</h1>
 
             </div>
             
@@ -310,19 +334,18 @@ correctly lit colors, fill the canvas with the generated data.</p>
         <li id="section-12">
             <div class="annotation">
               
-              <div class="pilwrap for-h2">
+              <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <h2>Sphere Intersection</h2>
-<p><img src="graphics/sphereintersection.png" alt=""></p>
-<p>Spheres are one of the simplest objects for rays to interact with, since
-the geometrical math for finding intersections and reflections with them
-is pretty straightforward.</p>
+              <h1>Trace</h1>
+<p>Given a ray, shoot it until it hits an object and return that object&#39;s color,
+or <code>Vector.WHITE</code> if no object is found. This is the main function that&#39;s
+called in order to draw the image, and it recurses into itself if rays
+reflect off of objects and acquire more color.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereIntersection</span><span class="params">(sphere, ray)</span> {</span>
-    <span class="keyword">var</span> eye_to_center = Vector.subtract(sphere.point, ray.point),</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">trace</span><span class="params">(ray, depth)</span> {</span></pre></div></div>
             
         </li>
         
@@ -333,14 +356,17 @@ is pretty straightforward.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
-              <p>picture a triangle with one side going straight from the camera point
-to the center of the sphere, another side being the vector.
-the final side is a right angle.</p>
-<p>This equation first figures out the length of the vector side</p>
+              <p>This is a recursive method: if we hit something that&#39;s reflective,
+then the call to <code>surface()</code> at the bottom will return here and try
+to find what the ray reflected into. Since this could easily go
+on forever, first check that we haven&#39;t gone more than three bounces
+into a reflection.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (depth &gt; <span class="number">3</span>) <span class="keyword">return</span>;
+
+    <span class="keyword">var</span> distObject = intersectScene(ray);</pre></div></div>
             
         </li>
         
@@ -351,12 +377,17 @@ the final side is a right angle.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>then the length of the straight from the camera to the center
-of the sphere</p>
+              <p>If we don&#39;t hit anything, fill this pixel with the background color -
+in this case, white.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (distObject[<span class="number">0</span>] === <span class="literal">Infinity</span>) {
+        <span class="keyword">return</span> Vector.WHITE;
+    }
+
+    <span class="keyword">var</span> dist = distObject[<span class="number">0</span>],
+        object = distObject[<span class="number">1</span>];</pre></div></div>
             
         </li>
         
@@ -367,12 +398,17 @@ of the sphere</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>and compute a segment from the right angle of the triangle to a point
-on the <code>v</code> line that also intersects the circle</p>
+              <p>The <code>pointAtTime</code> is another way of saying the &#39;intersection point&#39;
+of this ray into this object. We compute this by simply taking
+the direction of the ray and making it as long as the distance
+returned by the intersection check.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+
+    <span class="keyword">return</span> surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
+}</pre></div></div>
             
         </li>
         
@@ -380,69 +416,10 @@ on the <code>v</code> line that also intersects the circle</p>
         <li id="section-16">
             <div class="annotation">
               
-              <div class="pilwrap ">
+              <div class="pilwrap for-h1">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
-              <p>If the discriminant is negative, that means that the sphere hasn&#39;t
-been hit by the ray</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
-        <span class="keyword">return</span>;
-    } <span class="keyword">else</span> {</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-17">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
-              </div>
-              <p>otherwise, we return the distance from the camera point to the sphere
-<code>Math.sqrt(dotProduct(a, a))</code> is the length of a vector, so
-<code>v - Math.sqrt(discriminant)</code> means the length of the the vector
-just from the camera to the intersection point.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        <span class="keyword">return</span> v - Math.sqrt(discriminant);
-    }
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
-              </div>
-              <p>A normal is, at each point on the surface of a sphere or some other object,
-a vector that&#39;s perpendicular to the surface and radiates outward. We need
-to know this so that we can calculate the way that a ray reflects off of
-a sphere.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereNormal</span><span class="params">(sphere, pos)</span> {</span>
-    <span class="keyword">return</span> Vector.unitVector(
-        Vector.subtract(pos, sphere.point));
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <h1>Tracing Rays to Objects</h1>
+              <h1>Detecting collisions against all objects</h1>
 <p>Given a ray, let&#39;s figure out whether it hits anything, and if so,
 what&#39;s the closest thing it hits.</p>
 
@@ -453,11 +430,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>The base case is that it hits nothing, and travels for <code>Infinity</code></p>
 
@@ -468,11 +445,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>But for each object, we check whether it has any intersection,
 and compare that intersection - is it closer than <code>Infinity</code> at first,
@@ -493,18 +470,72 @@ and then is it closer than other objects that have been hit?</p>
         </li>
         
         
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <h2>Detecting collisions against a sphere</h2>
+<p><img src="graphics/sphereintersection.png" alt=""></p>
+<p>Spheres are one of the simplest objects for rays to interact with, since
+the geometrical math for finding intersections and reflections with them
+is pretty straightforward.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereIntersection</span><span class="params">(sphere, ray)</span> {</span>
+    <span class="keyword">var</span> eye_to_center = Vector.subtract(sphere.point, ray.point),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>picture a triangle with one side going straight from the camera point
+to the center of the sphere, another side being the vector.
+the final side is a right angle.</p>
+<p>This equation first figures out the length of the vector side</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        v = Vector.dotProduct(eye_to_center, ray.vector),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>then the length of the straight from the camera to the center
+of the sphere</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        eoDot = Vector.dotProduct(eye_to_center, eye_to_center),</pre></div></div>
+            
+        </li>
+        
+        
         <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              <p>Given a ray, shoot it until it hits an object and return that object&#39;s color,
-or <code>Vector.WHITE</code> if no object is found.</p>
+              <p>and compute a segment from the right angle of the triangle to a point
+on the <code>v</code> line that also intersects the circle</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">trace</span><span class="params">(ray, depth)</span> {</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>        discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);</pre></div></div>
             
         </li>
         
@@ -515,17 +546,14 @@ or <code>Vector.WHITE</code> if no object is found.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
-              <p>This is a recursive method: if we hit something that&#39;s reflective,
-then the call to <code>surface()</code> at the bottom will return here and try
-to find what the ray reflected into. Since this could easily go
-on forever, first check that we haven&#39;t gone more than three bounces
-into a reflection.</p>
+              <p>If the discriminant is negative, that means that the sphere hasn&#39;t
+been hit by the ray</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (depth &gt; <span class="number">3</span>) <span class="keyword">return</span>;
-
-    <span class="keyword">var</span> distObject = intersectScene(ray);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (discriminant &lt; <span class="number">0</span>) {
+        <span class="keyword">return</span>;
+    } <span class="keyword">else</span> {</pre></div></div>
             
         </li>
         
@@ -536,17 +564,16 @@ into a reflection.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
-              <p>If we don&#39;t hit anything, fill this pixel with the background color -
-in this case, white.</p>
+              <p>otherwise, we return the distance from the camera point to the sphere
+<code>Math.sqrt(dotProduct(a, a))</code> is the length of a vector, so
+<code>v - Math.sqrt(discriminant)</code> means the length of the the vector
+just from the camera to the intersection point.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">if</span> (distObject[<span class="number">0</span>] === <span class="literal">Infinity</span>) {
-        <span class="keyword">return</span> Vector.WHITE;
+            <div class="content"><div class='highlight'><pre>        <span class="keyword">return</span> v - Math.sqrt(discriminant);
     }
-
-    <span class="keyword">var</span> dist = distObject[<span class="number">0</span>],
-        object = distObject[<span class="number">1</span>];</pre></div></div>
+}</pre></div></div>
             
         </li>
         
@@ -557,23 +584,16 @@ in this case, white.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
-              <p>The <code>pointAtTime</code> is another way of saying the &#39;intersection point&#39;
-of this ray into this object. We compute this by simply taking
-the direction of the ray and making it as long as the distance
-returned by the intersection check.</p>
+              <p>A normal is, at each point on the surface of a sphere or some other object,
+a vector that&#39;s perpendicular to the surface and radiates outward. We need
+to know this so that we can calculate the way that a ray reflects off of
+a sphere.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
-
-    <span class="keyword">return</span> surface(ray, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
-}
-
-<span class="function"><span class="keyword">function</span> <span class="title">isLightVisible</span><span class="params">(pt, light)</span> {</span>
-    <span class="keyword">return</span> intersectScene({
-        point: pt,
-        vector: Vector.unitVector(Vector.subtract(pt, light))
-    })[<span class="number">1</span>] !== <span class="literal">null</span>;
+            <div class="content"><div class='highlight'><pre><span class="function"><span class="keyword">function</span> <span class="title">sphereNormal</span><span class="params">(sphere, pos)</span> {</span>
+    <span class="keyword">return</span> Vector.unitVector(
+        Vector.subtract(pos, sphere.point));
 }</pre></div></div>
             
         </li>
@@ -586,9 +606,8 @@ returned by the intersection check.</p>
                 <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <h1>Surface</h1>
-<p>The <code>trace()</code> function has figured out that something is hit by an ray,
-and we&#39;re going to figure out what surface that thing has - what color
-it&#39;ll send back to the camera.</p>
+<p>If <code>trace()</code> determines that a ray intersected with an object, <code>surface</code>
+decides what color it acquires from the interaction.</p>
 
             </div>
             
@@ -669,6 +688,13 @@ circle.</p>
             <div class="content"><div class='highlight'><pre>    <span class="keyword">return</span> Vector.add3(c,
         Vector.scale(b, lambertCoefficient * lambertAmount),
         Vector.scale(b, ambient));
+}
+
+<span class="function"><span class="keyword">function</span> <span class="title">isLightVisible</span><span class="params">(pt, light)</span> {</span>
+    <span class="keyword">return</span> intersectScene({
+        point: pt,
+        vector: Vector.unitVector(Vector.subtract(pt, light))
+    })[<span class="number">1</span>] !== <span class="literal">null</span>;
 }</pre></div></div>
             
         </li>

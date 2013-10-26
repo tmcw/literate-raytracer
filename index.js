@@ -194,7 +194,7 @@ function render(scene) {
         pixelWidth = camerawidth / (width - 1),
         pixelHeight = cameraheight / (height - 1);
 
-    console.time('render');
+    // console.time('render');
     var index, color;
     var ray = {
         point: camera.point
@@ -221,7 +221,7 @@ function render(scene) {
             data.data[index + 3] = 255;
         }
     }
-    console.timeEnd('render');
+    // console.timeEnd('render');
     // Now that each ray has returned and populated the `data` array with
     // correctly lit colors, fill the canvas with the generated data.
     ctx.putImageData(data, 0, 0);

@@ -13,8 +13,8 @@ well enough to do interesting things.
 
 Submit a normal pull request with more docs or clarified code! To rebuild the literate pages:
 
-  npm install
-  npm run-script doc
+    npm install
+    npm run-script doc
 
 ## Reading
 

@@ -9,6 +9,13 @@ This is intended as a learning platform for those trying to connect the mathemat
 and engineering explanations of raytracing and understand the behavior of the algorithm
 well enough to do interesting things.
 
+## Helping
+
+Submit a normal pull request with more docs or clarified code! To rebuild the literate pages:
+
+    npm install
+    npm run-script doc
+
 ## Reading
 
 * [Ray Tracing: Graphics for the Masses](http://www.cs.unc.edu/~rademach/xroads-RT/RTarticle.html)

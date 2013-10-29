@@ -45,6 +45,8 @@ var ctx = c.getContext('2d'),
 
 // # The Scene
 var scene = {};
+// ![](http://farm4.staticflickr.com/3781/10524236814_5a9c43487a_b.jpg)
+//
 // We need to define three different kinds of things in 3D space:
 // a **camera** from which we cast rays into the scene, **objects**
 // that can be hit by those rays and are drawn into the scene, and
@@ -325,6 +327,8 @@ function sphereNormal(sphere, pos) {
 }
 
 // # Surface
+//
+// ![](http://farm3.staticflickr.com/2851/10524788334_f2e3903b36_b.jpg)
 //
 // If `trace()` determines that a ray intersected with an object, `surface`
 // decides what color it acquires from the interaction.

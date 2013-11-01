@@ -353,22 +353,9 @@ here are just based on the ratio between them, <code>height/width</code>, and th
         camerawidth = halfWidth * <span class="number">2</span>,
         cameraheight = halfHeight * <span class="number">2</span>,
         pixelWidth = camerawidth / (width - <span class="number">1</span>),
-        pixelHeight = cameraheight / (height - <span class="number">1</span>);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-12">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
-              </div>
-              <p>console.time(&#39;render&#39;);</p>
+        pixelHeight = cameraheight / (height - <span class="number">1</span>);
 
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">var</span> index, color;
+    <span class="keyword">var</span> index, color;
     <span class="keyword">var</span> ray = {
         point: camera.point
     };
@@ -378,11 +365,11 @@ here are just based on the ratio between them, <code>height/width</code>, and th
         </li>
         
         
-        <li id="section-13">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>turn the raw pixel <code>x</code> and <code>y</code> values into values from -1 to 1
 and use these values to scale the facing-right and facing-up
@@ -399,11 +386,11 @@ skewed in each necessary direction.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>use the vector generated to raytrace the scene, returning a color
 as a <code>{x, y, z}</code> vector of RGB values</p>
@@ -422,14 +409,13 @@ as a <code>{x, y, z}</code> vector of RGB values</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
-              <p>console.timeEnd(&#39;render&#39;);
-Now that each ray has returned and populated the <code>data</code> array with
+              <p>Now that each ray has returned and populated the <code>data</code> array with
 correctly lit colors, fill the canvas with the generated data.</p>
 
             </div>
@@ -440,11 +426,11 @@ correctly lit colors, fill the canvas with the generated data.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <h1>Trace</h1>
 <p>Given a ray, shoot it until it hits an object and return that object&#39;s color,
@@ -459,11 +445,11 @@ reflect off of objects and acquire more color.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>This is a recursive method: if we hit something that&#39;s reflective,
 then the call to <code>surface()</code> at the bottom will return here and try
@@ -480,11 +466,11 @@ into a reflection.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>If we don&#39;t hit anything, fill this pixel with the background color -
 in this case, white.</p>
@@ -501,11 +487,11 @@ in this case, white.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>The <code>pointAtTime</code> is another way of saying the &#39;intersection point&#39;
 of this ray into this object. We compute this by simply taking
@@ -522,11 +508,11 @@ returned by the intersection check.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <h1>Detecting collisions against all objects</h1>
 <p>Given a ray, let&#39;s figure out whether it hits anything, and if so,
@@ -539,11 +525,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>The base case is that it hits nothing, and travels for <code>Infinity</code></p>
 
@@ -554,11 +540,11 @@ what&#39;s the closest thing it hits.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>But for each object, we check whether it has any intersection,
 and compare that intersection - is it closer than <code>Infinity</code> at first,
@@ -579,11 +565,11 @@ and then is it closer than other objects that have been hit?</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2>Detecting collisions against a sphere</h2>
 <p><img src="graphics/sphereintersection.png" alt=""></p>
@@ -599,11 +585,11 @@ is pretty straightforward.</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>picture a triangle with one side going straight from the camera point
 to the center of the sphere, another side being the vector.
@@ -617,11 +603,11 @@ the final side is a right angle.</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>then the length of the straight from the camera to the center
 of the sphere</p>
@@ -633,11 +619,11 @@ of the sphere</p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>and compute a segment from the right angle of the triangle to a point
 on the <code>v</code> line that also intersects the circle</p>
@@ -649,11 +635,11 @@ on the <code>v</code> line that also intersects the circle</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>If the discriminant is negative, that means that the sphere hasn&#39;t
 been hit by the ray</p>
@@ -667,11 +653,11 @@ been hit by the ray</p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>otherwise, we return the distance from the camera point to the sphere
 <code>Math.sqrt(dotProduct(a, a))</code> is the length of a vector, so
@@ -687,11 +673,11 @@ just from the camera to the intersection point.</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>A normal is, at each point on the surface of a sphere or some other object,
 a vector that&#39;s perpendicular to the surface and radiates outward. We need
@@ -708,11 +694,11 @@ a sphere.</p>
         </li>
         
         
-        <li id="section-30">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap for-h1">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <h1>Surface</h1>
 <p><img src="http://farm3.staticflickr.com/2851/10524788334_f2e3903b36_b.jpg" alt=""></p>
@@ -729,11 +715,11 @@ decides what color it acquires from the interaction.</p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p><strong><a href="http://en.wikipedia.org/wiki/Lambertian_reflectance">Lambert shading</a></strong>
 is our pretty shading, which shows gradations from the most lit point on
@@ -748,11 +734,11 @@ the object to the least.</p>
         </li>
         
         
-        <li id="section-32">
+        <li id="section-31">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>First: can we see the light? If not, this is a shadowy area
 and it gets no light from the lambert shading process.</p>
@@ -764,11 +750,11 @@ and it gets no light from the lambert shading process.</p>
         </li>
         
         
-        <li id="section-33">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>Otherwise, calculate the lambertian reflectance, which
 essentially is a &#39;diffuse&#39; lighting system - direct light
@@ -783,11 +769,11 @@ beautifully, less light.</p>
         </li>
         
         
-        <li id="section-34">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
               </div>
               <p>sometimes this formula can return negatives, so we check:
 we only want positive values for lighting.</p>
@@ -801,11 +787,11 @@ we only want positive values for lighting.</p>
         </li>
         
         
-        <li id="section-35">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p><strong><a href="https://en.wikipedia.org/wiki/Specular_reflection">Specular</a></strong> is a fancy word for &#39;reflective&#39;: rays that hit objects
 with specular surfaces bounce off and acquire the colors of other objects
@@ -818,11 +804,11 @@ they bounce into.</p>
         </li>
         
         
-        <li id="section-36">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>This is basically the same thing as what we did in <code>render()</code>, just
 instead of looking from the viewpoint of the camera, we&#39;re looking
@@ -844,11 +830,11 @@ and making that part of a reflection.</p>
         </li>
         
         
-        <li id="section-37">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>lambert should never &#39;blow out&#39; the lighting of an object,
 even if the ray bounces between a lot of things and hits lights</p>
@@ -860,11 +846,11 @@ even if the ray bounces between a lot of things and hits lights</p>
         </li>
         
         
-        <li id="section-38">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-38">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p><strong>Ambient</strong> colors shine bright regardless of whether there&#39;s a light visible -
 a circle with a totally ambient blue color will always just be a flat blue
@@ -880,11 +866,11 @@ circle.</p>
         </li>
         
         
-        <li id="section-39">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-39">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>Check whether a light is visible from some point on the surface of something.
 Note that there might be an intersection here, which is tricky - but if it&#39;s
@@ -907,11 +893,11 @@ this returns <code>false</code>, we make the area shadowy.</p>
         </li>
         
         
-        <li id="section-40">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-40">&#182;</a>
+                <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
               <p>Here we do a little fun magic, just for the heck of it. We have three spheres
 in the scene - <code>scene.objects[0]</code> is the big one, kind of like &#39;Earth&#39;.</p>
@@ -933,11 +919,11 @@ for getting to know <code>sin</code> and <code>cos</code>.</p>
         </li>
         
         
-        <li id="section-41">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-41">&#182;</a>
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <p>make one planet spin a little bit faster than the other, just for
 effect.</p>
@@ -950,11 +936,11 @@ effect.</p>
         </li>
         
         
-        <li id="section-42">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-42">&#182;</a>
+                <a class="pilcrow" href="#section-41">&#182;</a>
               </div>
               <p>set the position of each moon with some trig.</p>
 
@@ -969,11 +955,11 @@ effect.</p>
         </li>
         
         
-        <li id="section-43">
+        <li id="section-42">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-43">&#182;</a>
+                <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
               <p>finally, render the scene!</p>
 
@@ -984,11 +970,11 @@ effect.</p>
         </li>
         
         
-        <li id="section-44">
+        <li id="section-43">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-44">&#182;</a>
+                <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
               <p>and as soon as we&#39;re finished, render it again and move the planets
 again</p>
@@ -1014,11 +1000,11 @@ render(scene);</pre></div></div>
         </li>
         
         
-        <li id="section-45">
+        <li id="section-44">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-45">&#182;</a>
+                <a class="pilcrow" href="#section-44">&#182;</a>
               </div>
               <p>Then let the user control a cute playing animation!</p>
 

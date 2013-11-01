@@ -50,14 +50,14 @@ hr {
 
 pre, tt, code {
   font-size: 12px; line-height: 16px;
-  font-family: Menlo, Monaco, Consolas, "Lucida Console", monospace;
+  font-family: 'M+ 1mn', Menlo, Monaco, Consolas, "Lucida Console", monospace;
   margin: 0; padding: 0;
 }
   .annotation pre {
     display: block;
     margin: 0;
     padding: 7px 10px;
-    background: #fcfcfc;
+    background: #fcfdfc;
     overflow-x: auto;
   }
     .annotation pre code {
@@ -174,9 +174,7 @@ ul.sections > li > div {
   }
 
   ul.sections > li > div.content {
-    background: #f5f5f5;
-    border-top:2px solid #ccc;
-    border-bottom:2px solid #ccc;
+    background: #f5f5f8;
     overflow-x:auto;
     margin:5px 10px 5px 10px;
     padding-bottom: 5px;

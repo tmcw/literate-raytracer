@@ -1,6 +1,6 @@
 # literate-raytracer
 
-This is a literate [raytracer](http://en.wikipedia.org/wiki/Ray_tracing_(graphics),
+This is a literate [raytracer](http://en.wikipedia.org/wiki/Ray_tracing_(graphics)),
 written in Javascript. The [demo, code listing, and explanation](http://macwright.org/literate-raytracer/)
 are all one part: you can understand the implementation by reading it in combination
 with literate-style code comments.

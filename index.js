@@ -63,14 +63,14 @@ var scene = {};
 // angle it points in.
 scene.camera = {
     point: {
-        x: 0,
-        y: 1.8,
-        z: 10
+        x: 4.5,
+        y: .14,
+        z: 18
     },
     fieldOfView: 45,
     vector: {
         x: 0,
-        y: 3,
+        y: 0,
         z: 0
     }
 };
@@ -80,9 +80,9 @@ scene.camera = {
 // Lights are defined only as points in space - surfaces that have lambert
 // shading will be affected by any visible lights.
 scene.lights = [{
-    x: -30,
-    y: -10,
-    z: 20
+    x: 45,
+    y: -90,
+    z: 90
 }];
 
 // ## Objects
@@ -90,8 +90,7 @@ scene.lights = [{
 // This raytracer handles sphere objects, with any color, position, radius,
 // and surface properties.
 scene.objects = [
-    {
-        type: 'sphere',
+      {  type: 'sphere',
         point: {
             x: 0,
             y: 3.5,
@@ -140,7 +139,41 @@ scene.objects = [
         lambert: 0.7,
         ambient: 0.1,
         radius: 0.1
-    }
+    },
+    {
+        type: 'sphere',
+        point: {
+            x: -4,
+            y: 3,
+            z: 6
+        },
+        color: {
+            x: 85,
+            y: 75,
+            z: 25
+        },
+        specular: 0.2,
+        lambert: 0.7,
+        ambient: 0.1,
+        radius: 1.6
+    },
+    {
+        type: 'sphere',
+        point: {
+            x: -1.5,
+            y: 3,
+            z: 2
+        },
+        color: {
+            x: 255,
+            y: 75,
+            z: 25
+        },
+        specular: 0.2,
+        lambert: 0.7,
+        ambient: 0.1,
+        radius: 1
+		}
 ];
 
 // # Throwing Rays
@@ -269,18 +302,21 @@ function trace(ray, scene, depth) {
 function intersectScene(ray, scene) {
     // The base case is that it hits nothing, and travels for `Infinity`
     var closest = [Infinity, null];
+    var sortObjIntersect = new Array();
+    sortObjIntersect.push(closest);
     // But for each object, we check whether it has any intersection,
     // and compare that intersection - is it closer than `Infinity` at first,
     // and then is it closer than other objects that have been hit?
     for (var i = 0; i < scene.objects.length; i++) {
         var object = scene.objects[i],
-            dist = sphereIntersection(object, ray);
-        if (dist !== undefined && dist < closest[0]) {
-            closest = [dist, object];
-        }
+        dist = sphereIntersection(object, ray);
+        if (dist !== undefined) sortObjIntersect.push([dist, object]);   
     }
-    return closest;
+   sortObjIntersect.sort(sortFunction);
+   return sortObjIntersect[0];  
 }
+
+function sortFunction(a, b) { return (a[0] < -0.001 && b[0] < -0.001) ? (a[0]*-1)-(b[0]*-1) : a[0]-b[0];}
 
 // ## Detecting collisions against a sphere
 //

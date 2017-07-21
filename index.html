@@ -6,8 +6,13 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="custom.css" />
+  <script src="jquery.min.js"></script>
+  <script src="circle-progress.js"></script>
 </head>
 <body>
+   <div class="circles">
+    <div class="first circle"><strong></strong></div>
+  </div>
   <div id="container">
     <div class='cred'>
         <a href='https://github.com/tmcw/literate-raytracer'>an open source project by tom macwright</a>
@@ -43,7 +48,7 @@
    this.radiusCercle1 = scene.objects[0].radius     
 
    };
-   
+      
    var obj = new objet();
    var gui = new dat.GUI({  load: JSON });
    gui.remember(obj);
@@ -69,7 +74,20 @@
    scene.objects[0].radius = obj.radiusCercle1; 
    }
 
-   var maj2  = function(value) {  render(scene); }
+   var maj2  = function(value) {  
+   
+      var time =  new Date().getTime(); 
+	  render(scene);
+	      var now = new Date().getTime(),
+    dt = now - time; 
+	  $('.first.circle').circleProgress({
+     value: dt/1000,
+  fill: {gradient: ['#78fa70', '#ff5f43']}
+}).on('circle-animation-progress', function(event, progress, stepValue) {
+  $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+}) 
+   
+   }
    
    f = gui.addFolder('Mouvement');
    f.add(obj, "posXcam").min(-100).max(100).onChange(maj).onFinishChange(maj2);   
@@ -91,7 +109,12 @@
    f.add(obj, "ambientCercle1").min(0).max(2).onChange(maj).onFinishChange(maj2);
    f.add(obj, "radiusCercle1").min(0).max(500).onChange(maj).onFinishChange(maj2);
    f.close();
-
+$('.first.circle').circleProgress({
+  value: 0,
+  fill: {gradient: [['#0681c4', .5], ['#4ac5f8', .5]], gradientAngle: Math.PI / 4}
+}).on('circle-animation-progress', function(event, progress, stepValue) {
+  $(this).find('strong').text(String(stepValue.toFixed(2)).substr(1));
+});
 
 </script>
 </body>

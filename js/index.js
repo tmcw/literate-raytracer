@@ -29,19 +29,6 @@
 // read as a narrative](http://macwright.org/literate-raytracer/), and intends
 // to [explain vector operations](http://macwright.org/literate-raytracer/vector.html) as well.
 //
-// # Setup
-var c = document.getElementById('c'),
-    width = 640 * 0.5,
-    height = 480 * 0.5;
-
-// Get a context in order to generate a proper data array. We aren't going to
-// use traditional Canvas drawing functions like `fillRect` - instead this
-// raytracer will directly compute pixel data and then put it into an image.
-c.width = width;
-c.height = height;
-c.style.cssText = 'width:' + (width * 2) + 'px;height:' + (height*2) + 'px';
-var ctx = c.getContext('2d'),
-    data = ctx.getImageData(0, 0, width, height);
 
 // # The Scene
 var scene = {};
@@ -72,7 +59,8 @@ scene.camera = {
         x: 0,
         y: 0,
         z: 0
-    }
+    },
+    pixel:8
 };
 
 // ## Lights
@@ -194,6 +182,15 @@ function render(scene) {
     var camera = scene.camera,
         objects = scene.objects,
         lights = scene.lights;
+    var pixel = 1/scene.camera.pixel;
+    var c = document.getElementById('c'),
+    width = 640 * pixel,
+    height = 480 * pixel;
+    c.width = width;
+    c.height = height;
+    c.style.cssText = 'width:' + (width * 1/pixel) + 'px;height:' + (height * 1/pixel) + 'px';
+    var ctx = c.getContext('2d'), data = ctx.getImageData(0, 0, width, height);
+
 
     // This process
     // is a bit odd, because there's a disconnect between pixels and vectors:
@@ -252,7 +249,7 @@ function render(scene) {
             data.data[index + 0] = color.x;
             data.data[index + 1] = color.y;
             data.data[index + 2] = color.z;
-            data.data[index + 3] = 255;
+            data.data[index + 3] = (color.a !== undefined) ? color.a : 255;
         }
     }
 
@@ -484,8 +481,6 @@ function play() {
 function stop() {
     playing = false;
 }
-
-render(scene);
 
 // Then let the user control a cute playing animation!
 document.getElementById('play').onclick = play;

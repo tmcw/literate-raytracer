@@ -2,6 +2,7 @@
 
 <html>
 <head>
+
 <title>Raytracing</title>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
@@ -14,23 +15,24 @@
 <script src="js/jquery.transform.min.js" type="text/javascript"></script>
 <script src="js/jquery.bez.min.js" type="text/javascript"></script>
 <script src="js/scroll.js" type="text/javascript"></script>
- <script src='js/dat.gui.min.js'></script>
+<script src='js/dat.gui.min.js'></script>
 
 </head>
 <body>
+
   <div id="container">
-    <div class='cred'>
-        <a href='https://github.com/tmcw/literate-raytracer'>an open source project by tom macwright</a>
-    </div>
-    <canvas id='c'></canvas>
-    <center>
-        <button id='play'>play</button>
-        <button id='stop'>stop</button>
-    </center>
+    <canvas id='c' class='c'></canvas>
+    <canvas id='c2' hidden></canvas>
+    <canvas id='c4' hidden></canvas>
+    <canvas id='c8' hidden></canvas>
+    <canvas id='c10' hidden></canvas>
+    <canvas id='c16' hidden></canvas>
+    <canvas id='c32' hidden></canvas>
  </div>
   
   <script src='js/vector.js'></script>
   <script src='js/index.js'></script>
+  <script src='js/indexMT.js'></script>
   <script src='js/controller.js'></script>  
 <script type="text/javascript">
 if('ontouchstart' in document){}else{ document.getElementsByTagName("body")[0].className = "no-touch"; }
@@ -38,17 +40,31 @@ if('ontouchstart' in document){}else{ document.getElementsByTagName("body")[0].c
 
 <div id="boite">
 <div id="example7a-click-dragOut">
-  <div id="example7a-click-dragIn">
+  <div id="example7a-click-dragIn" class="circles">
     <div class="example7a-inside"> 
-      <div class="circles">
-        <div class="first circle"><strong></strong>
-      </div>
-  </div></div>
-    <div class="example7a-inside"></div>
-    <div class="example7a-inside"></div>
-    <div class="example7a-inside"></div>
-    <div class="example7a-inside"></div>
-    <div class="example7a-inside"></div>
+      <div class="c circle"><strong></strong></div>
+    </div>
+    <div class="example7a-inside">
+      <div class="c2 circle"><strong></strong></div>
+    </div>
+    <div class="example7a-inside">
+   <div class="c4 circle"><strong></strong></div>
+    </div>
+    <div class="example7a-inside">
+<div class="c8 circle"><strong></strong></div>
+    </div>
+
+    <div class="example7a-inside">
+  <div class="c10 circle"><strong></strong></div>
+    </div>
+    <div class="example7a-inside">
+  <div class="c16 circle"><strong></strong></div>
+    </div>
+  
+      <div class="example7a-inside">
+  <div class="c32 circle"><strong></strong></div>
+    </div>
+
   </div>
 </div>
 <div id="example7a-click-scrollOut"><div id="example7a-click-scrollIn"></div></div>

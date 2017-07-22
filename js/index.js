@@ -1,3 +1,4 @@
+
 // # Raytracing
 //
 // **Raytracing** is a relatively simple way to render images of 3D objects.
@@ -52,7 +53,7 @@ scene.camera = {
     point: {
         x: 4.5,
         y: .14,
-        z: 18
+        z: 120
     },
     fieldOfView: 45,
     vector: {
@@ -60,8 +61,18 @@ scene.camera = {
         y: 0,
         z: 0
     },
-    pixel:8
+    pixel:4,
+    vision: null,
+    width: 0,
+    height: 0,
+    startTime: 0   
 };
+
+scene.vision = null;
+scene.width = 0;
+scene.height= 0;   
+
+
 
 // ## Lights
 //
@@ -178,21 +189,30 @@ scene.objects = [
 // For each pixel in the canvas, there needs to be at least one ray of light
 // that determines its color by bouncing through the scene.
 function render(scene) {
-    // first 'unpack' the scene to make it easier to reference
-    var camera = scene.camera,
-        objects = scene.objects,
-        lights = scene.lights;
     var pixel = 1/scene.camera.pixel;
     var c = document.getElementById('c'),
-    width = 640 * pixel,
-    height = 480 * pixel;
+    width = Math.floor((screen.width * pixel)/10)*10,
+    height = Math.floor((screen.height * pixel)/10)*10;
     c.width = width;
     c.height = height;
-    c.style.cssText = 'width:' + (width * 1/pixel) + 'px;height:' + (height * 1/pixel) + 'px';
-    var ctx = c.getContext('2d'), data = ctx.getImageData(0, 0, width, height);
+    c.style.cssText = 'width:100%;height:100%';
+    var ctx = c.getContext('2d');
+    var dt = ctx.getImageData(0, 0, width, height);
+    scene.vision = dt.data;
+    scene.width = width;
+    scene.height = height;
+    dt.data = rendu(scene).slice();    
+    ctx.putImageData(dt, 0, 0);
+}
 
-
-    // This process
+function rendu(scene) {
+        var camera = scene.camera,
+        objects = scene.objects,
+        lights = scene.lights,
+        data = scene.vision,
+        width = scene.width,
+        height = scene.height; 
+        // This process
     // is a bit odd, because there's a disconnect between pixels and vectors:
     // given the left and right, top and bottom rays, the rays we shoot are just
     // interpolated between them in little increments.
@@ -246,18 +266,28 @@ function render(scene) {
             // as a `{x, y, z}` vector of RGB values
             color = trace(ray, scene, 0);
             index = (x * 4) + (y * width * 4),
-            data.data[index + 0] = color.x;
-            data.data[index + 1] = color.y;
-            data.data[index + 2] = color.z;
-            data.data[index + 3] = (color.a !== undefined) ? color.a : 255;
+            data[index + 0] = color.x;
+            data[index + 1] = color.y;
+            data[index + 2] = color.z;
+            data[index + 3] = (color.a !== undefined) ? color.a :  255;
         }
     }
-
-    // Now that each ray has returned and populated the `data` array with
-    // correctly lit colors, fill the canvas with the generated data.
-    ctx.putImageData(data, 0, 0);
+  return data; 
 }
 
+
+
+if( 'function' === typeof importScripts) {
+   importScripts('vector.js');
+   this.addEventListener('message', messageHandler, false);
+
+function messageHandler(event) {
+ var scene = event.data;
+ var r= rendu(scene);
+ this.postMessage({id : scene.camera.pixel , pixels : r, width: scene.width, height: scene.height, startTime:scene.startTime});  
+}
+
+}
 // # Trace
 //
 // Given a ray, shoot it until it hits an object and return that object's color,
@@ -270,7 +300,7 @@ function trace(ray, scene, depth) {
     // to find what the ray reflected into. Since this could easily go
     // on forever, first check that we haven't gone more than three bounces
     // into a reflection.
-    if (depth > 3) return;
+    if (depth > 1) return;
 
     var distObject = intersectScene(ray, scene);
 
@@ -435,53 +465,3 @@ function isLightVisible(pt, scene, light) {
     }, scene);
     return distObject[0] > -0.005;
 }
-
-// Here we do a little fun magic, just for the heck of it. We have three spheres
-    // in the scene - `scene.objects[0]` is the big one, kind of like 'Earth'.
-    //
-    // The other two are little, so let's make them orbit around the big one
-    // and look cool!
-
-    // The orbits of the two planets. We use some basic trigonetry to do the orbits:
-    // using `Math.sin()` and `Math.cos()`, it's simple to get a
-    // [unit circle](http://en.wikipedia.org/wiki/Unit_circle)
-    // for each planet. Here's [an article I wrote](http://macwright.org/2013/03/05/math-for-pictures.html)
-    // for getting to know `sin` and `cos`.
-var planet1 = 0,
-    planet2 = 0;
-
-function tick() {
-    // make one planet spin a little bit faster than the other, just for
-    // effect.
-    planet1 += 0.1;
-    planet2 += 0.2;
-
-    // set the position of each moon with some trig.
-    scene.objects[1].point.x = Math.sin(planet1) * 3.5;
-    scene.objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
-
-    scene.objects[2].point.x = Math.sin(planet2) * 4;
-    scene.objects[2].point.z = -3 + (Math.cos(planet2) * 4);
-
-    // finally, render the scene!
-    render(scene);
-
-    // and as soon as we're finished, render it again and move the planets
-    // again
-    if (playing) setTimeout(tick, 10);
-}
-
-var playing = false;
-
-function play() {
-    playing = true;
-    tick();
-}
-
-function stop() {
-    playing = false;
-}
-
-// Then let the user control a cute playing animation!
-document.getElementById('play').onclick = play;
-document.getElementById('stop').onclick = stop;

@@ -65,7 +65,36 @@ example7a.init();
     var now = new Date().getTime(),
     dt = now - time; 
 
-$('.first.circle').circleProgress({ value: dt/1000,  fill: {gradient: ['rgba(175,175,175,.8)', 'rgba(225,225,225,.8)']}})
+$('.c.circle').circleProgress({ value: dt/1000,  fill: {gradient: ['rgba(175,175,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+});
+   $('.c2.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(75,175,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+});
+
+$('.c4.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(75,175,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+});
+
+$('.c8.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(75,175,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+});
+
+$('.c10.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(175,75,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+}); 
+
+$('.c16.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(175,75,175,.8)', 'rgba(225,225,225,.8)']}})
+   .on('circle-animation-progress', function(event, progress, stepValue) {
+   $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
+});
+
+$('.c32.circle').circleProgress({ value: 0,  fill: {gradient: ['rgba(175,175,75,.8)', 'rgba(225,225,225,.8)']}})
    .on('circle-animation-progress', function(event, progress, stepValue) {
    $(this).find('strong').text(String(stepValue.toFixed(2)).substr(0));
 });

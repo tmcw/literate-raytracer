@@ -50,9 +50,13 @@
    var maj2  = function(value) {  
    
     var time =  new Date().getTime(); 
-   // scene.camera.pixel = 4; 
-   // render(scene);
-   renderMT(scene);
+    try{   
+      renderMT(scene);
+     } catch(e){
+      scene.camera.pixel = 4; 
+      render(scene);  
+     }
+ 
     var now = new Date().getTime(),
     dt = now - time; 
 

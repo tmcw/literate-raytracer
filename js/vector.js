@@ -13,7 +13,7 @@ var Vector = {};
 // # Constants
 Vector.UP = { x: 0, y: 1, z: 0 };
 Vector.ZERO = { x: 0, y: 0, z: 0 };
-Vector.WHITE = { x: 255, y: 255, z: 255 };
+Vector.WHITE = { x: 255, y: 255, z: 255, a:0 };
 Vector.ZEROcp = function() {
     return { x: 0, y: 0, z: 0 };
 };

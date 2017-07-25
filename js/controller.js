@@ -48,8 +48,7 @@ this.activeNoTraitement=activeNoTraitement
    scene.objects[0].lambert = obj.lambertCercle1;  
    scene.objects[0].ambient = obj.ambientCercle1;  
    scene.objects[0].radius = obj.radiusCercle1; 
-
-  
+   
    scene.camera.pixel = 16; 
    render(scene);
    }
@@ -104,7 +103,7 @@ this.activeNoTraitement=activeNoTraitement
    f.add(obj, "posXlook").min(-100).max(100).onChange(maj).onFinishChange(maj2);
    f.add(obj, "posYlook").min(-100).max(100).onChange(maj).onFinishChange(maj2);
    f.add(obj, "posZlook").min(-100).max(100).onChange(maj).onFinishChange(maj2);
-   f.close();
+   f.open();
    f = gui.addFolder('lumiere position');
    f.add(obj, "posXlum").min(-255).max(255).onChange(maj).onFinishChange(maj2);
    f.add(obj, "posYlum").min(-255).max(255).onChange(maj).onFinishChange(maj2);
@@ -125,4 +124,5 @@ this.activeNoTraitement=activeNoTraitement
    f.add(obj, "activeIntersect").onChange(maj3);
    f.add(obj, "activeNoTraitement").onChange(maj3);   
    f.open();
+
 

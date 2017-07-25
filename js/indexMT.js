@@ -11,6 +11,7 @@ function mt(pixel){
 var monWorker = new Worker('js/index.js');
 monWorker.addEventListener("message", function (event) {
     var result = event.data;    
+
     try{	 	
     var ct = document.getElementById('c');
     ct.width = result.width;
@@ -31,6 +32,7 @@ $('.c'+ (1/result.id) +'.circle').circleProgress({ value: (new Date().getTime() 
     }
 
 }, false);
+
 
  scene.camera.pixel = 1/pixel;
  var width = Math.floor((screen.width * scene.camera.pixel)/10)*10;

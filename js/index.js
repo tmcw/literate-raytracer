@@ -31,6 +31,7 @@
 // to [explain vector operations](http://macwright.org/literate-raytracer/vector.html) as well.
 //
 
+
 var activeSpecular=true;
 var activeLambert=true;
 var activeAmbient=true;
@@ -68,7 +69,7 @@ scene.camera = {
         y: 0,
         z: 0
     },
-    pixel:1,
+    pixel:4,
     vision: null,
     width: 0,
     height: 0,
@@ -204,26 +205,12 @@ function render(scene) {
     c.width = width;
     c.height = height;
     c.style.cssText = 'width:100%;height:100%';
-    var ctx = c.getContext('2d');
-/*
-    var dt = ctx.getImageData(0, 0, width, height);
-if(activeNoTraitement){
-    scene.vision = dt.data;
-    scene.width = width;
-    scene.height = height;
-    dt.data = rendu(scene).slice();    
-
-    ctx.putImageData(dt, 0, 0);	
-	}
-	*/
-	
-	
+    var ctx = c.getContext('2d');	
 	var arr = new Uint8ClampedArray((width*height)*4);	 
     scene.vision = arr;
     scene.width = width;
     scene.height = height;   
     ctx.putImageData(new ImageData(rendu(scene).slice(),width,height), 0, 0);	
-
 	
 }
 
@@ -325,7 +312,6 @@ function trace(ray, scene, depth) {
     // on forever, first check that we haven't gone more than three bounces
     // into a reflection.
     if (depth > 1) return;
-
     //var distObject = intersectSceneOld(ray, scene);
 var distObject = (activeIntersect) ? intersectSceneOld(ray, scene) : [Infinity, null];
     // If we don't hit anything, fill this pixel with the background color -

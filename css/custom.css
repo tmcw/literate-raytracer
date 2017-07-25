@@ -1,17 +1,34 @@
 /*--------------------- Layout ----------------------------*/
 html { height: 100%; }
 body {
-  font-family: "Helvetica Neue", "Helvetica";
-  font-size: 14px;
-  line-height: 18px;
-  color: #30404f;
-  margin: 0; padding: 0;
-  height:100%;
+  display:block;position:absolute;
+  color:#3c3c3c;
+  font-family: sans-serif;
+  font-size:12px;
+  left:50%;margin-left:-270px;
+  width:540px;
+   
 }
+
 #container {
+  position:fixed;
     min-height: 100%;
-    margin:0 auto;
-    width:640px;
+left:0%;
+  z-index: -1000;
+    width:100%;
+    height: 100%;
+    top:0%;
+     background:rgb(15,15,15);
+}
+
+#c {
+  position:fixed;
+    min-height: 100%;
+    left:0%;
+    z-index: -1000;
+    width:100%;
+    height: 100%;
+    top:0%;
 }
 
 img {
@@ -329,5 +346,111 @@ pre .chunk {
 
 pre .tex .formula {
   opacity: 0.5;
+}
+
+#boite {
+  position:fixed;
+  left:1%;
+  top:1%;
+    height:100%;
+      z-index: 1000;
+}
+
+.no-touch a:hover, a:active {
+  color:#3c3c3c;
+  background:#92e8ff;
+}
+[id^="example7a-"], .example7a-inside {
+  font-family: sans-serif;
+  color:rgba(175,175,175,.8);
+  border-radius: 15px;
+  text-decoration: none;
+  width:90px;
+  height:110px;
+  padding:10px 0px 5px 15px;
+  margin:10px;
+  font-size:20px;
+  background:
+radial-gradient(rgba(5,5,5,1) 15%, transparent 16%) 0 0,
+radial-gradient(rgba(5,5,5,1) 15%, transparent 16%) 4px 4px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 0 1px,
+radial-gradient(rgba(255,255,255,.1) 15%, transparent 20%) 4px 5px;
+background-color:rgba(215,215,215,0.2);
+background-size:8px 8px;
+}
+
+.example7a-inside {
+  display:block;
+  position:relative;
+  float:left;
+  clear:both;
+}
+[id^="example7a-"] {
+  display:block;
+  position:absolute;
+}
+
+.no-touch [id^="example7a-"]:hover {
+  background:#ffd966;
+}
+
+/* scrolls */
+#example7a-click-scrollOut {  
+  top:222px;
+  display:block;
+  position:relative;
+  float:left;
+  width:105px;
+  height:11px;
+  margin:0px 10px;padding:0px;
+  border:0px solid #3c3c3c;
+    background-color:rgba(20,20,18,.5);
+
+}
+#example7a-click-scrollOut {
+  top:90%;
+}
+#example7a-click-scrollIn {
+  color:#3c3c3c;
+  border:.5px solid #b3b3b3;
+  background: red;
+
+  display:block;
+  position:absolute;
+  width:40px;
+  height:8px;
+  background:#181717;
+  margin:0px;padding:0px;
+}
+.no-touch #example7a-click-scrollIn:hover, #example7a-click-scrollIn.active {
+  background:#e2e7ce;
+}
+
+/* drags */
+#example7a-click-dragOut {
+  border-radius:20px;
+  overflow:hidden;
+  float:left;
+  width:100%;
+  height:100%;
+  left:0px;
+  margin:0px;padding:0px;
+}
+#example7a-click-dragIn {
+  display:block;
+  position:absolute;
+  width:1200px;
+  height:190px;
+  margin:0px;padding:0px;
+}
+
+#example7a-click-dragOut {
+  height:578px;
+  background: transparent;
+}
+#example7a-click-dragIn {
+  border:0px solid #3c3c3c;
+  border-radius: 0px;
+  background: transparent;
 }
 

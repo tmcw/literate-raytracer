@@ -1,3 +1,4 @@
+
 // # Raytracing
 //
 // **Raytracing** is a relatively simple way to render images of 3D objects.
@@ -29,19 +30,14 @@
 // read as a narrative](http://macwright.org/literate-raytracer/), and intends
 // to [explain vector operations](http://macwright.org/literate-raytracer/vector.html) as well.
 //
-// # Setup
-var c = document.getElementById('c'),
-    width = 640 * 0.5,
-    height = 480 * 0.5;
 
-// Get a context in order to generate a proper data array. We aren't going to
-// use traditional Canvas drawing functions like `fillRect` - instead this
-// raytracer will directly compute pixel data and then put it into an image.
-c.width = width;
-c.height = height;
-c.style.cssText = 'width:' + (width * 2) + 'px;height:' + (height*2) + 'px';
-var ctx = c.getContext('2d'),
-    data = ctx.getImageData(0, 0, width, height);
+
+var activeSpecular=true;
+var activeLambert=true;
+var activeAmbient=true;
+var activeSurface=true;
+var activeIntersect=true;
+var activeNoTraitement=true;
 
 // # The Scene
 var scene = {};
@@ -63,26 +59,37 @@ var scene = {};
 // angle it points in.
 scene.camera = {
     point: {
-        x: 0,
-        y: 1.8,
-        z: 10
+        x: 4.5,
+        y: .14,
+        z: 35
     },
-    fieldOfView: 45,
+    fieldOfView: 90,
     vector: {
         x: 0,
-        y: 3,
+        y: 0,
         z: 0
-    }
+    },
+    pixel:4,
+    vision: null,
+    width: 0,
+    height: 0,
+    startTime: 0   
 };
+
+scene.vision = null;
+scene.width = 0;
+scene.height= 0;   
+
+
 
 // ## Lights
 //
 // Lights are defined only as points in space - surfaces that have lambert
 // shading will be affected by any visible lights.
 scene.lights = [{
-    x: -30,
-    y: -10,
-    z: 20
+    x: 45,
+    y: -90,
+    z: 90
 }];
 
 // ## Objects
@@ -90,8 +97,7 @@ scene.lights = [{
 // This raytracer handles sphere objects, with any color, position, radius,
 // and surface properties.
 scene.objects = [
-    {
-        type: 'sphere',
+      {  type: 'sphere',
         point: {
             x: 0,
             y: 3.5,
@@ -140,7 +146,41 @@ scene.objects = [
         lambert: 0.7,
         ambient: 0.1,
         radius: 0.1
-    }
+    },
+    {
+        type: 'sphere',
+        point: {
+            x: -4,
+            y: 3,
+            z: 6
+        },
+        color: {
+            x: 85,
+            y: 75,
+            z: 25
+        },
+        specular: 0.2,
+        lambert: 0.7,
+        ambient: 0.1,
+        radius: 1.6
+    },
+    {
+        type: 'sphere',
+        point: {
+            x: -1.5,
+            y: 3,
+            z: 2
+        },
+        color: {
+            x: 255,
+            y: 75,
+            z: 25
+        },
+        specular: 0.2,
+        lambert: 0.7,
+        ambient: 0.1,
+        radius: 1
+		}
 ];
 
 // # Throwing Rays
@@ -157,12 +197,31 @@ scene.objects = [
 // For each pixel in the canvas, there needs to be at least one ray of light
 // that determines its color by bouncing through the scene.
 function render(scene) {
-    // first 'unpack' the scene to make it easier to reference
-    var camera = scene.camera,
-        objects = scene.objects,
-        lights = scene.lights;
 
-    // This process
+    var pixel = 1/scene.camera.pixel;
+    var c = document.getElementById('c'),
+    width = Math.floor((screen.width * pixel)/10)*10,
+    height = Math.floor((screen.height * pixel)/10)*10;
+    c.width = width;
+    c.height = height;
+    c.style.cssText = 'width:100%;height:100%';
+    var ctx = c.getContext('2d');	
+	var arr = new Uint8ClampedArray((width*height)*4);	 
+    scene.vision = arr;
+    scene.width = width;
+    scene.height = height;   
+    ctx.putImageData(new ImageData(rendu(scene).slice(),width,height), 0, 0);	
+	
+}
+
+function rendu(scene) {
+        var camera = scene.camera,
+        objects = scene.objects,
+        lights = scene.lights,
+        data = scene.vision,
+        width = scene.width,
+        height = scene.height; 
+        // This process
     // is a bit odd, because there's a disconnect between pixels and vectors:
     // given the left and right, top and bottom rays, the rays we shoot are just
     // interpolated between them in little increments.
@@ -200,15 +259,16 @@ function render(scene) {
     var ray = {
         point: camera.point
     };
+				  
     for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
-
+  if(activeNoTraitement){
             // turn the raw pixel `x` and `y` values into values from -1 to 1
             // and use these values to scale the facing-right and facing-up
             // vectors so that we generate versions of the `eyeVector` that are
             // skewed in each necessary direction.
-            var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
-                ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
+			var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
+            ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
 
             ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
 
@@ -216,18 +276,29 @@ function render(scene) {
             // as a `{x, y, z}` vector of RGB values
             color = trace(ray, scene, 0);
             index = (x * 4) + (y * width * 4),
-            data.data[index + 0] = color.x;
-            data.data[index + 1] = color.y;
-            data.data[index + 2] = color.z;
-            data.data[index + 3] = 255;
-        }
+            data[index + 0] = color.x;
+            data[index + 1] = color.y;
+            data[index + 2] = color.z;
+            data[index + 3] = (color.a !== undefined) ? color.a :  255;
+			}       
     }
-
-    // Now that each ray has returned and populated the `data` array with
-    // correctly lit colors, fill the canvas with the generated data.
-    ctx.putImageData(data, 0, 0);
+	 }
+  return data; 
 }
 
+
+
+if( 'function' === typeof importScripts) {
+   importScripts('vector.js');
+   this.addEventListener('message', messageHandler, false);
+
+function messageHandler(event) {
+ var scene = event.data;
+ var r= rendu(scene);
+ this.postMessage({id : scene.camera.pixel , pixels : r, width: scene.width, height: scene.height, startTime:scene.startTime});  
+}
+
+}
 // # Trace
 //
 // Given a ray, shoot it until it hits an object and return that object's color,
@@ -240,10 +311,9 @@ function trace(ray, scene, depth) {
     // to find what the ray reflected into. Since this could easily go
     // on forever, first check that we haven't gone more than three bounces
     // into a reflection.
-    if (depth > 3) return;
-
-    var distObject = intersectScene(ray, scene);
-
+    if (depth > 1) return;
+    //var distObject = intersectSceneOld(ray, scene);
+var distObject = (activeIntersect) ? intersectSceneOld(ray, scene) : [Infinity, null];
     // If we don't hit anything, fill this pixel with the background color -
     // in this case, white.
     if (distObject[0] === Infinity) {
@@ -257,9 +327,11 @@ function trace(ray, scene, depth) {
     // of this ray into this object. We compute this by simply taking
     // the direction of the ray and making it as long as the distance
     // returned by the intersection check.
-    var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
-
-    return surface(ray, scene, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
+    if(activeSurface){
+	 var pointAtTime = Vector.add(ray.point, Vector.scale(ray.vector, dist));
+     return surface(ray, scene, object, pointAtTime, sphereNormal(object, pointAtTime), depth);
+	}
+  return Vector.WHITE;
 }
 
 // # Detecting collisions against all objects
@@ -269,18 +341,38 @@ function trace(ray, scene, depth) {
 function intersectScene(ray, scene) {
     // The base case is that it hits nothing, and travels for `Infinity`
     var closest = [Infinity, null];
+    var sortObjIntersect = new Array();
+    sortObjIntersect.push(closest);
     // But for each object, we check whether it has any intersection,
     // and compare that intersection - is it closer than `Infinity` at first,
     // and then is it closer than other objects that have been hit?
     for (var i = 0; i < scene.objects.length; i++) {
         var object = scene.objects[i],
-            dist = sphereIntersection(object, ray);
-        if (dist !== undefined && dist < closest[0]) {
+        dist = sphereIntersection(object, ray);
+        if (dist !== undefined) sortObjIntersect.push([dist, object]);   
+    }
+   sortObjIntersect.sort(sortFunction);
+   return sortObjIntersect[0];  
+}
+
+function intersectSceneOld(ray, scene) {
+    // The base case is that it hits nothing, and travels for `Infinity`
+    var closest = [Infinity, null];
+    // But for each object, we check whether it has any intersection,
+    // and compare that intersection - is it closer than `Infinity` at first,
+    // and then is it closer than other objects that have been hit?
+    for (var i = 0; i < scene.objects.length; i++) {
+        var object = scene.objects[i];
+        var dist = sphereIntersection(object, ray);	
+        if (dist !== undefined && ((dist < -0.001 && closest[0] < -0.001 && dist > closest[0]) || dist < closest[0])) {
+	 //    if (dist !== undefined && dist < closest[0]) {
             closest = [dist, object];
         }
     }
     return closest;
 }
+
+function sortFunction(a, b) { return (a[0] < -0.001 && b[0] < -0.001) ? (a[0]*-1)-(b[0]*-1) : a[0]-b[0];}
 
 // ## Detecting collisions against a sphere
 //
@@ -339,7 +431,7 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
     // **[Lambert shading](http://en.wikipedia.org/wiki/Lambertian_reflectance)**
     // is our pretty shading, which shows gradations from the most lit point on
     // the object to the least.
-    if (object.lambert) {
+    if (object.lambert && activeLambert) {
         for (var i = 0; i < scene.lights.length; i++) {
             var lightPoint = scene.lights[0];
             // First: can we see the light? If not, this is a shadowy area
@@ -360,7 +452,7 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
     // **[Specular](https://en.wikipedia.org/wiki/Specular_reflection)** is a fancy word for 'reflective': rays that hit objects
     // with specular surfaces bounce off and acquire the colors of other objects
     // they bounce into.
-    if (object.specular) {
+    if (object.specular && activeSpecular) {
         // This is basically the same thing as what we did in `render()`, just
         // instead of looking from the viewpoint of the camera, we're looking
         // from a point on the surface of a shiny object, seeing what it sees
@@ -396,61 +488,9 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
 // we'd check to see if the area in a shadowy spot can 'see' a light, and when
 // this returns `false`, we make the area shadowy.
 function isLightVisible(pt, scene, light) {
-    var distObject =  intersectScene({
+    var distObject =  intersectSceneOld({
         point: pt,
         vector: Vector.unitVector(Vector.subtract(pt, light))
     }, scene);
     return distObject[0] > -0.005;
 }
-
-// Here we do a little fun magic, just for the heck of it. We have three spheres
-    // in the scene - `scene.objects[0]` is the big one, kind of like 'Earth'.
-    //
-    // The other two are little, so let's make them orbit around the big one
-    // and look cool!
-
-    // The orbits of the two planets. We use some basic trigonetry to do the orbits:
-    // using `Math.sin()` and `Math.cos()`, it's simple to get a
-    // [unit circle](http://en.wikipedia.org/wiki/Unit_circle)
-    // for each planet. Here's [an article I wrote](http://macwright.org/2013/03/05/math-for-pictures.html)
-    // for getting to know `sin` and `cos`.
-var planet1 = 0,
-    planet2 = 0;
-
-function tick() {
-    // make one planet spin a little bit faster than the other, just for
-    // effect.
-    planet1 += 0.1;
-    planet2 += 0.2;
-
-    // set the position of each moon with some trig.
-    scene.objects[1].point.x = Math.sin(planet1) * 3.5;
-    scene.objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
-
-    scene.objects[2].point.x = Math.sin(planet2) * 4;
-    scene.objects[2].point.z = -3 + (Math.cos(planet2) * 4);
-
-    // finally, render the scene!
-    render(scene);
-
-    // and as soon as we're finished, render it again and move the planets
-    // again
-    if (playing) setTimeout(tick, 10);
-}
-
-var playing = false;
-
-function play() {
-    playing = true;
-    tick();
-}
-
-function stop() {
-    playing = false;
-}
-
-render(scene);
-
-// Then let the user control a cute playing animation!
-document.getElementById('play').onclick = play;
-document.getElementById('stop').onclick = stop;

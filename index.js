@@ -341,7 +341,7 @@ function surface(ray, scene, object, pointAtTime, normal, depth) {
     // the object to the least.
     if (object.lambert) {
         for (var i = 0; i < scene.lights.length; i++) {
-            var lightPoint = scene.lights[0];
+            var lightPoint = scene.lights[i];
             // First: can we see the light? If not, this is a shadowy area
             // and it gets no light from the lambert shading process.
             if (!isLightVisible(pointAtTime, scene, lightPoint)) continue;

@@ -14,6 +14,7 @@
   "author": "",
   "license": "BSD-2-Clause",
   "devDependencies": {
-    "docco": "~0.6.2"
+    "docco": "~0.6.2",
+    "typescript": "^3.7.3"
   }
 }

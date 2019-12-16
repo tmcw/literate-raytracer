@@ -29,6 +29,9 @@ const vertexSource = `
     }
 `;
 
+const lightCount = 1;
+const sphereCount = 3;
+
 const fragmentSource = `precision mediump float;
 
     struct Ray {
@@ -40,11 +43,18 @@ const fragmentSource = `precision mediump float;
         vec3 colour;
         vec3 point;
         float radius;
+        float ambient;
+        float lambert;
+        float specular;
     };
 
     struct SphereDistance {
         float distance;
         Sphere sphere;
+    };
+
+    struct PointLight {
+        vec3 point;
     };
 
     uniform vec3 cameraPos;
@@ -56,11 +66,19 @@ const fragmentSource = `precision mediump float;
     uniform float halfHeight;
     uniform vec3 eyeVector;
      
-    uniform Sphere spheres[3];
+    uniform Sphere spheres[${sphereCount}];
+    uniform PointLight pointLights[${lightCount}];
 
     float sphereIntersection(Sphere sphere, Ray ray);
     SphereDistance intersectScene(Ray ray);
     vec4 trace(Ray ray, int depth);
+    vec4 trace2(Ray ray, int depth);
+    vec4 trace3(Ray ray, int depth);
+    vec3 sphereNormal(Sphere sphere, vec3 pos);
+    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
+    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
+    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
+    bool isLightVisible(vec3 pt, PointLight light);
     void draw();
      
     void main() {
@@ -85,7 +103,7 @@ const fragmentSource = `precision mediump float;
 
     vec4 trace(Ray ray, int depth) {
        if (depth > 3) {
-           return vec4(0.0, 0.0, 0.0, 1.0);
+           return vec4(0.0, 0.0, 0.0, 0.0);
        } 
 
        SphereDistance sd = intersectScene(ray);
@@ -93,12 +111,51 @@ const fragmentSource = `precision mediump float;
            return vec4(1.0, 1.0, 1.0, 1.0);
        }
 
-       return vec4(sd.sphere.colour.r / 255.0, sd.sphere.colour.g / 255.0, sd.sphere.colour.b / 255.0, 1.0);
+       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+       return surface(ray, sd.sphere, pointAtTime, normal, depth);
+    }
+
+    vec4 trace2(Ray ray, int depth) {
+       if (depth > 3) {
+           return vec4(0.0, 0.0, 0.0, 0.0);
+       } 
+
+       SphereDistance sd = intersectScene(ray);
+       if (sd.distance <= 0.0) {
+           return vec4(1.0, 1.0, 1.0, 1.0);
+       }
+
+       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+       return surface2(ray, sd.sphere, pointAtTime, normal, depth);
+    }
+
+    vec4 trace3(Ray ray, int depth) {
+       if (depth > 3) {
+           return vec4(0.0, 0.0, 0.0, 0.0);
+       } 
+
+       SphereDistance sd = intersectScene(ray);
+       if (sd.distance <= 0.0) {
+           return vec4(1.0, 1.0, 1.0, 1.0);
+       }
+
+       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+       return surface3(ray, sd.sphere, pointAtTime, normal, depth);
+    }
+
+    vec3 sphereNormal(Sphere sphere, vec3 pos) {
+        return normalize(pos - sphere.point);
     }
 
     SphereDistance intersectScene(Ray ray) {
-        SphereDistance sd = SphereDistance(-1.0, Sphere(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), -1.0));
-        for (int i = 0; i < 3; i += 1) {
+        SphereDistance sd = SphereDistance(-1.0, Sphere(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), -1.0, 0.0, 0.0, 0.0));
+        for (int i = 0; i < ${sphereCount}; i += 1) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
             if (dist >= 0.0) {
@@ -122,6 +179,111 @@ const fragmentSource = `precision mediump float;
         }
 
         return v - sqrt(discriminant);
+    }
+
+    bool isLightVisible(vec3 pt, PointLight light) {
+        vec3 unit = normalize(pt - light.point);
+        SphereDistance sd = intersectScene(Ray(pt, unit));
+
+        return true;
+        return sd.distance > -0.005;
+    }
+
+    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+        vec3 b = vec3(sphere.colour.rgb / 255.0);
+        vec3 c = vec3(0.0, 0.0, 0.0);
+        float lambertAmount = 0.0;
+
+        if (sphere.lambert > 0.0) {
+            for (int i = 0; i < ${lightCount}; i += 1) {
+                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
+                    float contribution = dot(lmp, normal);
+
+                    if (contribution > 0.0) {
+                        lambertAmount += contribution;
+                    }
+                }
+            }
+        }
+
+        if (sphere.specular > 0.0) {
+            vec3 reflected = reflect(ray.vector, normal);
+            vec4 rColour = trace2(Ray(pointAtTime, reflected), ++depth);
+            if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
+                c += vec3(rColour.rgb * sphere.specular);
+            }
+        }
+
+        lambertAmount = min(1.0, lambertAmount);
+
+        vec3 lambert = vec3(b.rgb * lambertAmount * sphere.lambert);
+        vec3 ambient = vec3(b.rgb * sphere.ambient);
+
+        vec3 total = lambert + ambient + c;
+        return vec4(total.rgb, 1.0);
+    }
+
+    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+        vec3 b = sphere.colour;
+        vec3 c = vec3(0.0, 0.0, 0.0);
+        float lambertAmount = 0.0;
+
+        if (sphere.lambert > 0.0) {
+            for (int i = 0; i < ${lightCount}; i += 1) {
+                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
+                    float contribution = dot(lmp, normal);
+
+                    if (contribution > 0.0) {
+                        lambertAmount += contribution;
+                    }
+                }
+            }
+        }
+
+        if (sphere.specular > 0.0) {
+            vec3 reflected = reflect(ray.vector, normal);
+            vec4 rColour = trace3(Ray(pointAtTime, reflected), ++depth);
+            if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
+                c += vec3(rColour.rgb * sphere.specular);
+            }
+        }
+
+        lambertAmount = min(1.0, lambertAmount);
+
+        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * sphere.lambert);
+        vec3 ambient = vec3(b.rgb / 255.0 * sphere.ambient);
+
+        vec3 total = lambert + ambient + c;
+        return vec4(total.r, total.g, total.b, 1.0);
+    }
+
+    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+        vec3 b = sphere.colour;
+        vec3 c = vec3(0.0, 0.0, 0.0);
+        float lambertAmount = 0.0;
+
+        if (sphere.lambert > 0.0) {
+            for (int i = 0; i < ${lightCount}; i += 1) {
+                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
+                    float contribution = dot(lmp, normal);
+
+                    if (contribution > 0.0) {
+                        lambertAmount += contribution;
+                    }
+                }
+            }
+        }
+
+        lambertAmount = min(1.0, lambertAmount);
+
+        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * sphere.lambert);
+        vec3 ambient = vec3(b.rgb / 255.0 * sphere.ambient);
+
+        vec3 total = lambert + ambient + c;
+        return vec4(total.r, total.g, total.b, 1.0);
     }
 `;
 
@@ -367,8 +529,9 @@ const animate = () => {
     g_scene.objects[2].point.z = -3 + (Math.cos(planet2) * 4);
 
     g_scene.objects.forEach((o, i) => {
-        uniforms.spheres(i, o.radius, o.point, o.colour);
+        uniforms.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
     });
+
     draw(g_gl, g_ctx);
     requestAnimationFrame(animate);
 };
@@ -423,7 +586,11 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
     u.cameraPos(camera.point);
 
     objects.forEach((o, i) => {
-        u.spheres(i, o.radius, o.point, o.colour);
+        u.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
+    });
+
+    lights.forEach((l, i) => {
+        u.lights(i, l);
     });
 
     return u;
@@ -453,6 +620,15 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram, sph
             colour: getUniformLocation(gl, program, `spheres[${i}].colour`),
             point: getUniformLocation(gl, program, `spheres[${i}].point`),
             radius: getUniformLocation(gl, program, `spheres[${i}].radius`),
+            ambient: getUniformLocation(gl, program, `spheres[${i}].ambient`),
+            lambert: getUniformLocation(gl, program, `spheres[${i}].lambert`),
+            specular: getUniformLocation(gl, program, `spheres[${i}].specular`),
+        };
+    });
+
+    const lights = g_scene.lights.map((_, i) => {
+        return {
+            point: getUniformLocation(gl, program, `pointLights[${i}].point`),
         };
     });
 
@@ -488,13 +664,22 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram, sph
         eyeVector(vec: Vector) {
             setVec3(eyeVector, vec);
         },
-        spheres(index: number, radius: number, point: Vector, colour: Vector) {
+        spheres(index: number, radius: number, point: Vector, colour: Vector, ambient: number, lambert: number, specular: number) {
             if (!spheres[index]) {
                 throw new RangeError('out of bounds sphere');
             }
             setVec3(spheres[index].point, point);
             setFloat(spheres[index].radius, radius);
             setVec3(spheres[index].colour, colour);
+            setFloat(spheres[index].ambient, ambient);
+            setFloat(spheres[index].lambert, lambert);
+            setFloat(spheres[index].specular, specular);
         },
+        lights(index: number, point: Vector) {
+            if (!lights[index]) {
+                throw new RangeError('out of bounds light');
+            }
+            setVec3(lights[index].point, point);
+        }
     };
 }

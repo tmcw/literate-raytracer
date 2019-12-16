@@ -203,12 +203,14 @@ function render(scene) {
     for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
 
+            const xMul = (x * pixelWidth) - halfWidth;
+            const yMul = (y * pixelHeight) - halfHeight;
             // turn the raw pixel `x` and `y` values into values from -1 to 1
             // and use these values to scale the facing-right and facing-up
             // vectors so that we generate versions of the `eyeVector` that are
             // skewed in each necessary direction.
-            var xcomp = Vector.scale(vpRight, (x * pixelWidth) - halfWidth),
-                ycomp = Vector.scale(vpUp, (y * pixelHeight) - halfHeight);
+            var xcomp = Vector.scale(vpRight, xMul),
+                ycomp = Vector.scale(vpUp, yMul);
 
             ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));
 

@@ -1,14 +1,10 @@
 "use strict";
-const canvas = document.getElementById('c');
-const g_width = 640;
-const g_height = 480;
-canvas.width = g_width;
-canvas.height = g_height;
-canvas.style.cssText = 'width:' + (g_width) + 'px;height:' + (g_height) + 'px';
+const g_canvas = document.getElementById('c');
+resize(g_canvas);
 // const g_gl: WebGLRenderingContext = (window as any).WebGLDebugUtils.makeDebugContext(
 // canvas.getContext('webgl')
 // );
-const g_gl = canvas.getContext('webgl');
+const g_gl = g_canvas.getContext('webgl');
 if (!g_gl) {
     throw new Error('fail to launch gl');
 }
@@ -60,13 +56,13 @@ const fragmentSource = `precision mediump float;
 
     float sphereIntersection(Sphere sphere, Ray ray);
     SphereDistance intersectScene(Ray ray);
-    vec4 trace(Ray ray, int depth);
-    vec4 trace2(Ray ray, int depth);
-    vec4 trace3(Ray ray, int depth);
+    vec4 trace(Ray ray);
+    vec4 trace2(Ray ray);
+    vec4 trace3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
-    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
-    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
-    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth);
+    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
+    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
+    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
     bool isLightVisible(vec3 pt, PointLight light);
     void draw();
      
@@ -87,14 +83,10 @@ const fragmentSource = `precision mediump float;
 
         Ray ray = Ray(cameraPos, normalize(full));
 
-        gl_FragColor = trace(ray, 0);
+        gl_FragColor = trace(ray);
     }
 
-    vec4 trace(Ray ray, int depth) {
-       if (depth > 3) {
-           return vec4(0.0, 0.0, 0.0, 0.0);
-       } 
-
+    vec4 trace(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
            return vec4(1.0, 1.0, 1.0, 1.0);
@@ -103,14 +95,10 @@ const fragmentSource = `precision mediump float;
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface(ray, sd.sphere, pointAtTime, normal, depth);
+       return surface(ray, sd.sphere, pointAtTime, normal);
     }
 
-    vec4 trace2(Ray ray, int depth) {
-       if (depth > 3) {
-           return vec4(0.0, 0.0, 0.0, 0.0);
-       } 
-
+    vec4 trace2(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
            return vec4(1.0, 1.0, 1.0, 1.0);
@@ -119,14 +107,10 @@ const fragmentSource = `precision mediump float;
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface2(ray, sd.sphere, pointAtTime, normal, depth);
+       return surface2(ray, sd.sphere, pointAtTime, normal);
     }
 
-    vec4 trace3(Ray ray, int depth) {
-       if (depth > 3) {
-           return vec4(0.0, 0.0, 0.0, 0.0);
-       } 
-
+    vec4 trace3(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
            return vec4(1.0, 1.0, 1.0, 1.0);
@@ -135,7 +119,7 @@ const fragmentSource = `precision mediump float;
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface3(ray, sd.sphere, pointAtTime, normal, depth);
+       return surface3(ray, sd.sphere, pointAtTime, normal);
     }
 
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
@@ -178,7 +162,7 @@ const fragmentSource = `precision mediump float;
         return sd.distance > -0.005;
     }
 
-    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
         vec3 b = vec3(sphere.colour.rgb / 255.0);
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
@@ -198,7 +182,7 @@ const fragmentSource = `precision mediump float;
 
         if (sphere.specular > 0.0) {
             vec3 reflected = reflect(ray.vector, normal);
-            vec4 rColour = trace2(Ray(pointAtTime, reflected), ++depth);
+            vec4 rColour = trace2(Ray(pointAtTime, reflected));
             if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
                 c += vec3(rColour.rgb * sphere.specular);
             }
@@ -213,7 +197,7 @@ const fragmentSource = `precision mediump float;
         return vec4(total.rgb, 1.0);
     }
 
-    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
         vec3 b = sphere.colour;
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
@@ -233,7 +217,7 @@ const fragmentSource = `precision mediump float;
 
         if (sphere.specular > 0.0) {
             vec3 reflected = reflect(ray.vector, normal);
-            vec4 rColour = trace3(Ray(pointAtTime, reflected), ++depth);
+            vec4 rColour = trace3(Ray(pointAtTime, reflected));
             if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
                 c += vec3(rColour.rgb * sphere.specular);
             }
@@ -248,7 +232,7 @@ const fragmentSource = `precision mediump float;
         return vec4(total.r, total.g, total.b, 1.0);
     }
 
-    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal, int depth) {
+    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
         vec3 b = sphere.colour;
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
@@ -339,6 +323,9 @@ function createShader(gl, type, source) {
 // Unlike images, textures do not have a width and height associated
 // with them so we'll pass in the width and height of the texture
 function draw(gl, context) {
+    if (resize(g_canvas)) {
+        setupScene(gl, context, g_scene);
+    }
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enableVertexAttribArray(context.positionLocation);
     gl.vertexAttribPointer(context.positionLocation, 2, gl.FLOAT, false, 0, 0);
@@ -482,21 +469,23 @@ function setupScene(gl, context, scene) {
     u.vpRight(vpRight);
     const vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
     u.vpUp(vpUp);
+    const width = gl.canvas.clientWidth;
+    const height = gl.canvas.clientHeight;
     // The actual ending pixel dimensions of the image aren't important here -
     // note that `width` and `height` are in pixels, but the numbers we compute
     // here are just based on the ratio between them, `height/width`, and the
     // `fieldOfView` of the camera.
     const fovRadians = Math.PI * camera.fieldOfView / 180;
-    const heightWidthRatio = gl.canvas.height / gl.canvas.width;
+    const heightWidthRatio = height / width;
     const halfWidth = Math.tan(fovRadians);
     u.halfWidth(halfWidth);
     const halfHeight = heightWidthRatio * halfWidth;
     u.halfHeight(halfHeight);
     const camerawidth = halfWidth * 2;
     const cameraheight = halfHeight * 2;
-    const pixelWidth = camerawidth / (g_width - 1);
+    const pixelWidth = camerawidth / (width - 1);
     u.pixelWidth(pixelWidth);
-    const pixelHeight = cameraheight / (g_height - 1);
+    const pixelHeight = cameraheight / (height - 1);
     u.pixelHeight(pixelHeight);
     u.cameraPos(camera.point);
     objects.forEach((o, i) => {
@@ -587,4 +576,17 @@ function getUniformSetters(gl, program, sphereCount) {
             setVec3(lights[index].point, point);
         }
     };
+}
+function resize(canvas) {
+    // Lookup the size the browser is displaying the canvas.
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
+    // Check if the canvas is not the same size.
+    if (canvas.width != displayWidth || canvas.height != displayHeight) {
+        // Make the canvas the same size
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+        return true;
+    }
+    return false;
 }

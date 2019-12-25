@@ -26,6 +26,12 @@ const vertexSource = `
 
 const lightCount = 1;
 const sphereCount = 3;
+const epsilon = 0.00005;
+const bg = {
+    r: '1.0',
+    g: '1.0',
+    b: '1.0',
+};
 
 const fragmentSource = `precision mediump float;
 
@@ -51,6 +57,7 @@ const fragmentSource = `precision mediump float;
     struct PointLight {
         vec3 point;
     };
+    const vec4 bgColour = vec4(${bg.r}, ${bg.g}, ${bg.b}, 1.0);
 
     uniform vec3 cameraPos;
     uniform vec3 vpRight;
@@ -73,7 +80,7 @@ const fragmentSource = `precision mediump float;
     vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
     vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
     vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
-    bool isLightVisible(vec3 pt, PointLight light);
+    bool isLightVisible(vec3 pt, PointLight light, vec3 normal);
     void draw();
      
     void main() {
@@ -99,7 +106,7 @@ const fragmentSource = `precision mediump float;
     vec4 trace(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
-           return vec4(1.0, 1.0, 1.0, 1.0);
+           return bgColour;
        }
 
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
@@ -111,7 +118,7 @@ const fragmentSource = `precision mediump float;
     vec4 trace2(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
-           return vec4(1.0, 1.0, 1.0, 1.0);
+           return bgColour;
        }
 
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
@@ -123,7 +130,7 @@ const fragmentSource = `precision mediump float;
     vec4 trace3(Ray ray) {
        SphereDistance sd = intersectScene(ray);
        if (sd.distance <= 0.0) {
-           return vec4(1.0, 1.0, 1.0, 1.0);
+           return bgColour;
        }
 
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
@@ -164,12 +171,11 @@ const fragmentSource = `precision mediump float;
         return v - sqrt(discriminant);
     }
 
-    bool isLightVisible(vec3 pt, PointLight light) {
-        vec3 unit = normalize(pt - light.point);
-        SphereDistance sd = intersectScene(Ray(pt, unit));
+    bool isLightVisible(vec3 pt, PointLight light, vec3 normal) {
+        vec3 unit = normalize(pt  - light.point);
+        SphereDistance sd = intersectScene(Ray(pt + vec3(normal.xyz * ${epsilon}), unit));
 
-        return true;
-        return sd.distance > -0.005;
+        return sd.distance > 0.0;
     }
 
     vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
@@ -179,7 +185,7 @@ const fragmentSource = `precision mediump float;
 
         if (sphere.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
                     float contribution = dot(lmp, normal);
 
@@ -214,7 +220,7 @@ const fragmentSource = `precision mediump float;
 
         if (sphere.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
                     float contribution = dot(lmp, normal);
 
@@ -249,7 +255,7 @@ const fragmentSource = `precision mediump float;
 
         if (sphere.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i]) == true) {
+                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
                     float contribution = dot(lmp, normal);
 

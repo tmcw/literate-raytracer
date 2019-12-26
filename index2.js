@@ -15,6 +15,7 @@ const vertexSource = `
        gl_Position = a_position;
     }
 `;
+const triangleCount = 1;
 const lightCount = 1;
 const sphereCount = 3;
 const epsilon = 0.00005;
@@ -44,6 +45,18 @@ const fragmentSource = `precision mediump float;
         Sphere sphere;
     };
 
+    struct Triangle {
+        vec3 a;
+        vec3 b;
+        vec3 c;
+        vec3 normal;
+    };
+
+    struct TriangleDistance {
+        float distance;
+        Triangle triangle;
+    };
+
     struct PointLight {
         vec3 point;
     };
@@ -60,9 +73,12 @@ const fragmentSource = `precision mediump float;
      
     uniform Sphere spheres[${sphereCount}];
     uniform PointLight pointLights[${lightCount}];
+    uniform Triangle triangles[${triangleCount}];
 
     float sphereIntersection(Sphere sphere, Ray ray);
-    SphereDistance intersectScene(Ray ray);
+    bool triangleIntersection(Triangle triangle, Ray ray);
+    SphereDistance intersectSpheres(Ray ray);
+    TriangleDistance intersectTriangles(Ray ray);
     vec4 trace(Ray ray);
     vec4 trace2(Ray ray);
     vec4 trace3(Ray ray);
@@ -94,19 +110,24 @@ const fragmentSource = `precision mediump float;
     }
 
     vec4 trace(Ray ray) {
-       SphereDistance sd = intersectScene(ray);
-       if (sd.distance <= 0.0) {
+       SphereDistance sd = intersectSpheres(ray);
+       TriangleDistance td = intersectTriangles(ray);
+       if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return bgColour;
        }
 
-       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+       if (sd.distance >= 0.0) {
+        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface(ray, sd.sphere, pointAtTime, normal);
+        return surface(ray, sd.sphere, pointAtTime, normal);
+       }
+
+       return vec4(0.0, 0.0, 0.8, 1.0);
     }
 
     vec4 trace2(Ray ray) {
-       SphereDistance sd = intersectScene(ray);
+       SphereDistance sd = intersectSpheres(ray);
        if (sd.distance <= 0.0) {
            return bgColour;
        }
@@ -118,7 +139,7 @@ const fragmentSource = `precision mediump float;
     }
 
     vec4 trace3(Ray ray) {
-       SphereDistance sd = intersectScene(ray);
+       SphereDistance sd = intersectSpheres(ray);
        if (sd.distance <= 0.0) {
            return bgColour;
        }
@@ -133,7 +154,7 @@ const fragmentSource = `precision mediump float;
         return normalize(pos - sphere.point);
     }
 
-    SphereDistance intersectScene(Ray ray) {
+    SphereDistance intersectSpheres(Ray ray) {
         SphereDistance sd = SphereDistance(-1.0, Sphere(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), -1.0, 0.0, 0.0, 0.0));
         for (int i = 0; i < ${sphereCount}; i += 1) {
             Sphere s = spheres[i];
@@ -146,6 +167,81 @@ const fragmentSource = `precision mediump float;
             }
         }
         return sd;
+    }
+
+    TriangleDistance intersectTriangles(Ray ray) {
+        TriangleDistance td = TriangleDistance(-1.0, Triangle(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0)));
+        for (int i = 0; i < ${triangleCount}; i += 1) {
+            Triangle t = triangles[i];
+            bool didIntersect = triangleIntersection(t, ray);
+            if (didIntersect == true) {
+                td.distance = 1.0;
+                td.triangle = t;
+            }
+        }
+        return td;
+    }
+
+    bool triangleIntersection(Triangle triangle, Ray ray) {
+        // Step 1: finding P
+    
+        // check if ray and plane are parallel ?
+        float normalDotRay = dot(triangle.normal, ray.vector);
+        if (abs(normalDotRay) < ${epsilon}) {
+            // parallel lines
+            return false;
+        }
+
+        // compute d parameter using equation 2
+        float d = dot(triangle.normal, triangle.a);
+    
+        // compute t (equation 3)
+        float t = (dot(triangle.normal, ray.point) + d) / normalDotRay;
+
+        // check if the triangle is in behind the ray
+        if (t > 0.0) {
+            // the triangle is behind
+            return false;
+        }
+ 
+        // compute the intersection point using equation 1
+        vec3 P = ray.point + t * ray.vector;
+
+
+        // Step 2: inside-outside test
+        vec3 C;  // vector perpendicular to triangle's plane
+ 
+        // edge 0
+        vec3 edge0 = triangle.b - triangle.a;
+        vec3 vp0 = P - triangle.a;
+        C = cross(edge0, vp0);
+
+        if (dot(triangle.normal, C) < 0.0) {
+            // P is on the right side;
+            return false;
+        }
+ 
+        // edge 1
+        vec3 edge1 = triangle.c - triangle.b;
+        vec3 vp1 = P - triangle.b;
+        C = cross(edge1, vp1);
+
+        if (dot(triangle.normal, C) < 0.0) {
+            // P is on the right side
+            return false;
+        }
+ 
+        // edge 2
+        vec3 edge2 = triangle.a - triangle.c;
+        vec3 vp2 = P - triangle.c;
+        C = cross(edge2, vp2);
+
+        if (dot(triangle.normal, C) < 0.0) {
+            // P is on the right side;
+            return false;
+        }
+
+        return true; // this ray hits the triangle
     }
 
     float sphereIntersection(Sphere sphere, Ray ray) {
@@ -163,7 +259,7 @@ const fragmentSource = `precision mediump float;
 
     bool isLightVisible(vec3 pt, PointLight light, vec3 normal) {
         vec3 unit = normalize(pt  - light.point);
-        SphereDistance sd = intersectScene(Ray(pt + vec3(normal.xyz * ${epsilon}), unit));
+        SphereDistance sd = intersectSpheres(Ray(pt + vec3(normal.xyz * ${epsilon}), unit));
 
         return sd.distance > 0.0;
     }
@@ -377,7 +473,7 @@ const g_scene = {
             y: -10,
             z: 20
         }],
-    objects: [
+    spheres: [
         {
             type: 'sphere',
             point: {
@@ -428,7 +524,38 @@ const g_scene = {
             lambert: 0.7,
             ambient: 0.1,
             radius: 0.1
-        }
+        },
+    ],
+    triangles: [
+        {
+            type: 'triangle',
+            points: [
+                {
+                    x: 3,
+                    y: 2,
+                    z: -1,
+                },
+                {
+                    x: -2,
+                    y: 0,
+                    z: -1,
+                },
+                {
+                    x: 3,
+                    y: -1,
+                    z: -1,
+                },
+            ],
+            colour: {
+                x: 0,
+                y: 255,
+                z: 0
+            },
+            specular: 0.2,
+            lambert: 0.7,
+            ambient: 0.1,
+            radius: 0.1
+        },
     ],
 };
 const g_ctx = bindProgram(g_gl);
@@ -436,24 +563,39 @@ const uniforms = setupScene(g_gl, g_ctx, g_scene);
 draw(g_gl, g_ctx);
 let planet1 = 0;
 let planet2 = 0;
+let zod1 = 0.05;
 const animate = () => {
     planet1 += 0.01;
     planet2 += 0.02;
+    // move zod around
+    if (g_scene.triangles[0].points[0].y > 5.5) {
+        zod1 *= -1;
+    }
+    else if (g_scene.triangles[0].points[0].y < -5.5) {
+        zod1 *= -1;
+    }
+    g_scene.triangles[0].points[0].y += zod1;
     // set the position of each moon with some trig.
-    g_scene.objects[1].point.x = Math.sin(planet1) * 3.5;
-    g_scene.objects[1].point.z = -3 + (Math.cos(planet1) * 3.5);
-    g_scene.objects[2].point.x = Math.sin(planet2) * 4;
-    g_scene.objects[2].point.z = -3 + (Math.cos(planet2) * 4);
-    g_scene.objects.forEach((o, i) => {
+    g_scene.spheres[1].point.x = Math.sin(planet1) * 3.5;
+    g_scene.spheres[1].point.z = -3 + (Math.cos(planet1) * 3.5);
+    g_scene.spheres[2].point.x = Math.sin(planet2) * 4;
+    g_scene.spheres[2].point.z = -3 + (Math.cos(planet2) * 4);
+    g_scene.spheres.forEach((o, i) => {
         uniforms.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
+    });
+    g_scene.triangles.forEach((t, i) => {
+        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
+        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
+        const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
+        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal);
     });
     draw(g_gl, g_ctx);
     requestAnimationFrame(animate);
 };
 animate();
 function setupScene(gl, context, scene) {
-    const { camera, objects, lights } = scene;
-    const u = getUniformSetters(gl, context.program, objects.length);
+    const { camera, spheres, triangles, lights } = scene;
+    const u = getUniformSetters(gl, context.program);
     // This process
     // is a bit odd, because there's a disconnect between pixels and vectors:
     // given the left and right, top and bottom rays, the rays we shoot are just
@@ -494,8 +636,14 @@ function setupScene(gl, context, scene) {
     const pixelHeight = cameraheight / (height - 1);
     u.pixelHeight(pixelHeight);
     u.cameraPos(camera.point);
-    objects.forEach((o, i) => {
-        u.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
+    spheres.forEach((s, i) => {
+        u.spheres(i, s.radius, s.point, s.colour, s.ambient, s.lambert, s.specular);
+    });
+    triangles.forEach((t, i) => {
+        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
+        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
+        const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
+        u.triangles(i, t.points[0], t.points[1], t.points[2], normal);
     });
     lights.forEach((l, i) => {
         u.lights(i, l);
@@ -509,7 +657,7 @@ function getUniformLocation(gl, program, name) {
     }
     return location;
 }
-function getUniformSetters(gl, program, sphereCount) {
+function getUniformSetters(gl, program) {
     const cameraPos = getUniformLocation(gl, program, 'cameraPos');
     const vpRight = getUniformLocation(gl, program, 'vpRight');
     const pixelWidth = getUniformLocation(gl, program, 'pixelWidth');
@@ -518,7 +666,7 @@ function getUniformSetters(gl, program, sphereCount) {
     const pixelHeight = getUniformLocation(gl, program, 'pixelHeight');
     const halfHeight = getUniformLocation(gl, program, 'halfHeight');
     const eyeVector = getUniformLocation(gl, program, 'eyeVector');
-    const spheres = g_scene.objects.map((_, i) => {
+    const spheres = g_scene.spheres.map((_, i) => {
         return {
             colour: getUniformLocation(gl, program, `spheres[${i}].colour`),
             point: getUniformLocation(gl, program, `spheres[${i}].point`),
@@ -526,6 +674,14 @@ function getUniformSetters(gl, program, sphereCount) {
             ambient: getUniformLocation(gl, program, `spheres[${i}].ambient`),
             lambert: getUniformLocation(gl, program, `spheres[${i}].lambert`),
             specular: getUniformLocation(gl, program, `spheres[${i}].specular`),
+        };
+    });
+    const triangles = g_scene.triangles.map((_, i) => {
+        return {
+            a: getUniformLocation(gl, program, `triangles[${i}].a`),
+            b: getUniformLocation(gl, program, `triangles[${i}].b`),
+            c: getUniformLocation(gl, program, `triangles[${i}].c`),
+            normal: getUniformLocation(gl, program, `triangles[${i}].normal`),
         };
     });
     const lights = g_scene.lights.map((_, i) => {
@@ -574,6 +730,15 @@ function getUniformSetters(gl, program, sphereCount) {
             setFloat(spheres[index].ambient, ambient);
             setFloat(spheres[index].lambert, lambert);
             setFloat(spheres[index].specular, specular);
+        },
+        triangles(index, a, b, c, normal) {
+            if (!triangles[index]) {
+                throw new RangeError('out of bounds triangle');
+            }
+            setVec3(triangles[index].a, a);
+            setVec3(triangles[index].b, b);
+            setVec3(triangles[index].c, c);
+            setVec3(triangles[index].normal, normal);
         },
         lights(index, point) {
             if (!lights[index]) {

@@ -31,13 +31,17 @@ const fragmentSource = `precision mediump float;
         vec3 vector;
     };
 
-    struct Sphere {
+    struct Material {
         vec3 colour;
-        vec3 point;
-        float radius;
         float ambient;
         float lambert;
         float specular;
+    };
+
+    struct Sphere {
+        vec3 point;
+        float radius;
+        Material material;
     };
 
     struct SphereDistance {
@@ -50,6 +54,7 @@ const fragmentSource = `precision mediump float;
         vec3 b;
         vec3 c;
         vec3 normal;
+        Material material;
     };
 
     struct TriangleDistance {
@@ -83,9 +88,9 @@ const fragmentSource = `precision mediump float;
     vec4 trace2(Ray ray);
     vec4 trace3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
-    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
-    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
-    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal);
+    vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
+    vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
+    vec4 surface3(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
     bool isLightVisible(vec3 pt, PointLight light, vec3 normal);
     void draw();
      
@@ -120,10 +125,11 @@ const fragmentSource = `precision mediump float;
         vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
         vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-        return surface(ray, sd.sphere, pointAtTime, normal);
+        return surface(ray, sd.sphere.material, pointAtTime, normal);
        }
 
-       return vec4(0.0, 0.0, 0.8, 1.0);
+       vec3 c = td.triangle.material.colour;
+       return vec4(c.r / 255.0, c.g / 255.0, c.b / 255.0, 1.0);
     }
 
     vec4 trace2(Ray ray) {
@@ -135,7 +141,7 @@ const fragmentSource = `precision mediump float;
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface2(ray, sd.sphere, pointAtTime, normal);
+       return surface2(ray, sd.sphere.material, pointAtTime, normal);
     }
 
     vec4 trace3(Ray ray) {
@@ -147,7 +153,7 @@ const fragmentSource = `precision mediump float;
        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface3(ray, sd.sphere, pointAtTime, normal);
+       return surface3(ray, sd.sphere.material, pointAtTime, normal);
     }
 
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
@@ -155,7 +161,10 @@ const fragmentSource = `precision mediump float;
     }
 
     SphereDistance intersectSpheres(Ray ray) {
-        SphereDistance sd = SphereDistance(-1.0, Sphere(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), -1.0, 0.0, 0.0, 0.0));
+        SphereDistance sd = SphereDistance(-1.0, Sphere(
+            vec3(0.0, 0.0, 0.0), 
+            -1.0,
+            Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)));
         for (int i = 0; i < ${sphereCount}; i += 1) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
@@ -170,7 +179,13 @@ const fragmentSource = `precision mediump float;
     }
 
     TriangleDistance intersectTriangles(Ray ray) {
-        TriangleDistance td = TriangleDistance(-1.0, Triangle(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0)));
+        TriangleDistance td = TriangleDistance(
+            -1.0, 
+            Triangle(
+                vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
+                vec3(0.0, 0.0, 0.0), 
+                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)));
+
         for (int i = 0; i < ${triangleCount}; i += 1) {
             Triangle t = triangles[i];
             bool didIntersect = triangleIntersection(t, ray);
@@ -264,12 +279,12 @@ const fragmentSource = `precision mediump float;
         return sd.distance > 0.0;
     }
 
-    vec4 surface(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
-        vec3 b = vec3(sphere.colour.rgb / 255.0);
+    vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
+        vec3 b = vec3(material.colour.rgb / 255.0);
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
 
-        if (sphere.lambert > 0.0) {
+        if (material.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
                 if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
@@ -282,29 +297,29 @@ const fragmentSource = `precision mediump float;
             }
         }
 
-        if (sphere.specular > 0.0) {
+        if (material.specular > 0.0) {
             vec3 reflected = reflect(ray.vector, normal);
             vec4 rColour = trace2(Ray(pointAtTime, reflected));
             if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
-                c += vec3(rColour.rgb * sphere.specular);
+                c += vec3(rColour.rgb * material.specular);
             }
         }
 
         lambertAmount = min(1.0, lambertAmount);
 
-        vec3 lambert = vec3(b.rgb * lambertAmount * sphere.lambert);
-        vec3 ambient = vec3(b.rgb * sphere.ambient);
+        vec3 lambert = vec3(b.rgb * lambertAmount * material.lambert);
+        vec3 ambient = vec3(b.rgb * material.ambient);
 
         vec3 total = lambert + ambient + c;
         return vec4(total.rgb, 1.0);
     }
 
-    vec4 surface2(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
-        vec3 b = sphere.colour;
+    vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
+        vec3 b = material.colour;
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
 
-        if (sphere.lambert > 0.0) {
+        if (material.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
                 if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
@@ -317,29 +332,29 @@ const fragmentSource = `precision mediump float;
             }
         }
 
-        if (sphere.specular > 0.0) {
+        if (material.specular > 0.0) {
             vec3 reflected = reflect(ray.vector, normal);
             vec4 rColour = trace3(Ray(pointAtTime, reflected));
             if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
-                c += vec3(rColour.rgb * sphere.specular);
+                c += vec3(rColour.rgb * material.specular);
             }
         }
 
         lambertAmount = min(1.0, lambertAmount);
 
-        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * sphere.lambert);
-        vec3 ambient = vec3(b.rgb / 255.0 * sphere.ambient);
+        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * material.lambert);
+        vec3 ambient = vec3(b.rgb / 255.0 * material.ambient);
 
         vec3 total = lambert + ambient + c;
         return vec4(total.r, total.g, total.b, 1.0);
     }
 
-    vec4 surface3(Ray ray, Sphere sphere, vec3 pointAtTime, vec3 normal) {
-        vec3 b = sphere.colour;
+    vec4 surface3(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
+        vec3 b = material.colour;
         vec3 c = vec3(0.0, 0.0, 0.0);
         float lambertAmount = 0.0;
 
-        if (sphere.lambert > 0.0) {
+        if (material.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
                 if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
                     vec3 lmp = normalize(pointLights[i].point - pointAtTime);
@@ -354,8 +369,8 @@ const fragmentSource = `precision mediump float;
 
         lambertAmount = min(1.0, lambertAmount);
 
-        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * sphere.lambert);
-        vec3 ambient = vec3(b.rgb / 255.0 * sphere.ambient);
+        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * material.lambert);
+        vec3 ambient = vec3(b.rgb / 255.0 * material.ambient);
 
         vec3 total = lambert + ambient + c;
         return vec4(total.r, total.g, total.b, 1.0);
@@ -548,8 +563,8 @@ const g_scene = {
             ],
             colour: {
                 x: 0,
-                y: 255,
-                z: 0
+                y: 100,
+                z: 200,
             },
             specular: 0.2,
             lambert: 0.7,
@@ -587,7 +602,7 @@ const animate = () => {
         const v0v1 = Vector.subtract(t.points[1], t.points[0]);
         const v0v2 = Vector.subtract(t.points[2], t.points[0]);
         const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
-        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal);
+        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
     draw(g_gl, g_ctx);
     requestAnimationFrame(animate);
@@ -643,7 +658,7 @@ function setupScene(gl, context, scene) {
         const v0v1 = Vector.subtract(t.points[1], t.points[0]);
         const v0v2 = Vector.subtract(t.points[2], t.points[0]);
         const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
-        u.triangles(i, t.points[0], t.points[1], t.points[2], normal);
+        u.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
     lights.forEach((l, i) => {
         u.lights(i, l);
@@ -668,12 +683,12 @@ function getUniformSetters(gl, program) {
     const eyeVector = getUniformLocation(gl, program, 'eyeVector');
     const spheres = g_scene.spheres.map((_, i) => {
         return {
-            colour: getUniformLocation(gl, program, `spheres[${i}].colour`),
             point: getUniformLocation(gl, program, `spheres[${i}].point`),
             radius: getUniformLocation(gl, program, `spheres[${i}].radius`),
-            ambient: getUniformLocation(gl, program, `spheres[${i}].ambient`),
-            lambert: getUniformLocation(gl, program, `spheres[${i}].lambert`),
-            specular: getUniformLocation(gl, program, `spheres[${i}].specular`),
+            colour: getUniformLocation(gl, program, `spheres[${i}].material.colour`),
+            ambient: getUniformLocation(gl, program, `spheres[${i}].material.ambient`),
+            lambert: getUniformLocation(gl, program, `spheres[${i}].material.lambert`),
+            specular: getUniformLocation(gl, program, `spheres[${i}].material.specular`),
         };
     });
     const triangles = g_scene.triangles.map((_, i) => {
@@ -682,6 +697,10 @@ function getUniformSetters(gl, program) {
             b: getUniformLocation(gl, program, `triangles[${i}].b`),
             c: getUniformLocation(gl, program, `triangles[${i}].c`),
             normal: getUniformLocation(gl, program, `triangles[${i}].normal`),
+            colour: getUniformLocation(gl, program, `triangles[${i}].material.colour`),
+            ambient: getUniformLocation(gl, program, `triangles[${i}].material.ambient`),
+            lambert: getUniformLocation(gl, program, `triangles[${i}].material.lambert`),
+            specular: getUniformLocation(gl, program, `triangles[${i}].material.specular`),
         };
     });
     const lights = g_scene.lights.map((_, i) => {
@@ -731,7 +750,7 @@ function getUniformSetters(gl, program) {
             setFloat(spheres[index].lambert, lambert);
             setFloat(spheres[index].specular, specular);
         },
-        triangles(index, a, b, c, normal) {
+        triangles(index, a, b, c, normal, colour, ambient, lambert, specular) {
             if (!triangles[index]) {
                 throw new RangeError('out of bounds triangle');
             }
@@ -739,6 +758,10 @@ function getUniformSetters(gl, program) {
             setVec3(triangles[index].b, b);
             setVec3(triangles[index].c, c);
             setVec3(triangles[index].normal, normal);
+            setVec3(triangles[index].colour, colour);
+            setFloat(triangles[index].ambient, ambient);
+            setFloat(triangles[index].lambert, lambert);
+            setFloat(triangles[index].specular, specular);
         },
         lights(index, point) {
             if (!lights[index]) {

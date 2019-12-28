@@ -63,6 +63,14 @@ class Vector {
         return Vector.scale(a, 1 / Vector.len(a));
     }
     ;
+    static normalize(a) {
+        const sum = a.x * a.x + a.y * a.y + a.z * a.z;
+        return {
+            x: a.x / sum,
+            y: a.y / sum,
+            z: a.z / sum,
+        };
+    }
     // Add two vectors to each other, by simply combining each
     // of their components
     static add(a, b) {

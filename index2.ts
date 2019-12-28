@@ -217,14 +217,14 @@ const fragmentSource = `precision mediump float;
             return false;
         }
 
-        // compute d parameter using equation 2
+        // compute d parameter
         float d = dot(triangle.normal, triangle.a);
     
-        // compute t (equation 3)
+        // compute t
         float t = (dot(triangle.normal, ray.point) + d) / normalDotRay;
 
         // check if the triangle is in behind the ray
-        if (t > 0.0) {
+        if (t < 0.0) {
             // the triangle is behind
             return false;
         }
@@ -678,7 +678,7 @@ const animate = () => {
     g_scene.triangles.forEach((t, i) => {
         const v0v1 = Vector.subtract(t.points[1], t.points[0]);
         const v0v2 = Vector.subtract(t.points[2], t.points[0]);
-        const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
+        const normal = Vector.normalize(Vector.crossProduct(v0v1, v0v2));
         uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
 
@@ -722,7 +722,7 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
         // note that `width` and `height` are in pixels, but the numbers we compute
         // here are just based on the ratio between them, `height/width`, and the
         // `fieldOfView` of the camera.
-    const fovRadians = Math.PI * camera.fieldOfView / 180;
+    const fovRadians = Math.PI * (camera.fieldOfView * 0.5) / 180;
     const heightWidthRatio = height / width;
     const halfWidth = Math.tan(fovRadians);
     u.halfWidth(halfWidth);

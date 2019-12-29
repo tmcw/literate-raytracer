@@ -20,9 +20,9 @@ const lightCount = 1;
 const sphereCount = 3;
 const epsilon = 0.00005;
 const bg = {
-    r: '1.0',
-    g: '1.0',
-    b: '1.0',
+    r: '0.05',
+    g: '0.05',
+    b: '0.05',
 };
 const fragmentSource = `precision mediump float;
 
@@ -60,6 +60,7 @@ const fragmentSource = `precision mediump float;
     struct TriangleDistance {
         float distance;
         Triangle triangle;
+        vec3 intersectPoint;
     };
 
     struct PointLight {
@@ -67,21 +68,20 @@ const fragmentSource = `precision mediump float;
     };
     const vec4 bgColour = vec4(${bg.r}, ${bg.g}, ${bg.b}, 1.0);
 
+    uniform float aspectRatio;
     uniform vec3 cameraPos;
-    uniform vec3 vpRight;
-    uniform float pixelWidth;
-    uniform float halfWidth;
-    uniform vec3 vpUp;
-    uniform float pixelHeight;
-    uniform float halfHeight;
-    uniform vec3 eyeVector;
+    uniform mat4 cameraMatrix;
+    uniform float globalAmbientIntensity;
+    uniform float height;
+    uniform float scale;
+    uniform float width;
      
     uniform Sphere spheres[${sphereCount}];
     uniform PointLight pointLights[${lightCount}];
     uniform Triangle triangles[${triangleCount}];
 
     float sphereIntersection(Sphere sphere, Ray ray);
-    bool triangleIntersection(Triangle triangle, Ray ray);
+    TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
     SphereDistance intersectSpheres(Ray ray);
     TriangleDistance intersectTriangles(Ray ray);
     vec4 trace(Ray ray);
@@ -99,17 +99,19 @@ const fragmentSource = `precision mediump float;
     }
 
     void draw() {
-        float x = gl_FragCoord.x;
-        float y = gl_FragCoord.y;
-        float scaleX = (x * pixelWidth) - halfWidth;
-        float scaleY = (y * pixelHeight) - halfHeight;
+        float px = gl_FragCoord.x;
+        float py = gl_FragCoord.y;
 
-        vec3 xcomp = vec3(vpRight.xyz * scaleX);
-        vec3 ycomp = vec3(vpUp.xyz * scaleY);
-        vec3 xPlusY = xcomp + ycomp;
-        vec3 full = eyeVector + xPlusY;
+        float x = (2.0 * (px + 0.5) / width - 1.0) * scale;
+        float y = (2.0 * (py + 0.5) / height - 1.0) * scale * 1.0 / aspectRatio;
 
-        Ray ray = Ray(cameraPos, normalize(full));
+        vec3 dir = vec3(0.0, 0.0, 0.0);
+
+        dir.x = x    * cameraMatrix[0][0] + y * cameraMatrix[1][0] + -1.0 * cameraMatrix[2][0];
+        dir.y = y    * cameraMatrix[0][1] + y * cameraMatrix[1][1] + -1.0 * cameraMatrix[2][1];
+        dir.z = -1.0 * cameraMatrix[0][2] + y * cameraMatrix[1][2] + -1.0 * cameraMatrix[2][2];
+
+        Ray ray = Ray(cameraPos, normalize(dir));
 
         gl_FragColor = trace(ray);
     }
@@ -128,32 +130,41 @@ const fragmentSource = `precision mediump float;
         return surface(ray, sd.sphere.material, pointAtTime, normal);
        }
 
-       vec3 c = td.triangle.material.colour;
-       return vec4(c.r / 255.0, c.g / 255.0, c.b / 255.0, 1.0);
+       return surface(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
     }
 
     vec4 trace2(Ray ray) {
        SphereDistance sd = intersectSpheres(ray);
-       if (sd.distance <= 0.0) {
+       TriangleDistance td = intersectTriangles(ray);
+       if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return bgColour;
        }
 
-       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+       if (sd.distance >= 0.0) {
+        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface2(ray, sd.sphere.material, pointAtTime, normal);
+        return surface2(ray, sd.sphere.material, pointAtTime, normal);
+       }
+
+       return surface2(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
     }
 
     vec4 trace3(Ray ray) {
        SphereDistance sd = intersectSpheres(ray);
-       if (sd.distance <= 0.0) {
+       TriangleDistance td = intersectTriangles(ray);
+       if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return bgColour;
        }
 
-       vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-       vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+       if (sd.distance >= 0.0) {
+        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-       return surface3(ray, sd.sphere.material, pointAtTime, normal);
+        return surface3(ray, sd.sphere.material, pointAtTime, normal);
+       }
+
+       return surface3(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
     }
 
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
@@ -179,44 +190,54 @@ const fragmentSource = `precision mediump float;
     }
 
     TriangleDistance intersectTriangles(Ray ray) {
+        TriangleDistance least = TriangleDistance(
+            -1.0, 
+            Triangle(
+                vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
+                vec3(0.0, 0.0, 0.0), 
+                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)),
+            vec3(0.0, 0.0, 0.0));
+
+        for (int i = 0; i < ${triangleCount}; i += 1) {
+            Triangle t = triangles[i];
+            TriangleDistance td = triangleIntersection(t, ray);
+            if (td.distance >= 0.0) {
+                if (least.distance <= 0.0 || td.distance < least.distance) {
+                    td.triangle = t;
+                    least = td;
+                }
+            }
+        }
+        return least;
+    }
+
+    TriangleDistance triangleIntersection(Triangle triangle, Ray ray) {
+        // Step 1: finding P
         TriangleDistance td = TriangleDistance(
             -1.0, 
             Triangle(
                 vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
                 vec3(0.0, 0.0, 0.0), 
-                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)));
-
-        for (int i = 0; i < ${triangleCount}; i += 1) {
-            Triangle t = triangles[i];
-            bool didIntersect = triangleIntersection(t, ray);
-            if (didIntersect == true) {
-                td.distance = 1.0;
-                td.triangle = t;
-            }
-        }
-        return td;
-    }
-
-    bool triangleIntersection(Triangle triangle, Ray ray) {
-        // Step 1: finding P
+                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)),
+            vec3(0.0, 0.0, 0.0));
     
         // check if ray and plane are parallel ?
         float normalDotRay = dot(triangle.normal, ray.vector);
         if (abs(normalDotRay) < ${epsilon}) {
             // parallel lines
-            return false;
+            return td;
         }
 
         // compute d parameter
         float d = dot(triangle.normal, triangle.a);
     
         // compute t
-        float t = (dot(triangle.normal, ray.point) + d) / normalDotRay;
+        float t = (dot(triangle.normal, ray.point) + d) / (-1.0 * normalDotRay);
 
         // check if the triangle is in behind the ray
         if (t < 0.0) {
             // the triangle is behind
-            return false;
+            return td;
         }
  
         // compute the intersection point using equation 1
@@ -233,7 +254,7 @@ const fragmentSource = `precision mediump float;
 
         if (dot(triangle.normal, C) < 0.0) {
             // P is on the right side;
-            return false;
+            return td;
         }
  
         // edge 1
@@ -243,7 +264,7 @@ const fragmentSource = `precision mediump float;
 
         if (dot(triangle.normal, C) < 0.0) {
             // P is on the right side
-            return false;
+            return td;
         }
  
         // edge 2
@@ -253,10 +274,13 @@ const fragmentSource = `precision mediump float;
 
         if (dot(triangle.normal, C) < 0.0) {
             // P is on the right side;
-            return false;
+            return td;
         }
 
-        return true; // this ray hits the triangle
+        td.distance = t;
+        td.intersectPoint = P;
+
+        return td; // this ray hits the triangle
     }
 
     float sphereIntersection(Sphere sphere, Ray ray) {
@@ -274,79 +298,119 @@ const fragmentSource = `precision mediump float;
 
     bool isLightVisible(vec3 pt, PointLight light, vec3 normal) {
         vec3 unit = normalize(pt  - light.point);
-        SphereDistance sd = intersectSpheres(Ray(pt + vec3(normal.xyz * ${epsilon}), unit));
+        Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit);
+        SphereDistance sd = intersectSpheres(ray);
 
-        return sd.distance > 0.0;
+        if (sd.distance < 0.0) {
+            return true;
+        }
+
+        TriangleDistance td = intersectTriangles(ray);
+
+        return td.distance < 0.0;
+    }
+
+    float getLambert(vec3 pointAtTime, vec3 normal, vec3 lightPoint, float intensity) {
+        vec3 lightDir = normalize(lightPoint - pointAtTime);
+        float angleCo = max(0.0, dot(normal, lightDir));
+
+        return angleCo * intensity;
+    }
+
+    float getPhong(vec3 pointAtTime, vec3 normal, vec3 lightPoint, vec3 camDir, float intensity, float shiny) {
+        vec3 lightDir = normalize(lightPoint - pointAtTime);
+        vec3 halfVector = normalize(camDir + lightDir);
+        float halfVectorAngle = max(0.0, dot(normal, halfVector));
+        halfVectorAngle = pow(halfVectorAngle, shiny);
+
+        return intensity * halfVectorAngle;
     }
 
     vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
-        vec3 b = vec3(material.colour.rgb / 255.0);
-        vec3 c = vec3(0.0, 0.0, 0.0);
-        float lambertAmount = 0.0;
+        // calculate ambient light
+        vec3 fullColour = vec3(material.colour.rgb / 255.0);
+        vec4 ambient = vec4(fullColour.rgb * globalAmbientIntensity, 1.0);
 
+        if (material.ambient > 0.0) {
+            ambient = vec4(ambient.rgb + fullColour.rgb * material.ambient, 1.0);
+        }
+
+        // calculate point/spot/surface lights
+        float lambert = 0.0;
+        float phong = 0.0;
+        vec3 camDir = normalize(cameraPos - pointAtTime);
+
+        bool isInShadow = true;
         if (material.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
                 if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
-                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
-                    float contribution = dot(lmp, normal);
-
-                    if (contribution > 0.0) {
-                        lambertAmount += contribution;
-                    }
+                    isInShadow = false;
+                    lambert += getLambert(pointAtTime, normal, pointLights[i].point, material.lambert);
+                    phong += getPhong(pointAtTime, normal, pointLights[i].point, camDir, material.lambert, material.specular);
                 }
             }
         }
 
-        if (material.specular > 0.0) {
-            vec3 reflected = reflect(ray.vector, normal);
-            vec4 rColour = trace2(Ray(pointAtTime, reflected));
-            if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
-                c += vec3(rColour.rgb * material.specular);
-            }
+        // we can now bail if we're in the shadow
+        if (isInShadow == true) {
+            return ambient;
         }
 
-        lambertAmount = min(1.0, lambertAmount);
+        // we have light, let's do reflections
+        vec3 negCamDir = vec3(camDir.xyz * -1.0);
+        vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
+        vec4 reflection = trace2(Ray(pointAtTime, r));
 
-        vec3 lambert = vec3(b.rgb * lambertAmount * material.lambert);
-        vec3 ambient = vec3(b.rgb * material.ambient);
-
-        vec3 total = lambert + ambient + c;
-        return vec4(total.rgb, 1.0);
+        vec4 total = vec4(
+            ambient.rgb + 
+            fullColour.rgb * lambert +
+            fullColour.rgb * phong +
+            reflection.rgb * material.specular, 1.0);
+        
+        return total;
     }
 
     vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
-        vec3 b = material.colour;
-        vec3 c = vec3(0.0, 0.0, 0.0);
-        float lambertAmount = 0.0;
+        // calculate ambient light
+        vec3 fullColour = vec3(material.colour.rgb / 255.0);
+        vec4 ambient = vec4(fullColour.rgb * globalAmbientIntensity, 1.0);
 
+        if (material.ambient > 0.0) {
+            ambient = vec4(ambient.rgb + fullColour.rgb * material.ambient, 1.0);
+        }
+
+        // calculate point/spot/surface lights
+        float lambert = 0.0;
+        float phong = 0.0;
+        vec3 camDir = normalize(cameraPos - pointAtTime);
+
+        bool isInShadow = true;
         if (material.lambert > 0.0) {
             for (int i = 0; i < ${lightCount}; i += 1) {
                 if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
-                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
-                    float contribution = dot(lmp, normal);
-
-                    if (contribution > 0.0) {
-                        lambertAmount += contribution;
-                    }
+                    isInShadow = false;
+                    lambert += getLambert(pointAtTime, normal, pointLights[i].point, material.lambert);
+                    phong += getPhong(pointAtTime, normal, pointLights[i].point, camDir, material.lambert, material.specular);
                 }
             }
         }
 
-        if (material.specular > 0.0) {
-            vec3 reflected = reflect(ray.vector, normal);
-            vec4 rColour = trace3(Ray(pointAtTime, reflected));
-            if (rColour.r > 0.0 && rColour.g > 0.0 && rColour.b > 0.0 && rColour.a > 0.0) {
-                c += vec3(rColour.rgb * material.specular);
-            }
+        // we can now bail if we're in the shadow
+        if (isInShadow == true) {
+            return ambient;
         }
 
-        lambertAmount = min(1.0, lambertAmount);
+        // we have light, let's do reflections
+        // vec3 negCamDir = vec3(camDir.xyz * -1.0);
+        // vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
+        // vec4 reflection = trace2(Ray(pointAtTime, r));
 
-        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * material.lambert);
-        vec3 ambient = vec3(b.rgb / 255.0 * material.ambient);
-
-        vec3 total = lambert + ambient + c;
-        return vec4(total.r, total.g, total.b, 1.0);
+        vec4 total = vec4(
+            ambient.rgb + 
+            fullColour.rgb * lambert +
+            fullColour.rgb * phong, 1.0);
+        
+        return total;
     }
 
     vec4 surface3(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
@@ -471,15 +535,17 @@ function draw(gl, context) {
  */
 const g_scene = {
     camera: {
-        point: [0, 1.8, 10],
+        point: [0, 0, 20],
         fieldOfView: 45,
-        vector: [0, 3, 0],
+        rotation: [0, 0, 0],
+        up: [0, 1, 0],
     },
-    lights: [[-30, 10, 20]],
+    globalAmbientIntensity: 0.002,
+    lights: [[-20, 10, 20]],
     spheres: [
         {
             type: 'sphere',
-            point: [0, 3.5, -3],
+            point: [0, 0, -3],
             colour: [100, 0, 0],
             specular: 0.2,
             lambert: 0.7,
@@ -488,7 +554,7 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: [-4, 2, -1],
+            point: [-4, 0, -1],
             colour: [0, 0, 124],
             specular: 0.1,
             lambert: 0.9,
@@ -497,7 +563,7 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: [-4, 3, -1],
+            point: [-4, 0, -1],
             colour: [0, 255, 0],
             specular: 0.2,
             lambert: 0.7,
@@ -509,9 +575,9 @@ const g_scene = {
         {
             type: 'triangle',
             points: [
-                [3, 2, -1],
-                [-3, 2, -1],
-                [-3, -1, -1],
+                [3, 2, -10],
+                [-3, 2, -10],
+                [-3, -1, -10],
             ],
             colour: [0, 100, 200],
             specular: 0.2,
@@ -559,46 +625,23 @@ animate();
 function setupScene(gl, context, scene) {
     const { camera, spheres, triangles, lights } = scene;
     const u = getUniformSetters(gl, context.program);
-    // This process
-    // is a bit odd, because there's a disconnect between pixels and vectors:
-    // given the left and right, top and bottom rays, the rays we shoot are just
-    // interpolated between them in little increments.
-    //
-    // Starting with the height and width of the scene, the camera's place,
-    // direction, and field of view, we calculate factors that create
-    // `width*height` vectors for each ray
-    // Start by creating a simple vector pointing in the direction the camera is
-    // pointing - a unit vector
-    const eyeVector = normalize3_1(subtract3_1(camera.vector, camera.point));
-    u.eyeVector(eyeVector);
-    // and then we'll rotate this by combining it with a version that's turned
-    // 90° right and one that's turned 90° up. Since the [cross product](http://en.wikipedia.org/wiki/Cross_product)
-    // takes two vectors and creates a third that's perpendicular to both,
-    // we use a pure 'UP' vector to turn the camera right, and that 'right'
-    // vector to turn the camera up.
-    const vpRight = normalize3_1(multiply3_1(eyeVector, [0, 1, 0]));
-    u.vpRight(vpRight);
-    const vpUp = normalize3_1(multiply3_1(vpRight, eyeVector));
-    u.vpUp(vpUp);
+    const cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);
+    const scale = Math.tan(Math.PI * (camera.fieldOfView * 0.5) / 180);
     const width = gl.canvas.clientWidth;
     const height = gl.canvas.clientHeight;
-    // The actual ending pixel dimensions of the image aren't important here -
-    // note that `width` and `height` are in pixels, but the numbers we compute
-    // here are just based on the ratio between them, `height/width`, and the
-    // `fieldOfView` of the camera.
-    const fovRadians = Math.PI * (camera.fieldOfView * 0.5) / 180;
-    const heightWidthRatio = height / width;
-    const halfWidth = Math.tan(fovRadians);
-    u.halfWidth(halfWidth);
-    const halfHeight = heightWidthRatio * halfWidth;
-    u.halfHeight(halfHeight);
-    const camerawidth = halfWidth * 2;
-    const cameraheight = halfHeight * 2;
-    const pixelWidth = camerawidth / (width - 1);
-    u.pixelWidth(pixelWidth);
-    const pixelHeight = cameraheight / (height - 1);
-    u.pixelHeight(pixelHeight);
-    u.cameraPos(camera.point);
+    const aspectRatio = width / height;
+    const origin = [
+        cameraMatrix[12],
+        cameraMatrix[13],
+        cameraMatrix[14],
+    ];
+    u.aspectRatio(aspectRatio);
+    u.cameraMatrix(cameraMatrix);
+    u.cameraPos(origin);
+    u.globalAmbientIntensity(scene.globalAmbientIntensity);
+    u.height(height);
+    u.scale(scale);
+    u.width(width);
     spheres.forEach((s, i) => {
         u.spheres(i, s.radius, s.point, s.colour, s.ambient, s.lambert, s.specular);
     });
@@ -621,14 +664,13 @@ function getUniformLocation(gl, program, name) {
     return location;
 }
 function getUniformSetters(gl, program) {
+    const cameraMatrix = getUniformLocation(gl, program, 'cameraMatrix');
     const cameraPos = getUniformLocation(gl, program, 'cameraPos');
-    const vpRight = getUniformLocation(gl, program, 'vpRight');
-    const pixelWidth = getUniformLocation(gl, program, 'pixelWidth');
-    const halfWidth = getUniformLocation(gl, program, 'halfWidth');
-    const vpUp = getUniformLocation(gl, program, 'vpUp');
-    const pixelHeight = getUniformLocation(gl, program, 'pixelHeight');
-    const halfHeight = getUniformLocation(gl, program, 'halfHeight');
-    const eyeVector = getUniformLocation(gl, program, 'eyeVector');
+    const width = getUniformLocation(gl, program, 'width');
+    const globalAmbientIntensity = getUniformLocation(gl, program, 'globalAmbientIntensity');
+    const height = getUniformLocation(gl, program, 'height');
+    const aspectRatio = getUniformLocation(gl, program, 'aspectRatio');
+    const scale = getUniformLocation(gl, program, 'scale');
     const spheres = g_scene.spheres.map((_, i) => {
         return {
             point: getUniformLocation(gl, program, `spheres[${i}].point`),
@@ -663,29 +705,29 @@ function getUniformSetters(gl, program) {
         gl.uniform1f(loc, f);
     };
     return {
+        aspectRatio(aspect) {
+            setFloat(aspectRatio, aspect);
+        },
+        cameraMatrix(matrix) {
+            gl.uniformMatrix4fv(cameraMatrix, false, matrix);
+        },
         cameraPos(pos) {
             setVec3(cameraPos, pos);
         },
-        vpRight(vec) {
-            setVec3(vpRight, vec);
+        globalAmbientIntensity(intensity) {
+            setFloat(globalAmbientIntensity, intensity);
         },
-        pixelWidth(width) {
-            setFloat(pixelWidth, width);
+        height(h) {
+            setFloat(height, h);
         },
-        halfWidth(width) {
-            setFloat(halfWidth, width);
+        lights(index, point) {
+            if (!lights[index]) {
+                throw new RangeError('out of bounds light');
+            }
+            setVec3(lights[index].point, point);
         },
-        vpUp(vec) {
-            setVec3(vpUp, vec);
-        },
-        pixelHeight(height) {
-            setFloat(pixelHeight, height);
-        },
-        halfHeight(height) {
-            setFloat(halfHeight, height);
-        },
-        eyeVector(vec) {
-            setVec3(eyeVector, vec);
+        scale(s) {
+            setFloat(scale, s);
         },
         spheres(index, radius, point, colour, ambient, lambert, specular) {
             if (!spheres[index]) {
@@ -711,12 +753,9 @@ function getUniformSetters(gl, program) {
             setFloat(triangles[index].lambert, lambert);
             setFloat(triangles[index].specular, specular);
         },
-        lights(index, point) {
-            if (!lights[index]) {
-                throw new RangeError('out of bounds light');
-            }
-            setVec3(lights[index].point, point);
-        }
+        width(w) {
+            setFloat(width, w);
+        },
     };
 }
 function resize(canvas) {

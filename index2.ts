@@ -538,36 +538,16 @@ function draw(gl: WebGLRenderingContext, context: ProgramContext) {
 
 const g_scene = {
     camera: {
-        point: {
-            x: 0,
-            y: 1.8,
-            z: 10
-        },
+        point: [0, 1.8, 10] as Matrix3_1,
         fieldOfView: 45,
-        vector: {
-            x: 0,
-            y: 3,
-            z: 0
-        }
+        vector: [0, 3, 0] as Matrix3_1,
     },
-    lights: [{
-        x: -30,
-        y: -10,
-        z: 20
-    }],
+    lights: [[-30, 10, 20] as Matrix3_1],
     spheres: [
         {
             type: 'sphere',
-            point: {
-                x: 0,
-                y: 3.5,
-                z: -3
-            },
-            colour: {
-                x: 100,
-                y: 0,
-                z: 0 
-            },
+            point: [0, 3.5, -3] as Matrix3_1,
+            colour: [100, 0, 0 ] as Matrix3_1,
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -575,16 +555,8 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: {
-                x: -4,
-                y: 2,
-                z: -1
-            },
-            colour: {
-                x: 0,
-                y: 0,
-                z: 124, 
-            },
+            point: [-4, 2, -1] as Matrix3_1,
+            colour: [0, 0, 124] as Matrix3_1,
             specular: 0.1,
             lambert: 0.9,
             ambient: 0.0,
@@ -592,16 +564,8 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: {
-                x: -4,
-                y: 3,
-                z: -1
-            },
-            colour: {
-                x: 0,
-                y: 255,
-                z: 0
-            },
+            point: [-4, 3, -1] as Matrix3_1,
+            colour: [0, 255, 0] as Matrix3_1,
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -612,27 +576,11 @@ const g_scene = {
         {
             type: 'triangle',
             points: [
-                {
-                    x: 3,
-                    y: 2,
-                    z: -1,
-                },
-                {
-                    x: -3,
-                    y: 2,
-                    z: -1,
-                },
-                {
-                    x: -3,
-                    y: -1,
-                    z: -1,
-                },
-            ],
-            colour: {
-                x: 0,
-                y: 100,
-                z: 200,
-            },
+                [3, 2, -1],
+                [-3, 2, -1],
+                [-3, -1, -1],
+            ] as Matrix3_1[],
+            colour: [0, 100, 200] as Matrix3_1,
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -657,28 +605,28 @@ const animate = () => {
     planet2 += 0.02;
 
     // move zod around
-    if (g_scene.triangles[0].points[0].y > 5.5) {
+    if (g_scene.triangles[0].points[0][1] > 5.5) {
         zod1 *= -1;
-    } else if (g_scene.triangles[0].points[0].y < -5.5) {
+    } else if (g_scene.triangles[0].points[0][1] < -5.5) {
         zod1 *= -1;
     } 
-    g_scene.triangles[0].points[0].y += zod1;
+    g_scene.triangles[0].points[0][1] += zod1;
 
     // set the position of each moon with some trig.
-    g_scene.spheres[1].point.x = Math.sin(planet1) * 3.5;
-    g_scene.spheres[1].point.z = -3 + (Math.cos(planet1) * 3.5);
+    g_scene.spheres[1].point[0] = Math.sin(planet1) * 3.5;
+    g_scene.spheres[1].point[2] = -3 + (Math.cos(planet1) * 3.5);
 
-    g_scene.spheres[2].point.x = Math.sin(planet2) * 4;
-    g_scene.spheres[2].point.z = -3 + (Math.cos(planet2) * 4);
+    g_scene.spheres[2].point[0] = Math.sin(planet2) * 4;
+    g_scene.spheres[2].point[2] = -3 + (Math.cos(planet2) * 4);
 
     g_scene.spheres.forEach((o, i) => {
         uniforms.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
     });
 
     g_scene.triangles.forEach((t, i) => {
-        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
-        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
-        const normal = Vector.normalize(Vector.crossProduct(v0v1, v0v2));
+        const v0v1 = subtract3_1(t.points[1], t.points[0]);
+        const v0v2 = subtract3_1(t.points[2], t.points[0]);
+        const normal = normalize3_1(multiply3_1(v0v1, v0v2));
         uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
 
@@ -703,7 +651,7 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
 
     // Start by creating a simple vector pointing in the direction the camera is
     // pointing - a unit vector
-    const eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point));
+    const eyeVector = normalize3_1(subtract3_1(camera.vector, camera.point));
     u.eyeVector(eyeVector);
 
         // and then we'll rotate this by combining it with a version that's turned
@@ -711,9 +659,9 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
         // takes two vectors and creates a third that's perpendicular to both,
         // we use a pure 'UP' vector to turn the camera right, and that 'right'
         // vector to turn the camera up.
-    const vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP));
+    const vpRight = normalize3_1(multiply3_1(eyeVector, [0, 1, 0]));
     u.vpRight(vpRight);
-    const vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+    const vpUp = normalize3_1(multiply3_1(vpRight, eyeVector));
     u.vpUp(vpUp);
 
     const width = (gl.canvas as any).clientWidth;
@@ -742,9 +690,9 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
     });
 
     triangles.forEach((t, i) => {
-        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
-        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
-        const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
+        const v0v1 = subtract3_1(t.points[1], t.points[0]);
+        const v0v2 = subtract3_1(t.points[2], t.points[0]);
+        const normal = normalize3_1(multiply3_1(v0v1, v0v2));
         u.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
 
@@ -804,18 +752,18 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
         };
     });
 
-    const setVec3 = (loc: WebGLUniformLocation, v: Vector) => {
-        gl.uniform3f(loc, v.x, v.y, v.z);
+    const setVec3 = (loc: WebGLUniformLocation, v: Matrix3_1) => {
+        gl.uniform3fv(loc, v);
     };
     const setFloat = (loc: WebGLUniformLocation, f: number) => {
         gl.uniform1f(loc, f);
     };
      
     return {
-        cameraPos(pos: Vector) {
+        cameraPos(pos: Matrix3_1) {
             setVec3(cameraPos, pos);
         },
-        vpRight(vec: Vector) {
+        vpRight(vec: Matrix3_1) {
             setVec3(vpRight, vec);
         },
         pixelWidth(width: number) {
@@ -824,7 +772,7 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
         halfWidth(width: number) {
             setFloat(halfWidth, width);
         },
-        vpUp(vec: Vector) {
+        vpUp(vec: Matrix3_1) {
             setVec3(vpUp, vec);
         },
         pixelHeight(height: number) {
@@ -833,10 +781,10 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
         halfHeight(height: number) {
             setFloat(halfHeight, height);
         },
-        eyeVector(vec: Vector) {
+        eyeVector(vec: Matrix3_1) {
             setVec3(eyeVector, vec);
         },
-        spheres(index: number, radius: number, point: Vector, colour: Vector, ambient: number, lambert: number, specular: number) {
+        spheres(index: number, radius: number, point: Matrix3_1, colour: Matrix3_1, ambient: number, lambert: number, specular: number) {
             if (!spheres[index]) {
                 throw new RangeError('out of bounds sphere');
             }
@@ -847,7 +795,7 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
             setFloat(spheres[index].lambert, lambert);
             setFloat(spheres[index].specular, specular);
         },
-        triangles(index: number, a: Vector, b: Vector, c: Vector, normal: Vector, colour: Vector, ambient: number, lambert: number, specular: number) {
+        triangles(index: number, a: Matrix3_1, b: Matrix3_1, c: Matrix3_1, normal: Matrix3_1, colour: Matrix3_1, ambient: number, lambert: number, specular: number) {
             if (!triangles[index]) {
                 throw new RangeError('out of bounds triangle');
             }
@@ -860,7 +808,7 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
             setFloat(triangles[index].lambert, lambert);
             setFloat(triangles[index].specular, specular);
         },
-        lights(index: number, point: Vector) {
+        lights(index: number, point: Matrix3_1) {
             if (!lights[index]) {
                 throw new RangeError('out of bounds light');
             }

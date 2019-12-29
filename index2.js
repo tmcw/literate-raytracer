@@ -471,36 +471,16 @@ function draw(gl, context) {
  */
 const g_scene = {
     camera: {
-        point: {
-            x: 0,
-            y: 1.8,
-            z: 10
-        },
+        point: [0, 1.8, 10],
         fieldOfView: 45,
-        vector: {
-            x: 0,
-            y: 3,
-            z: 0
-        }
+        vector: [0, 3, 0],
     },
-    lights: [{
-            x: -30,
-            y: -10,
-            z: 20
-        }],
+    lights: [[-30, 10, 20]],
     spheres: [
         {
             type: 'sphere',
-            point: {
-                x: 0,
-                y: 3.5,
-                z: -3
-            },
-            colour: {
-                x: 100,
-                y: 0,
-                z: 0
-            },
+            point: [0, 3.5, -3],
+            colour: [100, 0, 0],
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -508,16 +488,8 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: {
-                x: -4,
-                y: 2,
-                z: -1
-            },
-            colour: {
-                x: 0,
-                y: 0,
-                z: 124,
-            },
+            point: [-4, 2, -1],
+            colour: [0, 0, 124],
             specular: 0.1,
             lambert: 0.9,
             ambient: 0.0,
@@ -525,16 +497,8 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: {
-                x: -4,
-                y: 3,
-                z: -1
-            },
-            colour: {
-                x: 0,
-                y: 255,
-                z: 0
-            },
+            point: [-4, 3, -1],
+            colour: [0, 255, 0],
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -545,27 +509,11 @@ const g_scene = {
         {
             type: 'triangle',
             points: [
-                {
-                    x: 3,
-                    y: 2,
-                    z: -1,
-                },
-                {
-                    x: -3,
-                    y: 2,
-                    z: -1,
-                },
-                {
-                    x: -3,
-                    y: -1,
-                    z: -1,
-                },
+                [3, 2, -1],
+                [-3, 2, -1],
+                [-3, -1, -1],
             ],
-            colour: {
-                x: 0,
-                y: 100,
-                z: 200,
-            },
+            colour: [0, 100, 200],
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
@@ -583,25 +531,25 @@ const animate = () => {
     planet1 += 0.01;
     planet2 += 0.02;
     // move zod around
-    if (g_scene.triangles[0].points[0].y > 5.5) {
+    if (g_scene.triangles[0].points[0][1] > 5.5) {
         zod1 *= -1;
     }
-    else if (g_scene.triangles[0].points[0].y < -5.5) {
+    else if (g_scene.triangles[0].points[0][1] < -5.5) {
         zod1 *= -1;
     }
-    g_scene.triangles[0].points[0].y += zod1;
+    g_scene.triangles[0].points[0][1] += zod1;
     // set the position of each moon with some trig.
-    g_scene.spheres[1].point.x = Math.sin(planet1) * 3.5;
-    g_scene.spheres[1].point.z = -3 + (Math.cos(planet1) * 3.5);
-    g_scene.spheres[2].point.x = Math.sin(planet2) * 4;
-    g_scene.spheres[2].point.z = -3 + (Math.cos(planet2) * 4);
+    g_scene.spheres[1].point[0] = Math.sin(planet1) * 3.5;
+    g_scene.spheres[1].point[2] = -3 + (Math.cos(planet1) * 3.5);
+    g_scene.spheres[2].point[0] = Math.sin(planet2) * 4;
+    g_scene.spheres[2].point[2] = -3 + (Math.cos(planet2) * 4);
     g_scene.spheres.forEach((o, i) => {
         uniforms.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
     });
     g_scene.triangles.forEach((t, i) => {
-        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
-        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
-        const normal = Vector.normalize(Vector.crossProduct(v0v1, v0v2));
+        const v0v1 = subtract3_1(t.points[1], t.points[0]);
+        const v0v2 = subtract3_1(t.points[2], t.points[0]);
+        const normal = normalize3_1(multiply3_1(v0v1, v0v2));
         uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
     draw(g_gl, g_ctx);
@@ -621,16 +569,16 @@ function setupScene(gl, context, scene) {
     // `width*height` vectors for each ray
     // Start by creating a simple vector pointing in the direction the camera is
     // pointing - a unit vector
-    const eyeVector = Vector.unitVector(Vector.subtract(camera.vector, camera.point));
+    const eyeVector = normalize3_1(subtract3_1(camera.vector, camera.point));
     u.eyeVector(eyeVector);
     // and then we'll rotate this by combining it with a version that's turned
     // 90° right and one that's turned 90° up. Since the [cross product](http://en.wikipedia.org/wiki/Cross_product)
     // takes two vectors and creates a third that's perpendicular to both,
     // we use a pure 'UP' vector to turn the camera right, and that 'right'
     // vector to turn the camera up.
-    const vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP));
+    const vpRight = normalize3_1(multiply3_1(eyeVector, [0, 1, 0]));
     u.vpRight(vpRight);
-    const vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector));
+    const vpUp = normalize3_1(multiply3_1(vpRight, eyeVector));
     u.vpUp(vpUp);
     const width = gl.canvas.clientWidth;
     const height = gl.canvas.clientHeight;
@@ -655,9 +603,9 @@ function setupScene(gl, context, scene) {
         u.spheres(i, s.radius, s.point, s.colour, s.ambient, s.lambert, s.specular);
     });
     triangles.forEach((t, i) => {
-        const v0v1 = Vector.subtract(t.points[1], t.points[0]);
-        const v0v2 = Vector.subtract(t.points[2], t.points[0]);
-        const normal = Vector.unitVector(Vector.crossProduct(v0v1, v0v2));
+        const v0v1 = subtract3_1(t.points[1], t.points[0]);
+        const v0v2 = subtract3_1(t.points[2], t.points[0]);
+        const normal = normalize3_1(multiply3_1(v0v1, v0v2));
         u.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
     });
     lights.forEach((l, i) => {
@@ -709,7 +657,7 @@ function getUniformSetters(gl, program) {
         };
     });
     const setVec3 = (loc, v) => {
-        gl.uniform3f(loc, v.x, v.y, v.z);
+        gl.uniform3fv(loc, v);
     };
     const setFloat = (loc, f) => {
         gl.uniform1f(loc, f);

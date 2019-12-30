@@ -24,7 +24,7 @@ const vertexSource = `
     }
 `;
 
-const phongSpecularExp = '8.0';
+const phongSpecularExp = '32.0';
 const triangleCount = 3;
 const lightCount = 1;
 const sphereCount = 3;
@@ -354,8 +354,8 @@ const fragmentSource = `precision mediump float;
                 diffuse += vec3(fullColour.rgb * lightIntensity * dco);
 
                 // specular
-                vec3 R = reflect(lightDir, hit.normal);
-                float sco = dot(R, normalize(hit.ray.vector));
+                vec3 halfway = normalize(lightDir - hit.ray.vector);
+                float sco = dot(hit.normal, normalize(halfway));
                 if (sco < 0.0) { sco = 0.0; }
                 
                 specular += vec3(lightColour.rgb * lightIntensity * pow(sco, ${phongSpecularExp}));

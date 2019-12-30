@@ -71,6 +71,8 @@ const fragmentSource = `precision mediump float;
         float distance;
         Triangle triangle;
         vec3 intersectPoint;
+        float u;
+        float v;
     };
 
     struct PointLight {
@@ -133,6 +135,18 @@ const fragmentSource = `precision mediump float;
            return bgColour;
        }
 
+       if (sd.distance >= 0.0 && td.distance >= 0.0) {
+           if (sd.distance < td.distance) {
+            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+            return surface(ray, sd.sphere.material, pointAtTime, normal);
+           } else {
+            return surface(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+           }
+       }
+
+
        if (sd.distance >= 0.0) {
         vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
         vec3 normal = sphereNormal(sd.sphere, pointAtTime);
@@ -150,6 +164,19 @@ const fragmentSource = `precision mediump float;
            return bgColour;
        }
 
+       if (sd.distance >= 0.0 && td.distance >= 0.0) {
+           if (sd.distance < td.distance) {
+            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+            return surface2(ray, sd.sphere.material, pointAtTime, normal);
+           } else {
+            return surface2(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+           }
+       }
+
+
+
        if (sd.distance >= 0.0) {
         vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
         vec3 normal = sphereNormal(sd.sphere, pointAtTime);
@@ -165,6 +192,17 @@ const fragmentSource = `precision mediump float;
        TriangleDistance td = intersectTriangles(ray);
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return bgColour;
+       }
+
+       if (sd.distance >= 0.0 && td.distance >= 0.0) {
+           if (sd.distance < td.distance) {
+            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+            return surface3(ray, sd.sphere.material, pointAtTime, normal);
+           } else {
+            return surface3(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+           }
        }
 
        if (sd.distance >= 0.0) {
@@ -206,14 +244,15 @@ const fragmentSource = `precision mediump float;
                 vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
                 vec3(0.0, 0.0, 0.0), 
                 Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)),
-            vec3(0.0, 0.0, 0.0));
+            vec3(0.0, 0.0, 0.0),
+            0.0,
+            0.0);
 
         for (int i = 0; i < ${triangleCount}; i += 1) {
             Triangle t = triangles[i];
             TriangleDistance td = triangleIntersection(t, ray);
             if (td.distance >= 0.0) {
                 if (least.distance <= 0.0 || td.distance < least.distance) {
-                    td.triangle = t;
                     least = td;
                 }
             }
@@ -222,75 +261,43 @@ const fragmentSource = `precision mediump float;
     }
 
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray) {
-        // Step 1: finding P
         TriangleDistance td = TriangleDistance(
             -1.0, 
-            Triangle(
-                vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
-                vec3(0.0, 0.0, 0.0), 
-                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)),
-            vec3(0.0, 0.0, 0.0));
+            triangle,
+            vec3(0.0, 0.0, 0.0),
+            0.0,
+            0.0);
     
-        // check if ray and plane are parallel ?
-        float normalDotRay = dot(triangle.normal, ray.vector);
-        if (abs(normalDotRay) < ${epsilon}) {
-            // parallel lines
+        // compute full scale normal
+        vec3 v0v1 = triangle.b - triangle.a;
+        vec3 v0v2 = triangle.c - triangle.a;
+        vec3 pvec = cross(ray.vector, v0v2);
+        float det = dot(v0v1, pvec);
+
+        if (abs(det) < ${epsilon}) {
             return td;
         }
 
-        // compute d parameter
-        float d = dot(triangle.normal, triangle.a);
-    
-        // compute t
-        float t = (dot(triangle.normal, ray.point) + d) / (-1.0 * normalDotRay);
+        float invDet = 1.0 / det;
 
-        // check if the triangle is in behind the ray
-        if (t < 0.0) {
-            // the triangle is behind
-            return td;
-        }
- 
-        // compute the intersection point using equation 1
-        vec3 P = ray.point + t * ray.vector;
-
-
-        // Step 2: inside-outside test
-        vec3 C;  // vector perpendicular to triangle's plane
- 
-        // edge 0
-        vec3 edge0 = triangle.b - triangle.a;
-        vec3 vp0 = P - triangle.a;
-        C = cross(edge0, vp0);
-
-        if (dot(triangle.normal, C) < 0.0) {
-            // P is on the right side;
-            return td;
-        }
- 
-        // edge 1
-        vec3 edge1 = triangle.c - triangle.b;
-        vec3 vp1 = P - triangle.b;
-        C = cross(edge1, vp1);
-
-        if (dot(triangle.normal, C) < 0.0) {
-            // P is on the right side
-            return td;
-        }
- 
-        // edge 2
-        vec3 edge2 = triangle.a - triangle.c;
-        vec3 vp2 = P - triangle.c;
-        C = cross(edge2, vp2);
-
-        if (dot(triangle.normal, C) < 0.0) {
-            // P is on the right side;
+        vec3 tvec = ray.point - triangle.a;
+        float u = dot(tvec, pvec) * invDet;
+        if (u < 0.0 || u > 1.0) {
             return td;
         }
 
-        td.distance = t;
-        td.intersectPoint = P;
+        vec3 qvec = cross(tvec, v0v1);
+        float v = dot(ray.vector, qvec) * invDet;
+        if (v < 0.0 || (u + v) > 1.0) {
+            return td;
+        }
 
-        return td; // this ray hits the triangle
+        td.u = u;
+        td.v = v;
+        td.distance = dot(v0v2, qvec) * invDet;
+        td.intersectPoint = vec3(triangle.a.xyz + u * v0v1.xyz + v * v0v2.xyz);
+
+        return td;
     }
 
     float sphereIntersection(Sphere sphere, Ray ray) {
@@ -642,9 +649,9 @@ const g_scene = {
         {
             type: 'triangle',
             points: [
-                [3, 2, -10],
-                [-3, 2, -10],
-                [-3, -1, -10],
+                [3, 2, -7],
+                [-5, 2, -7],
+                [-5, -1, -7],
             ] as Matrix3_1[],
             colour: [0, 100, 200] as Matrix3_1,
             specular: 0.2,

@@ -110,7 +110,7 @@ const fragmentSource = `precision mediump float;
     vec4 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
     vec4 surfacePhong(Hit hit);
-    bool isLightVisible(vec3 pt, PointLight light, vec3 normal);
+    bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
     void draw();
      
     void main() {
@@ -322,13 +322,13 @@ const fragmentSource = `precision mediump float;
         return v - sqrt(discriminant);
     }
 
-    bool isLightVisible(vec3 pt, PointLight light, vec3 normal) {
-        vec3 unit = normalize(pt  - light.point);
+    bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
+        vec3 unit = normalize(light - pt);
         Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit);
         SphereDistance sd = intersectSpheres(ray);
 
-        if (sd.distance < 0.0) {
-            return true;
+        if (sd.distance > 0.0) {
+            return false;
         }
 
         TriangleDistance td = intersectTriangles(ray);
@@ -342,7 +342,7 @@ const fragmentSource = `precision mediump float;
         vec3 specular = vec3(0.0, 0.0, 0.0);
 
         for (int i = 0; i < ${lightCount}; i += 1) {
-            if (isLightVisible(hit.position, pointLights[i], hit.normal) == true) {
+            if (isLightVisible(hit.position, pointLights[i].point, hit.normal) == true) {
                 vec3 lightColour = vec3(1.0, 1.0, 1.0);
                 vec3 lightDir = normalize(pointLights[i].point - hit.position);
                 float lightIntensity = 1.0;

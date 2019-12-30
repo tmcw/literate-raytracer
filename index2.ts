@@ -24,6 +24,7 @@ const vertexSource = `
     }
 `;
 
+const materialCount = 5;
 const phongSpecularExp = '32.0';
 const triangleCount = 3;
 const lightCount = 1;
@@ -45,7 +46,7 @@ const fragmentSource = `precision mediump float;
     struct Material {
         vec3 colour;
         float ambient;
-        float lambert;
+        float diffuse;
         float specular;
     };
 
@@ -60,7 +61,7 @@ const fragmentSource = `precision mediump float;
     struct Sphere {
         vec3 point;
         float radius;
-        Material material;
+        int material;
     };
 
     struct SphereDistance {
@@ -73,7 +74,7 @@ const fragmentSource = `precision mediump float;
         vec3 b;
         vec3 c;
         vec3 normal;
-        Material material;
+        int material;
     };
 
     struct TriangleDistance {
@@ -97,6 +98,7 @@ const fragmentSource = `precision mediump float;
     uniform float scale;
     uniform float width;
      
+    uniform Material materials[${materialCount}];
     uniform Sphere spheres[${sphereCount}];
     uniform PointLight pointLights[${lightCount}];
     uniform Triangle triangles[${triangleCount}];
@@ -135,6 +137,30 @@ const fragmentSource = `precision mediump float;
         gl_FragColor = cast1(ray);
     }
 
+    Material getMaterial(int index) {
+        if (index == 0) {
+            return materials[0];
+        }
+
+        if (index == 1) {
+            return materials[1];
+        }
+
+        if (index == 2) {
+            return materials[2];
+        }
+
+        if (index == 3) {
+            return materials[3];
+        }
+
+        if (index == 4) {
+            return materials[4];
+        }
+
+        return materials[0];
+    }
+
     Hit trace(Ray ray) {
        SphereDistance sd = intersectSpheres(ray);
        TriangleDistance td = intersectTriangles(ray);
@@ -155,7 +181,7 @@ const fragmentSource = `precision mediump float;
 
             return Hit(
                 sd.distance,
-                sd.sphere.material,
+                getMaterial(sd.sphere.material),
                 normal,
                 sd.sphere.point,
                 ray
@@ -163,7 +189,7 @@ const fragmentSource = `precision mediump float;
            } else {
             return Hit(
                 td.distance,
-                td.triangle.material,
+                getMaterial(td.triangle.material),
                 td.triangle.normal,
                 td.intersectPoint,
                 ray
@@ -178,7 +204,7 @@ const fragmentSource = `precision mediump float;
 
         return Hit(
             sd.distance,
-            sd.sphere.material,
+            getMaterial(sd.sphere.material),
             normal,
             sd.sphere.point,
             ray
@@ -187,7 +213,7 @@ const fragmentSource = `precision mediump float;
 
        return Hit(
             td.distance,
-            td.triangle.material,
+            getMaterial(td.triangle.material),
             td.triangle.normal,
             td.intersectPoint,
             ray
@@ -232,7 +258,7 @@ const fragmentSource = `precision mediump float;
         SphereDistance sd = SphereDistance(-1.0, Sphere(
             vec3(0.0, 0.0, 0.0), 
             -1.0,
-            Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)));
+            0));
         for (int i = 0; i < ${sphereCount}; i += 1) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
@@ -252,7 +278,7 @@ const fragmentSource = `precision mediump float;
             Triangle(
                 vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
                 vec3(0.0, 0.0, 0.0), 
-                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0)),
+                0),
             vec3(0.0, 0.0, 0.0),
             0.0,
             0.0);
@@ -337,7 +363,8 @@ const fragmentSource = `precision mediump float;
     }
 
     vec4 surfacePhong(Hit hit) {
-        vec3 fullColour = vec3(hit.material.colour.rgb / 255.0);
+        Material material = hit.material;
+        vec3 fullColour = vec3(material.colour.rgb / 255.0);
         vec3 diffuse = vec3(0.0, 0.0, 0.0);
         vec3 specular = vec3(0.0, 0.0, 0.0);
 
@@ -364,9 +391,9 @@ const fragmentSource = `precision mediump float;
 
         // calculate ambient light
         vec3 ambient = vec3(fullColour.rgb * globalAmbientIntensity);
-        ambient = vec3(ambient.rgb + (fullColour.rgb * hit.material.ambient));
+        ambient = vec3(ambient.rgb + (fullColour.rgb * material.ambient));
 
-        return vec4(ambient.rgb + diffuse.rgb * hit.material.lambert + specular.rgb * hit.material.specular, 1.0);
+        return vec4(ambient.rgb + diffuse.rgb * material.diffuse + specular.rgb * material.specular, 1.0);
     }
 `;
 
@@ -529,71 +556,85 @@ const g_scene = {
     },
     globalAmbientIntensity: 0.002,
     lights: [[-25, 30, 10] as Matrix3_1],
+    materials: [
+        {
+            colour: [100, 0, 0] as Matrix3_1,
+            ambient: 0.1,
+            diffuse: 0.7,
+            specular: 0.2,
+        },
+        {
+            colour: [0, 0, 124] as Matrix3_1,
+            diffuse: 0.9,
+            specular: 0.1,
+            ambient: 0.0,
+        },
+        {
+            colour: [0, 255, 0] as Matrix3_1,
+            diffuse: 0.7,
+            specular: 0.2,
+            ambient: 0.1,
+        },
+        {
+            colour: [0, 100, 200] as Matrix3_1,
+            diffuse: 0.7,
+            specular: 0.2,
+            ambient: 0.1,
+        },
+        {
+            colour: [200, 200, 200] as Matrix3_1,
+            diffuse: 0.7,
+            specular: 0.2,
+            ambient: 0.1,
+        },
+    ],
     spheres: [
         {
             type: 'sphere',
+            material: 0,
             point: [0, 5, -3] as Matrix3_1,
-            colour: [100, 0, 0 ] as Matrix3_1,
-            specular: 0.2,
-            lambert: 0.6,
-            ambient: 0.1,
             radius: 3
         },
         {
             type: 'sphere',
+            material: 1,
             point: [-4, 5, -1] as Matrix3_1,
-            colour: [0, 0, 124] as Matrix3_1,
-            specular: 0.1,
-            lambert: 0.9,
-            ambient: 0.0,
             radius: 0.2
         },
         {
             type: 'sphere',
+            material: 2,
             point: [-4, 5, -1] as Matrix3_1,
-            colour: [0, 255, 0] as Matrix3_1,
-            specular: 0.2,
-            lambert: 0.7,
-            ambient: 0.1,
             radius: 0.1
         },
     ],
     triangles: [
         {
             type: 'triangle',
+            material: 3,
             points: [
                 [3, 7, -7],
                 [-5, 7, -7],
                 [-5, 5, -7],
             ] as Matrix3_1[],
-            colour: [0, 100, 200] as Matrix3_1,
-            specular: 0.2,
-            lambert: 0.7,
-            ambient: 0.1,
         },
         {
             type: 'triangle',
+            material: 4,
             points: [
                 [FD, 0, -FD],
                 [-FD, 0, -FD],
                 [-FD, 0, FD],
             ] as Matrix3_1[],
-            colour: [200, 200, 200] as Matrix3_1,
-            specular: 0.2,
-            lambert: 0.7,
-            ambient: 0.1,
         },
         {
             type: 'triangle',
+            material: 4,
             points: [
                 [-FD, 0, FD],
                 [FD, 0, FD],
                 [FD, 0, -FD],
             ] as Matrix3_1[],
-            colour: [200, 200, 200] as Matrix3_1,
-            specular: 0.2,
-            lambert: 0.7,
-            ambient: 0.1,
         },
     ],
 };
@@ -629,14 +670,14 @@ const animate = () => {
     g_scene.spheres[2].point[2] = -3 + (Math.cos(planet2) * 4);
 
     g_scene.spheres.forEach((o, i) => {
-        uniforms.spheres(i, o.radius, o.point, o.colour, o.ambient, o.lambert, o.specular);
+        uniforms.spheres(i, o.radius, o.material, o.point);
     });
 
     g_scene.triangles.forEach((t, i) => {
         const v0v1 = subtract3_1(t.points[1], t.points[0]);
         const v0v2 = subtract3_1(t.points[2], t.points[0]);
         const normal = normalize3_1(multiply3_1(v0v1, v0v2));
-        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
+        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, normal);
     });
 
     draw(g_gl, g_ctx);
@@ -646,7 +687,7 @@ animate();
 
 
 function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene) {
-    const { camera, spheres, triangles, lights } = scene;
+    const { camera, materials, spheres, triangles, lights } = scene;
     const u = getUniformSetters(gl, context.program);
 
     const cameraMatrix = 
@@ -672,15 +713,19 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
     u.scale(scale);
     u.width(width);
 
+    materials.forEach((m, i) => {
+        u.materials(i, m.colour, m.ambient, m.diffuse, m.specular);
+    });
+
     spheres.forEach((s, i) => {
-        u.spheres(i, s.radius, s.point, s.colour, s.ambient, s.lambert, s.specular);
+        u.spheres(i, s.radius, s.material, s.point);
     });
 
     triangles.forEach((t, i) => {
         const v0v1 = subtract3_1(t.points[1], t.points[0]);
         const v0v2 = subtract3_1(t.points[2], t.points[0]);
         const normal = normalize3_1(multiply3_1(v0v1, v0v2));
-        u.triangles(i, t.points[0], t.points[1], t.points[2], normal, t.colour, t.ambient, t.lambert, t.specular);
+        u.triangles(i, t.points[0], t.points[1], t.points[2], t.material, normal);
     });
 
     lights.forEach((l, i) => {
@@ -708,14 +753,20 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
     const aspectRatio = getUniformLocation(gl, program, 'aspectRatio');
     const scale = getUniformLocation(gl, program, 'scale');
 
+    const materials = g_scene.materials.map((_, i) => {
+        return {
+            colour: getUniformLocation(gl, program, `materials[${i}].colour`),
+            ambient: getUniformLocation(gl, program, `materials[${i}].ambient`),
+            diffuse: getUniformLocation(gl, program, `materials[${i}].diffuse`),
+            specular: getUniformLocation(gl, program, `materials[${i}].specular`),
+        };
+    });
+
     const spheres = g_scene.spheres.map((_, i) => {
         return {
+            material: getUniformLocation(gl, program, `spheres[${i}].material`),
             point: getUniformLocation(gl, program, `spheres[${i}].point`),
             radius: getUniformLocation(gl, program, `spheres[${i}].radius`),
-            colour: getUniformLocation(gl, program, `spheres[${i}].material.colour`),
-            ambient: getUniformLocation(gl, program, `spheres[${i}].material.ambient`),
-            lambert: getUniformLocation(gl, program, `spheres[${i}].material.lambert`),
-            specular: getUniformLocation(gl, program, `spheres[${i}].material.specular`),
         };
     });
 
@@ -724,11 +775,8 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
             a: getUniformLocation(gl, program, `triangles[${i}].a`),
             b: getUniformLocation(gl, program, `triangles[${i}].b`),
             c: getUniformLocation(gl, program, `triangles[${i}].c`),
+            material: getUniformLocation(gl, program, `triangles[${i}].material`),
             normal: getUniformLocation(gl, program, `triangles[${i}].normal`),
-            colour: getUniformLocation(gl, program, `triangles[${i}].material.colour`),
-            ambient: getUniformLocation(gl, program, `triangles[${i}].material.ambient`),
-            lambert: getUniformLocation(gl, program, `triangles[${i}].material.lambert`),
-            specular: getUniformLocation(gl, program, `triangles[${i}].material.specular`),
         };
     });
 
@@ -743,6 +791,9 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
     };
     const setFloat = (loc: WebGLUniformLocation, f: number) => {
         gl.uniform1f(loc, f);
+    };
+    const setInt = (loc: WebGLUniformLocation, i: number) => {
+        gl.uniform1i(loc, i);
     };
      
     return {
@@ -767,21 +818,24 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
             }
             setVec3(lights[index].point, point);
         },
+        materials(index: number, colour: Matrix3_1, ambient: number, diffuse: number, specular: number) {
+            setVec3(materials[index].colour, colour);
+            setFloat(materials[index].ambient, ambient);
+            setFloat(materials[index].diffuse, diffuse);
+            setFloat(materials[index].specular, specular);
+        },
         scale(s: number) {
             setFloat(scale, s);
         },
-        spheres(index: number, radius: number, point: Matrix3_1, colour: Matrix3_1, ambient: number, lambert: number, specular: number) {
+        spheres(index: number, radius: number, materialIndex: number, point: Matrix3_1) {
             if (!spheres[index]) {
                 throw new RangeError('out of bounds sphere');
             }
             setVec3(spheres[index].point, point);
             setFloat(spheres[index].radius, radius);
-            setVec3(spheres[index].colour, colour);
-            setFloat(spheres[index].ambient, ambient);
-            setFloat(spheres[index].lambert, lambert);
-            setFloat(spheres[index].specular, specular);
+            setInt(spheres[index].material, materialIndex);
         },
-        triangles(index: number, a: Matrix3_1, b: Matrix3_1, c: Matrix3_1, normal: Matrix3_1, colour: Matrix3_1, ambient: number, lambert: number, specular: number) {
+        triangles(index: number, a: Matrix3_1, b: Matrix3_1, c: Matrix3_1, materialIndex: number, normal: Matrix3_1) {
             if (!triangles[index]) {
                 throw new RangeError('out of bounds triangle');
             }
@@ -789,10 +843,7 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
             setVec3(triangles[index].b, b);
             setVec3(triangles[index].c, c);
             setVec3(triangles[index].normal, normal);
-            setVec3(triangles[index].colour, colour);
-            setFloat(triangles[index].ambient, ambient);
-            setFloat(triangles[index].lambert, lambert);
-            setFloat(triangles[index].specular, specular);
+            setInt(triangles[index].material, materialIndex);
         },
         width(w: number) {
             setFloat(width, w);

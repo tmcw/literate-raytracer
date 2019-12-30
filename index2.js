@@ -15,7 +15,7 @@ const vertexSource = `
        gl_Position = a_position;
     }
 `;
-const triangleCount = 1;
+const triangleCount = 3;
 const lightCount = 1;
 const sphereCount = 3;
 const epsilon = 0.00005;
@@ -36,6 +36,14 @@ const fragmentSource = `precision mediump float;
         float ambient;
         float lambert;
         float specular;
+    };
+
+    struct Hit {
+        float distance;
+        vec3 origin;
+        Material material;
+        vec3 normal;
+        vec3 position;
     };
 
     struct Sphere {
@@ -86,9 +94,9 @@ const fragmentSource = `precision mediump float;
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
     SphereDistance intersectSpheres(Ray ray);
     TriangleDistance intersectTriangles(Ray ray);
-    vec4 trace(Ray ray);
-    vec4 trace2(Ray ray);
-    vec4 trace3(Ray ray);
+    vec4 cast1(Ray ray);
+    vec4 cast2(Ray ray);
+    vec4 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
     vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
     vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
@@ -115,14 +123,20 @@ const fragmentSource = `precision mediump float;
 
         Ray ray = Ray(cameraPos, normalize(dir));
 
-        gl_FragColor = trace(ray);
+        gl_FragColor = cast1(ray);
     }
 
-    vec4 trace(Ray ray) {
+    Hit trace(Ray ray) {
        SphereDistance sd = intersectSpheres(ray);
        TriangleDistance td = intersectTriangles(ray);
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
-           return bgColour;
+           return Hit(
+               -1.0,
+               vec3(0.0, 0.0, 0.0),
+               Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0),
+               vec3(0.0, 0.0, 0.0),
+               vec3(0.0, 0.0, 0.0)
+           );
        }
 
        if (sd.distance >= 0.0 && td.distance >= 0.0) {
@@ -130,9 +144,21 @@ const fragmentSource = `precision mediump float;
             vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
             vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-            return surface(ray, sd.sphere.material, pointAtTime, normal);
+            return Hit(
+                sd.distance,
+                ray.point,
+                sd.sphere.material,
+                normal,
+                sd.sphere.point
+            );
            } else {
-            return surface(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+            return Hit(
+                td.distance,
+                ray.point,
+                td.triangle.material,
+                td.triangle.normal,
+                td.intersectPoint
+            );
            }
        }
 
@@ -141,68 +167,52 @@ const fragmentSource = `precision mediump float;
         vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
         vec3 normal = sphereNormal(sd.sphere, pointAtTime);
 
-        return surface(ray, sd.sphere.material, pointAtTime, normal);
+        return Hit(
+            sd.distance,
+            ray.point,
+            sd.sphere.material,
+            normal,
+            sd.sphere.point
+        );
        }
 
-       return surface(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+       return Hit(
+            td.distance,
+            ray.point,
+            td.triangle.material,
+            td.triangle.normal,
+            td.intersectPoint
+        );
     }
 
-    vec4 trace2(Ray ray) {
-       SphereDistance sd = intersectSpheres(ray);
-       TriangleDistance td = intersectTriangles(ray);
-       if (sd.distance <= 0.0 && td.distance <= 0.0) {
-           return bgColour;
-       }
+    vec4 cast1(Ray ray) {
+        Hit hit = trace(ray);
 
-       if (sd.distance >= 0.0 && td.distance >= 0.0) {
-           if (sd.distance < td.distance) {
-            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+        if (hit.distance < 0.0) {
+            return bgColour;
+        }
 
-            return surface2(ray, sd.sphere.material, pointAtTime, normal);
-           } else {
-            return surface2(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
-           }
-       }
-
-
-
-       if (sd.distance >= 0.0) {
-        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
-
-        return surface2(ray, sd.sphere.material, pointAtTime, normal);
-       }
-
-       return surface2(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+        return surface(ray, hit.material, hit.position, hit.normal);
     }
 
-    vec4 trace3(Ray ray) {
-       SphereDistance sd = intersectSpheres(ray);
-       TriangleDistance td = intersectTriangles(ray);
-       if (sd.distance <= 0.0 && td.distance <= 0.0) {
-           return bgColour;
-       }
+    vec4 cast2(Ray ray) {
+        Hit hit = trace(ray);
 
-       if (sd.distance >= 0.0 && td.distance >= 0.0) {
-           if (sd.distance < td.distance) {
-            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+        if (hit.distance < 0.0) {
+            return bgColour;
+        }
 
-            return surface3(ray, sd.sphere.material, pointAtTime, normal);
-           } else {
-            return surface3(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
-           }
-       }
+        return surface2(ray, hit.material, hit.position, hit.normal);
+    }
 
-       if (sd.distance >= 0.0) {
-        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
-        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+    vec4 cast3(Ray ray) {
+        Hit hit = trace(ray);
 
-        return surface3(ray, sd.sphere.material, pointAtTime, normal);
-       }
+        if (hit.distance < 0.0) {
+            return bgColour;
+        }
 
-       return surface3(ray, td.triangle.material, td.intersectPoint, td.triangle.normal);
+        return surface3(ray, hit.material, hit.position, hit.normal);
     }
 
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
@@ -366,7 +376,7 @@ const fragmentSource = `precision mediump float;
         // we have light, let's do reflections
         vec3 negCamDir = vec3(camDir.xyz * -1.0);
         vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
-        vec4 reflection = trace2(Ray(pointAtTime, r));
+        vec4 reflection = cast2(Ray(pointAtTime, r));
 
         vec4 total = vec4(
             ambient.rgb + 
@@ -410,7 +420,7 @@ const fragmentSource = `precision mediump float;
         // we have light, let's do reflections
         // vec3 negCamDir = vec3(camDir.xyz * -1.0);
         // vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
-        // vec4 reflection = trace2(Ray(pointAtTime, r));
+        // vec4 reflection = cast2(Ray(pointAtTime, r));
 
         vec4 total = vec4(
             ambient.rgb + 
@@ -540,19 +550,20 @@ function draw(gl, context) {
  *
  *
  */
+const FD = 25;
 const g_scene = {
     camera: {
-        point: [0, 0, 20],
+        point: [0, 5, 50],
         fieldOfView: 45,
         rotation: [0, 0, 0],
         up: [0, 1, 0],
     },
     globalAmbientIntensity: 0.002,
-    lights: [[-20, 10, 20]],
+    lights: [[-20, 5, 20]],
     spheres: [
         {
             type: 'sphere',
-            point: [0, 0, -3],
+            point: [0, 5, -3],
             colour: [100, 0, 0],
             specular: 0.2,
             lambert: 0.7,
@@ -561,7 +572,7 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: [-4, 0, -1],
+            point: [-4, 5, -1],
             colour: [0, 0, 124],
             specular: 0.1,
             lambert: 0.9,
@@ -570,7 +581,7 @@ const g_scene = {
         },
         {
             type: 'sphere',
-            point: [-4, 0, -1],
+            point: [-4, 5, -1],
             colour: [0, 255, 0],
             specular: 0.2,
             lambert: 0.7,
@@ -582,15 +593,38 @@ const g_scene = {
         {
             type: 'triangle',
             points: [
-                [3, 2, -7],
-                [-5, 2, -7],
-                [-5, -1, -7],
+                [3, 7, -7],
+                [-5, 7, -7],
+                [-5, 5, -7],
             ],
             colour: [0, 100, 200],
             specular: 0.2,
             lambert: 0.7,
             ambient: 0.1,
-            radius: 0.1
+        },
+        {
+            type: 'triangle',
+            points: [
+                [FD, 0, -FD],
+                [-FD, 0, -FD],
+                [-FD, 0, FD],
+            ],
+            colour: [200, 200, 200],
+            specular: 0.2,
+            lambert: 0.7,
+            ambient: 0.1,
+        },
+        {
+            type: 'triangle',
+            points: [
+                [-FD, 0, FD],
+                [FD, 0, FD],
+                [FD, 0, -FD],
+            ],
+            colour: [200, 200, 200],
+            specular: 0.2,
+            lambert: 0.7,
+            ambient: 0.1,
         },
     ],
 };
@@ -604,10 +638,10 @@ const animate = () => {
     planet1 += 0.01;
     planet2 += 0.02;
     // move zod around
-    if (g_scene.triangles[0].points[0][1] > 5.5) {
+    if (g_scene.triangles[0].points[0][1] > 10.5) {
         zod1 *= -1;
     }
-    else if (g_scene.triangles[0].points[0][1] < -5.5) {
+    else if (g_scene.triangles[0].points[0][1] < 4.5) {
         zod1 *= -1;
     }
     g_scene.triangles[0].points[0][1] += zod1;

@@ -24,6 +24,7 @@ const vertexSource = `
     }
 `;
 
+const phongSpecularExp = '16.0';
 const triangleCount = 3;
 const lightCount = 1;
 const sphereCount = 3;
@@ -50,10 +51,10 @@ const fragmentSource = `precision mediump float;
 
     struct Hit {
         float distance;
-        vec3 origin;
         Material material;
         vec3 normal;
         vec3 position;
+        Ray ray;
     };
 
     struct Sphere {
@@ -108,9 +109,7 @@ const fragmentSource = `precision mediump float;
     vec4 cast2(Ray ray);
     vec4 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
-    vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
-    vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
-    vec4 surface3(Ray ray, Material material, vec3 pointAtTime, vec3 normal);
+    vec4 surfacePhong(Hit hit);
     bool isLightVisible(vec3 pt, PointLight light, vec3 normal);
     void draw();
      
@@ -142,10 +141,10 @@ const fragmentSource = `precision mediump float;
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return Hit(
                -1.0,
-               vec3(0.0, 0.0, 0.0),
                Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0),
                vec3(0.0, 0.0, 0.0),
-               vec3(0.0, 0.0, 0.0)
+               vec3(0.0, 0.0, 0.0),
+               Ray(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0))
            );
        }
 
@@ -156,18 +155,18 @@ const fragmentSource = `precision mediump float;
 
             return Hit(
                 sd.distance,
-                ray.point,
                 sd.sphere.material,
                 normal,
-                sd.sphere.point
+                sd.sphere.point,
+                ray
             );
            } else {
             return Hit(
                 td.distance,
-                ray.point,
                 td.triangle.material,
                 td.triangle.normal,
-                td.intersectPoint
+                td.intersectPoint,
+                ray
             );
            }
        }
@@ -179,19 +178,19 @@ const fragmentSource = `precision mediump float;
 
         return Hit(
             sd.distance,
-            ray.point,
             sd.sphere.material,
             normal,
-            sd.sphere.point
+            sd.sphere.point,
+            ray
         );
        }
 
        return Hit(
             td.distance,
-            ray.point,
             td.triangle.material,
             td.triangle.normal,
-            td.intersectPoint
+            td.intersectPoint,
+            ray
         );
     }
 
@@ -202,7 +201,7 @@ const fragmentSource = `precision mediump float;
             return bgColour;
         }
 
-        return surface(ray, hit.material, hit.position, hit.normal);
+        return surfacePhong(hit);
     }
 
     vec4 cast2(Ray ray) {
@@ -212,7 +211,7 @@ const fragmentSource = `precision mediump float;
             return bgColour;
         }
 
-        return surface2(ray, hit.material, hit.position, hit.normal);
+        return surfacePhong(hit);
     }
 
     vec4 cast3(Ray ray) {
@@ -222,7 +221,7 @@ const fragmentSource = `precision mediump float;
             return bgColour;
         }
 
-        return surface3(ray, hit.material, hit.position, hit.normal);
+        return surfacePhong(hit);
     }
 
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
@@ -337,134 +336,37 @@ const fragmentSource = `precision mediump float;
         return td.distance < 0.0;
     }
 
-    float getLambert(vec3 pointAtTime, vec3 normal, vec3 lightPoint, float intensity) {
-        vec3 lightDir = normalize(lightPoint - pointAtTime);
-        float angleCo = max(0.0, dot(normal, lightDir));
+    vec4 surfacePhong(Hit hit) {
+        vec3 fullColour = vec3(hit.material.colour.rgb / 255.0);
+        vec3 diffuse = vec3(0.0, 0.0, 0.0);
+        vec3 specular = vec3(0.0, 0.0, 0.0);
 
-        return angleCo * intensity;
-    }
+        for (int i = 0; i < ${lightCount}; i += 1) {
+            if (isLightVisible(hit.position, pointLights[i], hit.normal) == true) {
+                vec3 lightColour = vec3(1.0, 1.0, 1.0);
+                vec3 lightDir = normalize(pointLights[i].point - hit.position);
+                float lightIntensity = 1.0;
 
-    float getPhong(vec3 pointAtTime, vec3 normal, vec3 lightPoint, vec3 camDir, float intensity, float shiny) {
-        vec3 lightDir = normalize(lightPoint - pointAtTime);
-        vec3 halfVector = normalize(camDir + lightDir);
-        float halfVectorAngle = max(0.0, dot(normal, halfVector));
-        halfVectorAngle = pow(halfVectorAngle, shiny);
+                // diffuse
+                float dco = dot(hit.normal, lightDir);
+                if (dco < 0.0) { dco = 0.0; }
 
-        return intensity * halfVectorAngle;
-    }
+                diffuse += vec3(fullColour.rgb * lightIntensity * dco);
 
-    vec4 surface(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
+                // specular
+                vec3 R = reflect(lightDir, hit.normal);
+                float sco = dot(R, normalize(hit.ray.vector));
+                if (sco < 0.0) { sco = 0.0; }
+                
+                specular += vec3(lightColour.rgb * lightIntensity * pow(sco, ${phongSpecularExp}));
+            }
+        }
+
         // calculate ambient light
-        vec3 fullColour = vec3(material.colour.rgb / 255.0);
-        vec4 ambient = vec4(fullColour.rgb * globalAmbientIntensity, 1.0);
+        vec3 ambient = vec3(fullColour.rgb * globalAmbientIntensity);
+        ambient = vec3(ambient.rgb + (fullColour.rgb * hit.material.ambient));
 
-        if (material.ambient > 0.0) {
-            ambient = vec4(ambient.rgb + fullColour.rgb * material.ambient, 1.0);
-        }
-
-        // calculate point/spot/surface lights
-        float lambert = 0.0;
-        float phong = 0.0;
-        vec3 camDir = normalize(cameraPos - pointAtTime);
-
-        bool isInShadow = true;
-        if (material.lambert > 0.0) {
-            for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
-                    isInShadow = false;
-                    lambert += getLambert(pointAtTime, normal, pointLights[i].point, material.lambert);
-                    phong += getPhong(pointAtTime, normal, pointLights[i].point, camDir, material.lambert, material.specular);
-                }
-            }
-        }
-
-        // we can now bail if we're in the shadow
-        if (isInShadow == true) {
-            return ambient;
-        }
-
-        // we have light, let's do reflections
-        vec3 negCamDir = vec3(camDir.xyz * -1.0);
-        vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
-        vec4 reflection = cast2(Ray(pointAtTime, r));
-
-        vec4 total = vec4(
-            ambient.rgb + 
-            fullColour.rgb * lambert +
-            fullColour.rgb * phong +
-            reflection.rgb * material.specular, 1.0);
-        
-        return total;
-    }
-
-    vec4 surface2(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
-        // calculate ambient light
-        vec3 fullColour = vec3(material.colour.rgb / 255.0);
-        vec4 ambient = vec4(fullColour.rgb * globalAmbientIntensity, 1.0);
-
-        if (material.ambient > 0.0) {
-            ambient = vec4(ambient.rgb + fullColour.rgb * material.ambient, 1.0);
-        }
-
-        // calculate point/spot/surface lights
-        float lambert = 0.0;
-        float phong = 0.0;
-        vec3 camDir = normalize(cameraPos - pointAtTime);
-
-        bool isInShadow = true;
-        if (material.lambert > 0.0) {
-            for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
-                    isInShadow = false;
-                    lambert += getLambert(pointAtTime, normal, pointLights[i].point, material.lambert);
-                    phong += getPhong(pointAtTime, normal, pointLights[i].point, camDir, material.lambert, material.specular);
-                }
-            }
-        }
-
-        // we can now bail if we're in the shadow
-        if (isInShadow == true) {
-            return ambient;
-        }
-
-        // we have light, let's do reflections
-        // vec3 negCamDir = vec3(camDir.xyz * -1.0);
-        // vec3 r = negCamDir - normal * (2.0 * dot(negCamDir, normal));
-        // vec4 reflection = cast2(Ray(pointAtTime, r));
-
-        vec4 total = vec4(
-            ambient.rgb + 
-            fullColour.rgb * lambert +
-            fullColour.rgb * phong, 1.0);
-        
-        return total;
-    }
-
-    vec4 surface3(Ray ray, Material material, vec3 pointAtTime, vec3 normal) {
-        vec3 b = material.colour;
-        vec3 c = vec3(0.0, 0.0, 0.0);
-        float lambertAmount = 0.0;
-
-        if (material.lambert > 0.0) {
-            for (int i = 0; i < ${lightCount}; i += 1) {
-                if (isLightVisible(pointAtTime, pointLights[i], normal) == true) {
-                    vec3 lmp = normalize(pointLights[i].point - pointAtTime);
-                    float contribution = dot(lmp, normal);
-
-                    if (contribution > 0.0) {
-                        lambertAmount += contribution;
-                    }
-                }
-            }
-        }
-
-        lambertAmount = min(1.0, lambertAmount);
-
-        vec3 lambert = vec3(b.rgb / 255.0 * lambertAmount * material.lambert);
-        vec3 ambient = vec3(b.rgb / 255.0 * material.ambient);
-
-        vec3 total = lambert + ambient + c;
-        return vec4(total.r, total.g, total.b, 1.0);
+        return vec4(ambient.rgb + diffuse.rgb * hit.material.lambert + specular.rgb * hit.material.specular, 1.0);
     }
 `;
 
@@ -633,7 +535,7 @@ const g_scene = {
             point: [0, 5, -3] as Matrix3_1,
             colour: [100, 0, 0 ] as Matrix3_1,
             specular: 0.2,
-            lambert: 0.7,
+            lambert: 0.6,
             ambient: 0.1,
             radius: 3
         },

@@ -15,7 +15,7 @@ const vertexSource = `
        gl_Position = a_position;
     }
 `;
-const phongSpecularExp = '16.0';
+const phongSpecularExp = '8.0';
 const triangleCount = 3;
 const lightCount = 1;
 const sphereCount = 3;
@@ -461,7 +461,7 @@ const g_scene = {
         up: [0, 1, 0],
     },
     globalAmbientIntensity: 0.002,
-    lights: [[-20, 5, 20]],
+    lights: [[-25, 30, 10]],
     spheres: [
         {
             type: 'sphere',

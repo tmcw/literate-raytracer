@@ -24,7 +24,7 @@ const vertexSource = `
     }
 `;
 
-const phongSpecularExp = '16.0';
+const phongSpecularExp = '8.0';
 const triangleCount = 3;
 const lightCount = 1;
 const sphereCount = 3;
@@ -528,7 +528,7 @@ const g_scene = {
         up: [0, 1, 0] as Matrix3_1,
     },
     globalAmbientIntensity: 0.002,
-    lights: [[-20, 5, 20] as Matrix3_1],
+    lights: [[-25, 30, 10] as Matrix3_1],
     spheres: [
         {
             type: 'sphere',

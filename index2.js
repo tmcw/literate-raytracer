@@ -106,7 +106,7 @@ const fragmentSource = `precision mediump float;
     vec4 surfacePhong(Hit hit);
     vec4 surfacePbr(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
-    void draw();
+    vec4 draw(float xo, float yo);
     float DistributionGGX(vec3 N, vec3 H, float roughness);
     float GeometrySchlickGGX(float NdotV, float roughness);
     float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -114,15 +114,22 @@ const fragmentSource = `precision mediump float;
 
      
     void main() {
-        draw();
+        vec3 total = vec3(0.0);
+
+        total += draw(0.25, 0.25).rgb;
+        total += draw(0.75, 0.25).rgb;
+        total += draw(0.75, 0.75).rgb;
+        total += draw(0.25, 0.75).rgb;
+
+        gl_FragColor = vec4(total.rgb / 4.0, 1.0);
     }
 
-    void draw() {
+    vec4 draw(float xo, float yo) {
         float px = gl_FragCoord.x;
         float py = gl_FragCoord.y;
 
-        float x = (2.0 * (px + 0.5) / width - 1.0) * scale;
-        float y = (2.0 * (py + 0.5) / height - 1.0) * scale * 1.0 / aspectRatio;
+        float x = (2.0 * (px + xo) / width - 1.0) * scale;
+        float y = (2.0 * (py + yo) / height - 1.0) * scale * 1.0 / aspectRatio;
 
         vec3 dir = vec3(0.0, 0.0, 0.0);
 
@@ -132,7 +139,7 @@ const fragmentSource = `precision mediump float;
 
         Ray ray = Ray(cameraPos, normalize(dir));
 
-        gl_FragColor = cast1(ray);
+        return cast1(ray);
     }
 
     Material getMaterial(int index) {

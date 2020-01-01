@@ -15,6 +15,7 @@ const vertexSource = `
        gl_Position = a_position;
     }
 `;
+const defaultF0 = 0.04;
 const materialCount = 5;
 const phongSpecularExp = '32.0';
 const triangleCount = 3;
@@ -34,10 +35,10 @@ const fragmentSource = `precision mediump float;
     };
 
     struct Material {
-        vec3 colour;
+        vec3 colourOrAlbedo;
         float ambient;
-        float diffuse;
-        float specular;
+        float diffuseOrRoughness;
+        float specularOrMetallic;
     };
 
     struct Hit {
@@ -79,6 +80,7 @@ const fragmentSource = `precision mediump float;
         vec3 point;
     };
     const vec4 bgColour = vec4(${bg.r}, ${bg.g}, ${bg.b}, 1.0);
+    const float PI = ${Math.PI};
 
     uniform float aspectRatio;
     uniform vec3 cameraPos;
@@ -102,8 +104,14 @@ const fragmentSource = `precision mediump float;
     vec4 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
     vec4 surfacePhong(Hit hit);
+    vec4 surfacePbr(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
     void draw();
+    float DistributionGGX(vec3 N, vec3 H, float roughness);
+    float GeometrySchlickGGX(float NdotV, float roughness);
+    float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+    vec3 fresnelSchlick(float cosTheta, vec3 F0);
+
      
     void main() {
         draw();
@@ -217,7 +225,11 @@ const fragmentSource = `precision mediump float;
             return bgColour;
         }
 
-        return surfacePhong(hit);
+        if (hit.distance < 0.0) {
+            return surfacePhong(hit);
+        } else {
+            return surfacePbr(hit);
+        }
     }
 
     vec4 cast2(Ray ray) {
@@ -352,14 +364,125 @@ const fragmentSource = `precision mediump float;
         return td.distance < 0.0;
     }
 
+    float sRgb8ChannelToLinear(float colour8) {
+        const float sThresh = 0.04045;
+
+        float colourf = colour8 / 255.0;
+        if (colourf <= sThresh) {
+            return colourf / 12.92;
+        }
+
+        return pow((colourf + 0.055) / 1.055, 2.4);
+    }
+
+    vec3 sRgb8ToLinear(vec3 srgb8) {
+        return vec3(
+            sRgb8ChannelToLinear(srgb8.r),
+            sRgb8ChannelToLinear(srgb8.g),
+            sRgb8ChannelToLinear(srgb8.b)
+            );
+    }
+
+    float linearChannelToSrgbF(float linear) {
+        if (linear <= 0.0031308) {
+            return (linear * 12.92);
+        }
+
+        return (1.055 * pow(linear, 1.0/2.4) - 0.055);
+    }
+
+    vec3 linearToSrgbF(vec3 linear) {
+        return vec3(
+            linearChannelToSrgbF(linear.r),
+            linearChannelToSrgbF(linear.g),
+            linearChannelToSrgbF(linear.b)
+        );
+    }
+
+    vec4 surfacePbr(Hit hit) {
+        Material material = hit.material;
+        vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); // pow(material.colourOrAlbedo.rgb, vec3(2.2));
+        float ao = material.ambient;
+        float metallic = material.specularOrMetallic;
+        float roughness = material.diffuseOrRoughness;
+
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+
+        vec3 F0 = vec3(${defaultF0}); 
+        F0 = mix(F0, albedo, metallic);
+
+        // reflectance equation
+        bool didLight = false;
+        vec3 Lo = vec3(0.0);
+        for (int i = 0; i < ${lightCount}; i += 1) {
+            if (isLightVisible(hit.position, pointLights[i].point, hit.normal) == true) {
+                didLight = true;
+                // calculate per-light radiance
+                vec3 lightDir = pointLights[i].point - hit.position;
+                float distance = length(lightDir);
+                vec3 L = normalize(lightDir);
+                vec3 H = normalize(V + L);
+                float attenuation = 1.0 / (distance * distance);
+                // @todo light colour
+                vec3 lightColour = sRgb8ToLinear(vec3(255.0, 255.0, 255.0) * 35.0);
+                vec3 radiance = lightColour.rgb * attenuation;
+
+                // Cook-Torrance BRDF
+                float NDF = DistributionGGX(N, H, roughness);   
+                float G   = GeometrySmith(N, V, L, roughness);      
+                vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+                vec3 nominator    = NDF * G * F; 
+                float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.
+                vec3 specular = nominator / denominator;
+
+                // kS is equal to Fresnel
+                vec3 kS = F;
+                // for energy conservation, the diffuse and specular light can't
+                // be above 1.0 (unless the surface emits light); to preserve this
+                // relationship the diffuse component (kD) should equal 1.0 - kS.
+                vec3 kD = vec3(1.0) - kS;
+                // multiply kD by the inverse metalness such that only non-metals 
+                // have diffuse lighting, or a linear blend if partly metal (pure metals
+                // have no diffuse light).
+                kD *= 1.0 - metallic;	  
+                // scale light by NdotL
+                float NdotL = max(dot(N, L), 0.0);        
+
+                // add to outgoing radiance Lo
+                Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+            }
+        }
+
+        if (didLight == false) {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        // ambient lighting (will replace this ambient lighting with 
+        // environment lighting).
+        vec3 ambient = vec3(0.03) * albedo * ao;
+    
+        vec3 colour = ambient + Lo;
+
+
+        // HDR tonemapping
+        colour = colour / (colour + vec3(1.0));
+
+        colour = linearToSrgbF(colour);
+
+        return vec4(colour.rgb, 1.0);
+    }
+
     vec4 surfacePhong(Hit hit) {
         Material material = hit.material;
-        vec3 fullColour = vec3(material.colour.rgb / 255.0);
+        vec3 fullColour = vec3(material.colourOrAlbedo.rgb / 255.0);
         vec3 diffuse = vec3(0.0, 0.0, 0.0);
         vec3 specular = vec3(0.0, 0.0, 0.0);
 
         for (int i = 0; i < ${lightCount}; i += 1) {
             if (isLightVisible(hit.position, pointLights[i].point, hit.normal) == true) {
+                // @todo light colour
                 vec3 lightColour = vec3(1.0, 1.0, 1.0);
                 vec3 lightDir = normalize(pointLights[i].point - hit.position);
                 float lightIntensity = 1.0;
@@ -383,7 +506,44 @@ const fragmentSource = `precision mediump float;
         vec3 ambient = vec3(fullColour.rgb * globalAmbientIntensity);
         ambient = vec3(ambient.rgb + (fullColour.rgb * material.ambient));
 
-        return vec4(ambient.rgb + diffuse.rgb * material.diffuse + specular.rgb * material.specular, 1.0);
+        return vec4(ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic, 1.0);
+    }
+
+// ----------------------------------------------------------------------------
+    float DistributionGGX(vec3 N, vec3 H, float roughness) {
+        float a = roughness*roughness;
+        float a2 = a*a;
+        float NdotH = max(dot(N, H), 0.0);
+        float NdotH2 = NdotH*NdotH;
+
+        float nom   = a2;
+        float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+        denom = PI * denom * denom;
+
+        return nom / denom;
+    }
+// ----------------------------------------------------------------------------
+    float GeometrySchlickGGX(float NdotV, float roughness) {
+        float r = (roughness + 1.0);
+        float k = (r*r) / 8.0;
+
+        float nom   = NdotV;
+        float denom = NdotV * (1.0 - k) + k;
+
+        return nom / denom;
+    }
+// ----------------------------------------------------------------------------
+    float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+        float NdotV = max(dot(N, V), 0.0);
+        float NdotL = max(dot(N, L), 0.0);
+        float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+        float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+        return ggx1 * ggx2;
+    }
+// ----------------------------------------------------------------------------
+    vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+        return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
     }
 `;
 function bindProgram(gl) {
@@ -490,35 +650,41 @@ const g_scene = {
     globalAmbientIntensity: 0.002,
     lights: [[-25, 30, 10]],
     materials: [
+        // {
+        //     colour: [100, 0, 0] as Matrix3_1,
+        //     ambient: 0.1,
+        //     diffuse: 0.7,
+        //     specular: 0.2,
+        // },
         {
             colour: [100, 0, 0],
-            ambient: 0.1,
-            diffuse: 0.7,
-            specular: 0.2,
+            ambient: 0.01,
+            diffuse: 0.45,
+            specular: 0.1,
         },
         {
             colour: [0, 0, 124],
-            diffuse: 0.9,
-            specular: 0.1,
-            ambient: 0.0,
+            diffuse: 0.1,
+            specular: 0.8,
+            ambient: 0.2,
         },
         {
             colour: [0, 255, 0],
-            diffuse: 0.7,
-            specular: 0.2,
-            ambient: 0.1,
+            diffuse: 0.1,
+            specular: 0.5,
+            ambient: 0.2,
         },
         {
             colour: [0, 100, 200],
             diffuse: 0.7,
-            specular: 0.2,
-            ambient: 0.1,
+            specular: 0.02,
+            ambient: 0.2,
         },
         {
             colour: [200, 200, 200],
             diffuse: 0.7,
-            specular: 0.2,
-            ambient: 0.1,
+            specular: 0.02,
+            ambient: 0.2,
         },
     ],
     spheres: [
@@ -660,10 +826,10 @@ function getUniformSetters(gl, program) {
     const scale = getUniformLocation(gl, program, 'scale');
     const materials = g_scene.materials.map((_, i) => {
         return {
-            colour: getUniformLocation(gl, program, `materials[${i}].colour`),
+            colour: getUniformLocation(gl, program, `materials[${i}].colourOrAlbedo`),
             ambient: getUniformLocation(gl, program, `materials[${i}].ambient`),
-            diffuse: getUniformLocation(gl, program, `materials[${i}].diffuse`),
-            specular: getUniformLocation(gl, program, `materials[${i}].specular`),
+            diffuse: getUniformLocation(gl, program, `materials[${i}].diffuseOrRoughness`),
+            specular: getUniformLocation(gl, program, `materials[${i}].specularOrMetallic`),
         };
     });
     const spheres = g_scene.spheres.map((_, i) => {
@@ -718,11 +884,11 @@ function getUniformSetters(gl, program) {
             }
             setVec3(lights[index].point, point);
         },
-        materials(index, colour, ambient, diffuse, specular) {
-            setVec3(materials[index].colour, colour);
+        materials(index, colourOrAlbedo, ambient, diffuseOrRoughness, specularOrMetallic) {
+            setVec3(materials[index].colour, colourOrAlbedo);
             setFloat(materials[index].ambient, ambient);
-            setFloat(materials[index].diffuse, diffuse);
-            setFloat(materials[index].specular, specular);
+            setFloat(materials[index].diffuse, diffuseOrRoughness);
+            setFloat(materials[index].specular, specularOrMetallic);
         },
         scale(s) {
             setFloat(scale, s);

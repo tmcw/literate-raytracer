@@ -54,13 +54,13 @@ function normalize3_1(m, op = createObjectPool(createMatrix3_1)) {
     const v = op.malloc();
     const length = Math.sqrt(m[0] * m[0] + m[1] * m[1] + m[2] * m[2]);
     // make sure we don't divide by 0.
-    if (length > 0.000001) {
+    if (length > 0.0000001) {
         v[0] = m[0] / length;
         v[1] = m[1] / length;
         v[2] = m[2] / length;
         return v;
     }
-    console.warn('normalize3_1 has no length');
+    console.warn('normalize3_1 has no length', m);
     v[0] = 0;
     v[1] = 0;
     v[2] = 0;

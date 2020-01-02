@@ -16,9 +16,9 @@ const vertexSource = `
     }
 `;
 const defaultF0 = 0.04;
-const materialCount = 5;
+const materialCount = 6;
 const phongSpecularExp = '32.0';
-const triangleCount = 3;
+const triangleCount = 3 + 12;
 const lightCount = 1;
 const sphereCount = 3;
 const epsilon = 0.00005;
@@ -32,6 +32,7 @@ const fragmentSource = `precision mediump float;
     struct Ray {
         vec3 point;
         vec3 vector;
+        float ior;
     };
 
     struct Material {
@@ -39,6 +40,8 @@ const fragmentSource = `precision mediump float;
         float ambient;
         float diffuseOrRoughness;
         float specularOrMetallic;
+        float refraction;
+        int isTranslucent;
     };
 
     struct Hit {
@@ -79,8 +82,9 @@ const fragmentSource = `precision mediump float;
     struct PointLight {
         vec3 point;
     };
-    const vec4 bgColour = vec4(${bg.r}, ${bg.g}, ${bg.b}, 1.0);
+    const vec3 bgColour = vec3(${bg.r}, ${bg.g}, ${bg.b});
     const float PI = ${Math.PI};
+    const float refractionMedium = 1.0;
 
     uniform float aspectRatio;
     uniform vec3 cameraPos;
@@ -99,19 +103,21 @@ const fragmentSource = `precision mediump float;
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
     SphereDistance intersectSpheres(Ray ray);
     TriangleDistance intersectTriangles(Ray ray);
-    vec4 cast1(Ray ray);
-    vec4 cast2(Ray ray);
-    vec4 cast3(Ray ray);
+    vec3 cast1(Ray ray);
+    vec3 cast2(Ray ray);
+    vec3 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
-    vec4 surfacePhong(Hit hit);
-    vec4 surfacePbr1(Hit hit);
-    vec4 surfacePbr2(Hit hit);
+    vec3 surfacePhong(Hit hit);
+    vec3 surfacePbr1(Hit hit);
+    vec3 surfacePbr2(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
-    vec4 draw(float xo, float yo);
+    bool areEqualish(float a, float b);
+    vec3 draw(float xo, float yo);
     float DistributionGGX(vec3 N, vec3 H, float roughness);
     float GeometrySchlickGGX(float NdotV, float roughness);
     float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
     vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
+    Material getMaterial(int index);
 
      
     void main() {
@@ -125,7 +131,7 @@ const fragmentSource = `precision mediump float;
         gl_FragColor = vec4(total.rgb / 4.0, 1.0);
     }
 
-    vec4 draw(float xo, float yo) {
+    vec3 draw(float xo, float yo) {
         float px = gl_FragCoord.x;
         float py = gl_FragCoord.y;
 
@@ -138,33 +144,9 @@ const fragmentSource = `precision mediump float;
         dir.y = y    * cameraMatrix[0][1] + y * cameraMatrix[1][1] + -1.0 * cameraMatrix[2][1];
         dir.z = -1.0 * cameraMatrix[0][2] + y * cameraMatrix[1][2] + -1.0 * cameraMatrix[2][2];
 
-        Ray ray = Ray(cameraPos, normalize(dir));
+        Ray ray = Ray(cameraPos, normalize(dir), refractionMedium);
 
         return cast1(ray);
-    }
-
-    Material getMaterial(int index) {
-        if (index == 0) {
-            return materials[0];
-        }
-
-        if (index == 1) {
-            return materials[1];
-        }
-
-        if (index == 2) {
-            return materials[2];
-        }
-
-        if (index == 3) {
-            return materials[3];
-        }
-
-        if (index == 4) {
-            return materials[4];
-        }
-
-        return materials[0];
     }
 
     Hit trace(Ray ray) {
@@ -173,10 +155,10 @@ const fragmentSource = `precision mediump float;
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return Hit(
                -1.0,
-               Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0),
+               Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0),
                vec3(0.0, 0.0, 0.0),
                vec3(0.0, 0.0, 0.0),
-               Ray(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0))
+               ray
            );
        }
 
@@ -226,7 +208,7 @@ const fragmentSource = `precision mediump float;
         );
     }
 
-    vec4 cast1(Ray ray) {
+    vec3 cast1(Ray ray) {
         Hit hit = trace(ray);
 
         if (hit.distance < 0.0) {
@@ -240,7 +222,7 @@ const fragmentSource = `precision mediump float;
         }
     }
 
-    vec4 cast2(Ray ray) {
+    vec3 cast2(Ray ray) {
         Hit hit = trace(ray);
 
         if (hit.distance < 0.0) {
@@ -254,7 +236,7 @@ const fragmentSource = `precision mediump float;
         }
     }
 
-    vec4 cast3(Ray ray) {
+    vec3 cast3(Ray ray) {
         Hit hit = trace(ray);
 
         if (hit.distance < 0.0) {
@@ -364,7 +346,7 @@ const fragmentSource = `precision mediump float;
 
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
         vec3 unit = normalize(light - pt);
-        Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit);
+        Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit, refractionMedium);
         SphereDistance sd = intersectSpheres(ray);
 
         if (sd.distance > 0.0) {
@@ -411,7 +393,7 @@ const fragmentSource = `precision mediump float;
         );
     }
 
-    vec4 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour) {
+    vec3 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour, vec3 refractColour) {
         Material material = hit.material;
         vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); // pow(material.colourOrAlbedo.rgb, vec3(2.2));
         float ao = material.ambient;
@@ -461,12 +443,12 @@ const fragmentSource = `precision mediump float;
                 float NdotL = max(dot(N, L), 0.0);        
 
                 // add to outgoing radiance Lo
-                Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+                Lo += (kD * (albedo + refractColour) / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
             }
         }
 
         if (didLight == false) {
-            return vec4(0.0, 0.0, 0.0, 1.0);
+            return vec3(0.0, 0.0, 0.0);
         }
 
         // ambient lighting (will replace this ambient lighting with 
@@ -481,27 +463,33 @@ const fragmentSource = `precision mediump float;
 
         colour = linearToSrgbF(colour);
 
-        return vec4(colour.rgb, 1.0);
+        return colour;
     }
 
-    vec4 surfacePbr1(Hit hit) {
+    vec3 surfacePbr1(Hit hit) {
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+        vec3 R = reflect(-V, N);  
+        vec3 reflectColour = cast2(Ray(hit.position, R, hit.ray.ior)).rgb;
+        vec3 refractColour = vec3(0.0, 0.0, 0.0);
+
+        if (hit.material.isTranslucent == 1) {
+            if (areEqualish(hit.ray.ior, hit.material.refraction) == false) {
+            }
+        }
+
+        return surfacePbrReflectance(hit, N, V, R, reflectColour, refractColour);
+    }
+
+    vec3 surfacePbr2(Hit hit) {
         vec3 N = hit.normal;
         vec3 V = normalize(hit.ray.point - hit.position);
         vec3 R = reflect(-V, N);   
-        vec3 reflectColour = cast2(Ray(hit.position, R)).rgb;
 
-        return surfacePbrReflectance(hit, N, V, R, reflectColour);
+        return surfacePbrReflectance(hit, N, V, R, vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 0.0));
     }
 
-    vec4 surfacePbr2(Hit hit) {
-        vec3 N = hit.normal;
-        vec3 V = normalize(hit.ray.point - hit.position);
-        vec3 R = reflect(-V, N);   
-
-        return surfacePbrReflectance(hit, N, V, R, vec3(1.0, 1.0, 1.0));
-    }
-
-    vec4 surfacePhong(Hit hit) {
+    vec3 surfacePhong(Hit hit) {
         Material material = hit.material;
         vec3 fullColour = vec3(material.colourOrAlbedo.rgb / 255.0);
         vec3 diffuse = vec3(0.0, 0.0, 0.0);
@@ -533,8 +521,44 @@ const fragmentSource = `precision mediump float;
         vec3 ambient = vec3(fullColour.rgb * globalAmbientIntensity);
         ambient = vec3(ambient.rgb + (fullColour.rgb * material.ambient));
 
-        return vec4(ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic, 1.0);
+        return ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic;
     }
+
+    bool areEqualish(float a, float b) {
+        if (abs(a - b) < ${epsilon}) {
+            return true;
+        }
+        return false;
+    }
+
+    Material getMaterial(int index) {
+        if (index == 0) {
+            return materials[0];
+        }
+
+        if (index == 1) {
+            return materials[1];
+        }
+
+        if (index == 2) {
+            return materials[2];
+        }
+
+        if (index == 3) {
+            return materials[3];
+        }
+
+        if (index == 4) {
+            return materials[4];
+        }
+
+        if (index == 5) {
+            return materials[5];
+        }
+
+        return materials[0];
+    }
+
 
 // ----------------------------------------------------------------------------
     float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -572,6 +596,7 @@ const fragmentSource = `precision mediump float;
     vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
         return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
     }   
+// ----------------------------------------------------------------------------
 `;
 function bindProgram(gl) {
     const vs = createShader(gl, gl.VERTEX_SHADER, vertexSource);
@@ -688,30 +713,48 @@ const g_scene = {
             ambient: 0.01,
             diffuse: 0.5,
             specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
         },
         {
             colour: [0, 0, 124],
             ambient: 0.1,
             diffuse: 0.01,
             specular: 0.8,
+            refraction: 1.0,
+            isTranslucent: false,
         },
         {
             colour: [0, 255, 0],
             ambient: 0.1,
             diffuse: 0.01,
             specular: 0.9,
+            refraction: 1.0,
+            isTranslucent: false,
         },
         {
             colour: [0, 100, 200],
             ambient: 0.1,
             diffuse: 0.8,
             specular: 0.02,
+            refraction: 1.0,
+            isTranslucent: false,
         },
         {
             colour: [200, 200, 200],
             ambient: 0.1,
             diffuse: 0.8,
             specular: 0.02,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [0, 25, 50],
+            ambient: 0.1,
+            diffuse: 0.8,
+            specular: 0.02,
+            refraction: 1.0,
+            isTranslucent: false,
         },
     ],
     spheres: [
@@ -762,7 +805,9 @@ const g_scene = {
                 [FD, 0, -FD],
             ],
         },
+        ...g_cube,
     ],
+    triangleNormals: [],
 };
 const g_ctx = bindProgram(g_gl);
 const uniforms = setupScene(g_gl, g_ctx, g_scene);
@@ -790,10 +835,7 @@ const animate = () => {
         uniforms.spheres(i, o.radius, o.material, o.point);
     });
     g_scene.triangles.forEach((t, i) => {
-        const v0v1 = subtract3_1(t.points[1], t.points[0]);
-        const v0v2 = subtract3_1(t.points[2], t.points[0]);
-        const normal = normalize3_1(multiply3_1(v0v1, v0v2));
-        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, normal);
+        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, g_scene.triangleNormals[i]);
     });
     draw(g_gl, g_ctx);
     requestAnimationFrame(animate);
@@ -820,16 +862,18 @@ function setupScene(gl, context, scene) {
     u.scale(scale);
     u.width(width);
     materials.forEach((m, i) => {
-        u.materials(i, m.colour, m.ambient, m.diffuse, m.specular);
+        u.materials(i, m.colour, m.ambient, m.diffuse, m.specular, m.refraction, m.isTranslucent);
     });
     spheres.forEach((s, i) => {
         u.spheres(i, s.radius, s.material, s.point);
     });
-    triangles.forEach((t, i) => {
+    g_scene.triangleNormals = [];
+    g_scene.triangleNormals = g_scene.triangles.map((t, i) => {
         const v0v1 = subtract3_1(t.points[1], t.points[0]);
         const v0v2 = subtract3_1(t.points[2], t.points[0]);
         const normal = normalize3_1(multiply3_1(v0v1, v0v2));
         u.triangles(i, t.points[0], t.points[1], t.points[2], t.material, normal);
+        return normal;
     });
     lights.forEach((l, i) => {
         u.lights(i, l);
@@ -856,6 +900,8 @@ function getUniformSetters(gl, program) {
             colour: getUniformLocation(gl, program, `materials[${i}].colourOrAlbedo`),
             ambient: getUniformLocation(gl, program, `materials[${i}].ambient`),
             diffuse: getUniformLocation(gl, program, `materials[${i}].diffuseOrRoughness`),
+            isTranslucent: getUniformLocation(gl, program, `materials[${i}].isTranslucent`),
+            refraction: getUniformLocation(gl, program, `materials[${i}].refraction`),
             specular: getUniformLocation(gl, program, `materials[${i}].specularOrMetallic`),
         };
     });
@@ -911,11 +957,13 @@ function getUniformSetters(gl, program) {
             }
             setVec3(lights[index].point, point);
         },
-        materials(index, colourOrAlbedo, ambient, diffuseOrRoughness, specularOrMetallic) {
+        materials(index, colourOrAlbedo, ambient, diffuseOrRoughness, specularOrMetallic, refraction, isTranslucent) {
             setVec3(materials[index].colour, colourOrAlbedo);
             setFloat(materials[index].ambient, ambient);
             setFloat(materials[index].diffuse, diffuseOrRoughness);
+            setFloat(materials[index].refraction, refraction);
             setFloat(materials[index].specular, specularOrMetallic);
+            setInt(materials[index].isTranslucent, isTranslucent ? 1 : 0);
         },
         scale(s) {
             setFloat(scale, s);

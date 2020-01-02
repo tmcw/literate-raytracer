@@ -104,13 +104,14 @@ const fragmentSource = `precision mediump float;
     vec4 cast3(Ray ray);
     vec3 sphereNormal(Sphere sphere, vec3 pos);
     vec4 surfacePhong(Hit hit);
-    vec4 surfacePbr(Hit hit);
+    vec4 surfacePbr1(Hit hit);
+    vec4 surfacePbr2(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
     vec4 draw(float xo, float yo);
     float DistributionGGX(vec3 N, vec3 H, float roughness);
     float GeometrySchlickGGX(float NdotV, float roughness);
     float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-    vec3 fresnelSchlick(float cosTheta, vec3 F0);
+    vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 
      
     void main() {
@@ -235,7 +236,7 @@ const fragmentSource = `precision mediump float;
         if (hit.distance < 0.0) {
             return surfacePhong(hit);
         } else {
-            return surfacePbr(hit);
+            return surfacePbr1(hit);
         }
     }
 
@@ -246,7 +247,11 @@ const fragmentSource = `precision mediump float;
             return bgColour;
         }
 
-        return surfacePhong(hit);
+        if (hit.distance < 0.0) {
+            return surfacePhong(hit);
+        } else {
+            return surfacePbr2(hit);
+        }
     }
 
     vec4 cast3(Ray ray) {
@@ -406,15 +411,12 @@ const fragmentSource = `precision mediump float;
         );
     }
 
-    vec4 surfacePbr(Hit hit) {
+    vec4 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour) {
         Material material = hit.material;
         vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); // pow(material.colourOrAlbedo.rgb, vec3(2.2));
         float ao = material.ambient;
         float metallic = material.specularOrMetallic;
         float roughness = material.diffuseOrRoughness;
-
-        vec3 N = hit.normal;
-        vec3 V = normalize(hit.ray.point - hit.position);
 
         vec3 F0 = vec3(${defaultF0}); 
         F0 = mix(F0, albedo, metallic);
@@ -438,11 +440,12 @@ const fragmentSource = `precision mediump float;
                 // Cook-Torrance BRDF
                 float NDF = DistributionGGX(N, H, roughness);   
                 float G   = GeometrySmith(N, V, L, roughness);      
-                vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
+                vec3 F    = fresnelSchlickRoughness(max(dot(H, V), 0.0), F0, roughness);
 
                 vec3 nominator    = NDF * G * F; 
                 float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.
-                vec3 specular = nominator / denominator;
+                /** @todo use real physics, this violates the PBR to some extent */
+                vec3 specular = nominator / denominator + F * reflectColour * metallic;
 
                 // kS is equal to Fresnel
                 vec3 kS = F;
@@ -479,6 +482,23 @@ const fragmentSource = `precision mediump float;
         colour = linearToSrgbF(colour);
 
         return vec4(colour.rgb, 1.0);
+    }
+
+    vec4 surfacePbr1(Hit hit) {
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+        vec3 R = reflect(-V, N);   
+        vec3 reflectColour = cast2(Ray(hit.position, R)).rgb;
+
+        return surfacePbrReflectance(hit, N, V, R, reflectColour);
+    }
+
+    vec4 surfacePbr2(Hit hit) {
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+        vec3 R = reflect(-V, N);   
+
+        return surfacePbrReflectance(hit, N, V, R, vec3(1.0, 1.0, 1.0));
     }
 
     vec4 surfacePhong(Hit hit) {
@@ -549,9 +569,9 @@ const fragmentSource = `precision mediump float;
         return ggx1 * ggx2;
     }
 // ----------------------------------------------------------------------------
-    vec3 fresnelSchlick(float cosTheta, vec3 F0) {
-        return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-    }
+    vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+        return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    }   
 `;
 function bindProgram(gl) {
     const vs = createShader(gl, gl.VERTEX_SHADER, vertexSource);
@@ -666,32 +686,32 @@ const g_scene = {
         {
             colour: [100, 0, 0],
             ambient: 0.01,
-            diffuse: 0.45,
+            diffuse: 0.5,
             specular: 0.1,
         },
         {
             colour: [0, 0, 124],
-            diffuse: 0.1,
+            ambient: 0.1,
+            diffuse: 0.01,
             specular: 0.8,
-            ambient: 0.2,
         },
         {
             colour: [0, 255, 0],
-            diffuse: 0.1,
-            specular: 0.5,
-            ambient: 0.2,
+            ambient: 0.1,
+            diffuse: 0.01,
+            specular: 0.9,
         },
         {
             colour: [0, 100, 200],
-            diffuse: 0.7,
+            ambient: 0.1,
+            diffuse: 0.8,
             specular: 0.02,
-            ambient: 0.2,
         },
         {
             colour: [200, 200, 200],
-            diffuse: 0.7,
+            ambient: 0.1,
+            diffuse: 0.8,
             specular: 0.02,
-            ambient: 0.2,
         },
     ],
     spheres: [

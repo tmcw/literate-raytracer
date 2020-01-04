@@ -16,6 +16,7 @@ const vertexSource = `
        gl_Position = a_position;
     }
 `;
+const aa = 0;
 const defaultF0 = 0.04;
 const materialCount = 6;
 const phongSpecularExp = '32.0';
@@ -144,13 +145,23 @@ const fragmentSource = `precision mediump float;
      
     void main() {
         vec3 total = vec3(0.0);
+        float divisor = 1.0;
 
-        total += draw(0.25, 0.25).rgb;
-        total += draw(0.75, 0.25).rgb;
-        total += draw(0.75, 0.75).rgb;
-        total += draw(0.25, 0.75).rgb;
+        if (${aa} == 2) {
+            divisor = 2.0;
+            total += draw(0.25, 0.25).rgb;
+            total += draw(0.75, 0.75).rgb;
+        } else if (${aa} == 4) {
+            divisor = 4.0;
+            total += draw(0.25, 0.25).rgb;
+            total += draw(0.75, 0.25).rgb;
+            total += draw(0.75, 0.75).rgb;
+            total += draw(0.25, 0.75).rgb;
+        } else {
+            total += draw(0.5, 0.5).rgb;
+        }
 
-        gl_FragColor = vec4(total.rgb / 4.0, 1.0);
+        gl_FragColor = vec4(total.rgb / divisor, 1.0);
     }
 
     vec3 draw(float xo, float yo) {

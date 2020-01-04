@@ -123,6 +123,13 @@ function identity4_4(op = createObjectPool(createMatrix4_4)) {
     v[15] = 1;
     return v;
 }
+function multiply4_4and3_1(a, b, op = createObjectPool(createMatrix3_1)) {
+    const m = op.malloc();
+    m[0] = a[0] * b[0] + a[4] * b[1] + a[8] * b[2] + a[12];
+    m[1] = a[1] * b[0] + a[5] * b[1] + a[9] * b[2] + a[13];
+    m[2] = a[2] * b[0] + a[6] * b[1] + a[10] * b[2] + a[14];
+    return m;
+}
 function multiply4_4(a, b, op = createObjectPool(createMatrix4_4)) {
     const v = op.malloc();
     const b00 = b[0 * 4 + 0];

@@ -11,6 +11,7 @@ interface ProgramContext {
 // canvas.getContext('webgl')
 // );
 const g_gl = g_canvas.getContext('webgl');
+const MIN_ORBIT = 3;
 
 if (!g_gl) {
     throw new Error('fail to launch gl');
@@ -27,15 +28,39 @@ const vertexSource = `
 const defaultF0 = 0.04;
 const materialCount = 6;
 const phongSpecularExp = '32.0';
-const triangleCount = 3 + 12;
+const triangleCount = 2; // 3 + 12;
 const lightCount = 1;
-const sphereCount = 3;
+// 13 is PBR limit
+const sphereCount = 57;
 const epsilon = 0.00005;
 const bg = {
     r: '0.05',
     g: '0.05',
     b: '0.05',
 };
+
+const g_spheres = (function () {
+    const s: { type: string, radius: number, point: Matrix3_1, material: number }[] = [];
+    const minOrbit = MIN_ORBIT;
+
+    let prevRadius = 0;
+    for (let i = 0; i < sphereCount; i += 1) {
+        const radius = i === 0 ? minOrbit - 1 : (Math.random() / 2) + 0.1;
+        s.push({
+            type: 'sphere',
+            radius,
+            point: [
+                i === 0 ? 0 : minOrbit + i * 0.25 + radius + prevRadius,
+                5,
+                0
+            ] as Matrix3_1,
+            material: Math.floor(Math.random() * 3),
+        });
+        prevRadius = radius;
+    }
+
+    return s;
+}());
 
 const fragmentSource = `precision mediump float;
 
@@ -111,7 +136,7 @@ const fragmentSource = `precision mediump float;
 
     float sphereIntersection(Sphere sphere, Ray ray);
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
-    SphereDistance intersectSpheres(Ray ray);
+    SphereDistance intersectSpheres(Ray ray, bool useAnyHit);
     TriangleDistance intersectTriangles(Ray ray);
     vec3 cast1(Ray ray);
     vec3 cast2(Ray ray);
@@ -160,7 +185,7 @@ const fragmentSource = `precision mediump float;
     }
 
     Hit trace(Ray ray) {
-       SphereDistance sd = intersectSpheres(ray);
+       SphereDistance sd = intersectSpheres(ray, false);
        TriangleDistance td = intersectTriangles(ray);
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return Hit(
@@ -226,9 +251,9 @@ const fragmentSource = `precision mediump float;
         }
 
         if (hit.distance < 0.0) {
-            return surfacePhong(hit);
-        } else {
             return surfacePbr1(hit);
+        } else {
+            return surfacePhong(hit);
         }
     }
 
@@ -240,9 +265,9 @@ const fragmentSource = `precision mediump float;
         }
 
         if (hit.distance < 0.0) {
-            return surfacePhong(hit);
-        } else {
             return surfacePbr2(hit);
+        } else {
+            return surfacePhong(hit);
         }
     }
 
@@ -260,7 +285,7 @@ const fragmentSource = `precision mediump float;
         return normalize(pos - sphere.point);
     }
 
-    SphereDistance intersectSpheres(Ray ray) {
+    SphereDistance intersectSpheres(Ray ray, bool useAnyHit) {
         SphereDistance sd = SphereDistance(-1.0, Sphere(
             vec3(0.0, 0.0, 0.0), 
             -1.0,
@@ -270,6 +295,10 @@ const fragmentSource = `precision mediump float;
             float dist = sphereIntersection(s, ray);
             if (dist >= 0.0) {
                 if (sd.distance <= 0.0 || dist < sd.distance) {
+                    sd.distance = dist;
+                    sd.sphere = s;
+                }
+                if (useAnyHit) {
                     sd.distance = dist;
                     sd.sphere = s;
                 }
@@ -357,7 +386,7 @@ const fragmentSource = `precision mediump float;
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
         vec3 unit = normalize(light - pt);
         Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit, refractionMedium);
-        SphereDistance sd = intersectSpheres(ray);
+        SphereDistance sd = intersectSpheres(ray, true);
 
         if (sd.distance > 0.0) {
             return false;
@@ -825,36 +854,36 @@ const g_scene = {
             isTranslucent: false,
         },
     ],
-    spheres: [
-        {
-            type: 'sphere',
-            material: 0,
-            point: [0, 5, -3] as Matrix3_1,
-            radius: 3
-        },
-        {
-            type: 'sphere',
-            material: 1,
-            point: [-4, 5, -1] as Matrix3_1,
-            radius: 0.2
-        },
-        {
-            type: 'sphere',
-            material: 2,
-            point: [-4, 5, -1] as Matrix3_1,
-            radius: 0.1
-        },
-    ],
+    spheres: g_spheres, // [
+        // {
+        //     type: 'sphere',
+        //     material: 0,
+        //     point: [0, 5, -3] as Matrix3_1,
+        //     radius: 3
+        // },
+        // {
+        //     type: 'sphere',
+        //     material: 1,
+        //     point: [-4, 5, -1] as Matrix3_1,
+        //     radius: 0.2
+        // },
+        // {
+        //     type: 'sphere',
+        //     material: 2,
+        //     point: [-4, 5, -1] as Matrix3_1,
+        //     radius: 0.1
+        // },
+    // ],
     triangles: [
-        {
-            type: 'triangle',
-            material: 3,
-            points: [
-                [3, 7, -7],
-                [-5, 7, -7],
-                [-5, 5, -7],
-            ] as Matrix3_1[],
-        },
+        // {
+        //     type: 'triangle',
+        //     material: 3,
+        //     points: [
+        //         [3, 7, -7],
+        //         [-5, 7, -7],
+        //         [-5, 5, -7],
+        //     ] as Matrix3_1[],
+        // },
         {
             type: 'triangle',
             material: 4,
@@ -873,7 +902,7 @@ const g_scene = {
                 [FD, 0, -FD],
             ] as Matrix3_1[],
         },
-        ...g_cube,
+        // ...g_cube,
     ],
     triangleNormals: [
     ] as Matrix3_1[],
@@ -883,44 +912,94 @@ type Scene = typeof g_scene;
 
 
 const g_ctx = bindProgram(g_gl);
-const uniforms = setupScene(g_gl, g_ctx, g_scene);
+const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
 draw(g_gl, g_ctx);
 
-let planet1 = 0;
-let planet2 = 0;
-let zod1 = 0.05;
+const g_planetStates = (function () {
+    const states: { matrix: Matrix4_4, vector: Matrix3_1 }[] = [];
 
-const animate = () => {
-    planet1 += 0.01;
-    planet2 += 0.02;
+    for (let i = 0; i < sphereCount; i += 1) {
+        const p = g_spheres[i].point;
+        const x = (Math.random() - 0.5);
+        const y = (Math.random() - 0.5);
+        const z = (Math.random() - 0.5);
+        states.push({
+            matrix: translate4_4(identity4_4(), p[0], p[1], p[2]),
+            vector: normalize3_1([x, y, z]),
+        });
+    }
 
-    // move zod around
-    if (g_scene.triangles[0].points[0][1] > 10.5) {
-        zod1 *= -1;
-    } else if (g_scene.triangles[0].points[0][1] < 4.5) {
-        zod1 *= -1;
-    } 
-    g_scene.triangles[0].points[0][1] += zod1;
+    return states;
+}());
 
-    // set the position of each moon with some trig.
-    g_scene.spheres[1].point[0] = Math.sin(planet1) * 3.5;
-    g_scene.spheres[1].point[2] = -3 + (Math.cos(planet1) * 3.5);
+const g_fps = {
+    countTime: 0,
+    lastTime: 0,
+    frames: 0,
+    sampleDuration: 5000,
+};
 
-    g_scene.spheres[2].point[0] = Math.sin(planet2) * 4;
-    g_scene.spheres[2].point[2] = -3 + (Math.cos(planet2) * 4);
+const animate = (time: number) => {
+    g_fps.frames += 1;
+    g_fps.countTime += time - g_fps.lastTime;
+    g_fps.lastTime = time;
+    if (g_fps.countTime >= g_fps.sampleDuration) {
+        console.log('fps', g_fps.frames / (g_fps.countTime / 1000));
+        g_fps.frames = 0;
+        g_fps.countTime = 0;
+    }
+    g_planetStates.forEach((state, i) => {
+        if (i > 0) {
+            if (state.matrix[12] > FD) {
+                state.vector = normalize3_1([-1, state.vector[1], state.vector[2]]);
+            }
 
-    g_scene.spheres.forEach((o, i) => {
-        uniforms.spheres(i, o.radius, o.material, o.point);
+            if (state.matrix[13] > 15) {
+                state.vector = normalize3_1([state.vector[0], -1, state.vector[2]]);
+            }
+
+            if (state.matrix[14] > FD) {
+                state.vector = normalize3_1([state.vector[0], state.vector[1], -1]);
+            }
+
+            if (state.matrix[12] < -FD) {
+                state.vector = normalize3_1([1, state.vector[1], state.vector[2]]);
+            }
+
+            if (state.matrix[13] < 0.5) {
+                state.vector = normalize3_1([state.vector[0], 1, state.vector[2]]);
+            }
+
+            if (state.matrix[14] < -FD) {
+                state.vector = normalize3_1([state.vector[0], state.vector[1], 1]);
+            }
+
+            const speed = Math.random() * 3 + 5;
+
+            const x = state.vector[0] / speed;
+            const y = state.vector[1] / speed;
+            const z = state.vector[2] / speed;
+
+            state.matrix = translate4_4(state.matrix, x, y, z);
+        }
+
+        const sphere = g_scene.spheres[i];
+        if (i > 0) {
+            sphere.point = [state.matrix[12], state.matrix[13], state.matrix[14]];
+            g_planetStates[i] = state;
+        }
+
+        g_uniforms.spheres(i, sphere.radius, sphere.material, sphere.point);
     });
 
     g_scene.triangles.forEach((t, i) => {
-        uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, g_scene.triangleNormals[i]);
+        g_uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, g_scene.triangleNormals[i]);
     });
 
     draw(g_gl, g_ctx);
     requestAnimationFrame(animate);
 };
-animate();
+animate(0);
 
 
 function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene) {

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>matrix.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="custom.css" />
+</head>
+<body>
+  <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
+        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    </div>
+    <canvas id='c'></canvas>
+    <center>
+        <button id='play'>play</button>
+        <button id='stop'>stop</button>
+    </center>
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="accelerators.html">
+                accelerators.js
+              </a>
+            
+              
+              <a class="source" href="cube.html">
+                cube.js
+              </a>
+            
+              
+              <a class="source" href="gl.html">
+                gl.js
+              </a>
+            
+              
+              <a class="source" href="html.html">
+                html.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="matrix.html">
+                matrix.js
+              </a>
+            
+              
+              <a class="source" href="scene.html">
+                scene.js
+              </a>
+            
+              
+              <a class="source" href="shader-configuration.html">
+                shader-configuration.js
+              </a>
+            
+              
+              <a class="source" href="shaders.html">
+                shaders.js
+              </a>
+            
+              
+              <a class="source" href="utility.html">
+                utility.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>matrix.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createMatrix3_1</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> [<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">identity3_3</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> [<span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">multiply3_1</span>(<span class="hljs-params">a, b, op = createObjectPool(createMatrix3_1</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = a[<span class="hljs-number">1</span>] * b[<span class="hljs-number">2</span>] - a[<span class="hljs-number">2</span>] * b[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">1</span>] = a[<span class="hljs-number">2</span>] * b[<span class="hljs-number">0</span>] - a[<span class="hljs-number">0</span>] * b[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">2</span>] = a[<span class="hljs-number">0</span>] * b[<span class="hljs-number">1</span>] - a[<span class="hljs-number">1</span>] * b[<span class="hljs-number">0</span>];
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">multiply3_3</span>(<span class="hljs-params">a, b</span>) </span>{
+    <span class="hljs-keyword">const</span> a00 = a[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a01 = a[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a02 = a[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a10 = a[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a11 = a[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a12 = a[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a20 = a[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a21 = a[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a22 = a[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b00 = b[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b01 = b[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b02 = b[<span class="hljs-number">0</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b10 = b[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b11 = b[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b12 = b[<span class="hljs-number">1</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b20 = b[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b21 = b[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b22 = b[<span class="hljs-number">2</span> * <span class="hljs-number">3</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">return</span> [
+        b00 * a00 + b01 * a10 + b02 * a20,
+        b00 * a01 + b01 * a11 + b02 * a21,
+        b00 * a02 + b01 * a12 + b02 * a22,
+        b10 * a00 + b11 * a10 + b12 * a20,
+        b10 * a01 + b11 * a11 + b12 * a21,
+        b10 * a02 + b11 * a12 + b12 * a22,
+        b20 * a00 + b21 * a10 + b22 * a20,
+        b20 * a01 + b21 * a11 + b22 * a21,
+        b20 * a02 + b21 * a12 + b22 * a22,
+    ];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">subtract3_1</span>(<span class="hljs-params">a, b, op = createObjectPool(createMatrix3_1</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = a[<span class="hljs-number">0</span>] - b[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">1</span>] = a[<span class="hljs-number">1</span>] - b[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">2</span>] = a[<span class="hljs-number">2</span>] - b[<span class="hljs-number">2</span>];
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">normalize3_1</span>(<span class="hljs-params">m, op = createObjectPool(createMatrix3_1</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    <span class="hljs-keyword">const</span> length = <span class="hljs-built_in">Math</span>.sqrt(m[<span class="hljs-number">0</span>] * m[<span class="hljs-number">0</span>] + m[<span class="hljs-number">1</span>] * m[<span class="hljs-number">1</span>] + m[<span class="hljs-number">2</span>] * m[<span class="hljs-number">2</span>]);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>make sure we don’t divide by 0.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (length &gt; <span class="hljs-number">0.0000001</span>) {
+        v[<span class="hljs-number">0</span>] = m[<span class="hljs-number">0</span>] / length;
+        v[<span class="hljs-number">1</span>] = m[<span class="hljs-number">1</span>] / length;
+        v[<span class="hljs-number">2</span>] = m[<span class="hljs-number">2</span>] / length;
+        <span class="hljs-keyword">return</span> v;
+    }
+    <span class="hljs-built_in">console</span>.warn(<span class="hljs-string">'normalize3_1 has no length'</span>, m);
+    v[<span class="hljs-number">0</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createTranslation3_3</span>(<span class="hljs-params">tx, ty</span>) </span>{
+    <span class="hljs-keyword">return</span> [<span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>, tx, ty, <span class="hljs-number">1</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createRotation3_3</span>(<span class="hljs-params">angleInRadians</span>) </span>{
+    <span class="hljs-keyword">const</span> c = <span class="hljs-built_in">Math</span>.cos(angleInRadians);
+    <span class="hljs-keyword">const</span> s = <span class="hljs-built_in">Math</span>.sin(angleInRadians);
+    <span class="hljs-keyword">return</span> [c, -s, <span class="hljs-number">0</span>, s, c, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createScaling3_3</span>(<span class="hljs-params">sx, sy</span>) </span>{
+    <span class="hljs-keyword">return</span> [sx, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, sy, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createProjection3_3</span>(<span class="hljs-params">width, height</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Note: This matrix flips the Y axis so that 0 is at the top.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> [<span class="hljs-number">2</span> / width, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">-2</span> / height, <span class="hljs-number">0</span>, <span class="hljs-number">-1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>];
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">translate3_3</span>(<span class="hljs-params">m, x, y</span>) </span>{
+    <span class="hljs-keyword">return</span> multiply3_3(createTranslation3_3(x, y), m);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">rotate3_3</span>(<span class="hljs-params">m, angleInRadians</span>) </span>{
+    <span class="hljs-keyword">return</span> multiply3_3(createRotation3_3(angleInRadians), m);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">scale3_3</span>(<span class="hljs-params">m, sx, sy</span>) </span>{
+    <span class="hljs-keyword">return</span> multiply3_3(createScaling3_3(sx, sy), m);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">project3_3</span>(<span class="hljs-params">m, width, height</span>) </span>{
+    <span class="hljs-keyword">return</span> multiply3_3(createProjection3_3(width, height), m);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createMatrix4_4</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Float32Array</span>(<span class="hljs-number">16</span>);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">copy4_4</span>(<span class="hljs-params">source, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; source.length; i += <span class="hljs-number">1</span>) {
+        v[i] = source[i];
+    }
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">identity4_4</span>(<span class="hljs-params">op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">multiply4_4and3_1</span>(<span class="hljs-params">a, b, op = createObjectPool(createMatrix3_1</span>)) </span>{
+    <span class="hljs-keyword">const</span> m = op.malloc();
+    m[<span class="hljs-number">0</span>] = a[<span class="hljs-number">0</span>] * b[<span class="hljs-number">0</span>] + a[<span class="hljs-number">4</span>] * b[<span class="hljs-number">1</span>] + a[<span class="hljs-number">8</span>] * b[<span class="hljs-number">2</span>] + a[<span class="hljs-number">12</span>];
+    m[<span class="hljs-number">1</span>] = a[<span class="hljs-number">1</span>] * b[<span class="hljs-number">0</span>] + a[<span class="hljs-number">5</span>] * b[<span class="hljs-number">1</span>] + a[<span class="hljs-number">9</span>] * b[<span class="hljs-number">2</span>] + a[<span class="hljs-number">13</span>];
+    m[<span class="hljs-number">2</span>] = a[<span class="hljs-number">2</span>] * b[<span class="hljs-number">0</span>] + a[<span class="hljs-number">6</span>] * b[<span class="hljs-number">1</span>] + a[<span class="hljs-number">10</span>] * b[<span class="hljs-number">2</span>] + a[<span class="hljs-number">14</span>];
+    <span class="hljs-keyword">return</span> m;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">multiply4_4</span>(<span class="hljs-params">a, b, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    <span class="hljs-keyword">const</span> b00 = b[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b01 = b[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b02 = b[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b03 = b[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> b10 = b[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b11 = b[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b12 = b[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b13 = b[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> b20 = b[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b21 = b[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b22 = b[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b23 = b[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> b30 = b[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> b31 = b[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> b32 = b[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> b33 = b[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> a00 = a[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a01 = a[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a02 = a[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a03 = a[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> a10 = a[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a11 = a[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a12 = a[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a13 = a[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> a20 = a[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a21 = a[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a22 = a[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a23 = a[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> a30 = a[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> a31 = a[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> a32 = a[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> a33 = a[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    v[<span class="hljs-number">0</span>] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30;
+    v[<span class="hljs-number">1</span>] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31;
+    v[<span class="hljs-number">2</span>] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32;
+    v[<span class="hljs-number">3</span>] = b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33;
+    v[<span class="hljs-number">4</span>] = b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30;
+    v[<span class="hljs-number">5</span>] = b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31;
+    v[<span class="hljs-number">6</span>] = b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32;
+    v[<span class="hljs-number">7</span>] = b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33;
+    v[<span class="hljs-number">8</span>] = b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30;
+    v[<span class="hljs-number">9</span>] = b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31;
+    v[<span class="hljs-number">10</span>] = b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32;
+    v[<span class="hljs-number">11</span>] = b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33;
+    v[<span class="hljs-number">12</span>] = b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30;
+    v[<span class="hljs-number">13</span>] = b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31;
+    v[<span class="hljs-number">14</span>] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32;
+    v[<span class="hljs-number">15</span>] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createTranslation4_4</span>(<span class="hljs-params">x, y, z, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = x;
+    v[<span class="hljs-number">13</span>] = y;
+    v[<span class="hljs-number">14</span>] = z;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createXRotation4_4</span>(<span class="hljs-params">angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> c = <span class="hljs-built_in">Math</span>.cos(angleInRadians);
+    <span class="hljs-keyword">const</span> s = <span class="hljs-built_in">Math</span>.sin(angleInRadians);
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = c;
+    v[<span class="hljs-number">6</span>] = s;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = -s;
+    v[<span class="hljs-number">10</span>] = c;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createYRotation4_4</span>(<span class="hljs-params">angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> c = <span class="hljs-built_in">Math</span>.cos(angleInRadians);
+    <span class="hljs-keyword">const</span> s = <span class="hljs-built_in">Math</span>.sin(angleInRadians);
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = c;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = -s;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = s;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = c;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createZRotation4_4</span>(<span class="hljs-params">angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> c = <span class="hljs-built_in">Math</span>.cos(angleInRadians);
+    <span class="hljs-keyword">const</span> s = <span class="hljs-built_in">Math</span>.sin(angleInRadians);
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = c;
+    v[<span class="hljs-number">1</span>] = s;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = -s;
+    v[<span class="hljs-number">5</span>] = c;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = <span class="hljs-number">1</span>;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createScaling4_4</span>(<span class="hljs-params">x, y, z, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = x;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = y;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = z;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">translate4_4</span>(<span class="hljs-params">m, x, y, z, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> t = createTranslation4_4(x, y, z, op);
+    <span class="hljs-keyword">const</span> result = multiply4_4(m, t, op);
+    op.free(t);
+    <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">xRotate4_4</span>(<span class="hljs-params">m, angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> t = createXRotation4_4(angleInRadians, op);
+    <span class="hljs-keyword">const</span> result = multiply4_4(m, t, op);
+    op.free(t);
+    <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">yRotate4_4</span>(<span class="hljs-params">m, angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> t = createYRotation4_4(angleInRadians, op);
+    <span class="hljs-keyword">const</span> result = multiply4_4(m, t, op);
+    op.free(t);
+    <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">zRotate4_4</span>(<span class="hljs-params">m, angleInRadians, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> t = createZRotation4_4(angleInRadians, op);
+    <span class="hljs-keyword">const</span> result = multiply4_4(m, t, op);
+    op.free(t);
+    <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">scale4_4</span>(<span class="hljs-params">m, x, y, z, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> t = createScaling4_4(x, y, z, op);
+    <span class="hljs-keyword">const</span> result = multiply4_4(m, t, op);
+    op.free(t);
+    <span class="hljs-keyword">return</span> result;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ortho4_4</span>(<span class="hljs-params">left, right, bottom, top, near, far, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = <span class="hljs-number">2</span> / (right - left);
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = <span class="hljs-number">2</span> / (top - bottom);
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = <span class="hljs-number">2</span> / (near - far);
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = (left + right) / (left - right);
+    v[<span class="hljs-number">13</span>] = (bottom + top) / (bottom - top);
+    v[<span class="hljs-number">14</span>] = (near + far) / (near - far);
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">perspective4_4</span>(<span class="hljs-params">fovRadians, aspect, near, far, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> f = <span class="hljs-built_in">Math</span>.tan(<span class="hljs-built_in">Math</span>.PI * <span class="hljs-number">0.5</span> - <span class="hljs-number">0.5</span> * fovRadians);
+    <span class="hljs-keyword">const</span> rangeInv = <span class="hljs-number">1.0</span> / (near - far);
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = f / aspect;
+    v[<span class="hljs-number">1</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">2</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">5</span>] = f;
+    v[<span class="hljs-number">6</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">9</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">10</span>] = (near + far) * rangeInv;
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">-1</span>;
+    v[<span class="hljs-number">12</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">13</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">14</span>] = near * far * rangeInv * <span class="hljs-number">2</span>;
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">inverse4_4</span>(<span class="hljs-params">m, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    <span class="hljs-keyword">const</span> m00 = m[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> m01 = m[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> m02 = m[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> m03 = m[<span class="hljs-number">0</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> m10 = m[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> m11 = m[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> m12 = m[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> m13 = m[<span class="hljs-number">1</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> m20 = m[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> m21 = m[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> m22 = m[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> m23 = m[<span class="hljs-number">2</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> m30 = m[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">0</span>];
+    <span class="hljs-keyword">const</span> m31 = m[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">1</span>];
+    <span class="hljs-keyword">const</span> m32 = m[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">2</span>];
+    <span class="hljs-keyword">const</span> m33 = m[<span class="hljs-number">3</span> * <span class="hljs-number">4</span> + <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">const</span> tmp_0 = m22 * m33;
+    <span class="hljs-keyword">const</span> tmp_1 = m32 * m23;
+    <span class="hljs-keyword">const</span> tmp_2 = m12 * m33;
+    <span class="hljs-keyword">const</span> tmp_3 = m32 * m13;
+    <span class="hljs-keyword">const</span> tmp_4 = m12 * m23;
+    <span class="hljs-keyword">const</span> tmp_5 = m22 * m13;
+    <span class="hljs-keyword">const</span> tmp_6 = m02 * m33;
+    <span class="hljs-keyword">const</span> tmp_7 = m32 * m03;
+    <span class="hljs-keyword">const</span> tmp_8 = m02 * m23;
+    <span class="hljs-keyword">const</span> tmp_9 = m22 * m03;
+    <span class="hljs-keyword">const</span> tmp_10 = m02 * m13;
+    <span class="hljs-keyword">const</span> tmp_11 = m12 * m03;
+    <span class="hljs-keyword">const</span> tmp_12 = m20 * m31;
+    <span class="hljs-keyword">const</span> tmp_13 = m30 * m21;
+    <span class="hljs-keyword">const</span> tmp_14 = m10 * m31;
+    <span class="hljs-keyword">const</span> tmp_15 = m30 * m11;
+    <span class="hljs-keyword">const</span> tmp_16 = m10 * m21;
+    <span class="hljs-keyword">const</span> tmp_17 = m20 * m11;
+    <span class="hljs-keyword">const</span> tmp_18 = m00 * m31;
+    <span class="hljs-keyword">const</span> tmp_19 = m30 * m01;
+    <span class="hljs-keyword">const</span> tmp_20 = m00 * m21;
+    <span class="hljs-keyword">const</span> tmp_21 = m20 * m01;
+    <span class="hljs-keyword">const</span> tmp_22 = m00 * m11;
+    <span class="hljs-keyword">const</span> tmp_23 = m10 * m01;
+    <span class="hljs-keyword">const</span> t0 = tmp_0 * m11 +
+        tmp_3 * m21 +
+        tmp_4 * m31 -
+        (tmp_1 * m11 + tmp_2 * m21 + tmp_5 * m31);
+    <span class="hljs-keyword">const</span> t1 = tmp_1 * m01 +
+        tmp_6 * m21 +
+        tmp_9 * m31 -
+        (tmp_0 * m01 + tmp_7 * m21 + tmp_8 * m31);
+    <span class="hljs-keyword">const</span> t2 = tmp_2 * m01 +
+        tmp_7 * m11 +
+        tmp_10 * m31 -
+        (tmp_3 * m01 + tmp_6 * m11 + tmp_11 * m31);
+    <span class="hljs-keyword">const</span> t3 = tmp_5 * m01 +
+        tmp_8 * m11 +
+        tmp_11 * m21 -
+        (tmp_4 * m01 + tmp_9 * m11 + tmp_10 * m21);
+    <span class="hljs-keyword">const</span> det = m00 * t0 + m10 * t1 + m20 * t2 + m30 * t3;
+    <span class="hljs-keyword">if</span> (det === <span class="hljs-number">0</span>) {
+        <span class="hljs-built_in">console</span>.warn(<span class="hljs-string">'4x4 Matrix inversion warnining, no inverse'</span>);
+    }
+    <span class="hljs-keyword">const</span> d = det !== <span class="hljs-number">0</span> ? <span class="hljs-number">1.0</span> / det : <span class="hljs-number">0.000000001</span>;
+    v[<span class="hljs-number">0</span>] = d * t0;
+    v[<span class="hljs-number">1</span>] = d * t1;
+    v[<span class="hljs-number">2</span>] = d * t2;
+    v[<span class="hljs-number">3</span>] = d * t3;
+    v[<span class="hljs-number">4</span>] =
+        d *
+            (tmp_1 * m10 +
+                tmp_2 * m20 +
+                tmp_5 * m30 -
+                (tmp_0 * m10 + tmp_3 * m20 + tmp_4 * m30));
+    v[<span class="hljs-number">5</span>] =
+        d *
+            (tmp_0 * m00 +
+                tmp_7 * m20 +
+                tmp_8 * m30 -
+                (tmp_1 * m00 + tmp_6 * m20 + tmp_9 * m30));
+    v[<span class="hljs-number">6</span>] =
+        d *
+            (tmp_3 * m00 +
+                tmp_6 * m10 +
+                tmp_11 * m30 -
+                (tmp_2 * m00 + tmp_7 * m10 + tmp_10 * m30));
+    v[<span class="hljs-number">7</span>] =
+        d *
+            (tmp_4 * m00 +
+                tmp_9 * m10 +
+                tmp_10 * m20 -
+                (tmp_5 * m00 + tmp_8 * m10 + tmp_11 * m20));
+    v[<span class="hljs-number">8</span>] =
+        d *
+            (tmp_12 * m13 +
+                tmp_15 * m23 +
+                tmp_16 * m33 -
+                (tmp_13 * m13 + tmp_14 * m23 + tmp_17 * m33));
+    v[<span class="hljs-number">9</span>] =
+        d *
+            (tmp_13 * m03 +
+                tmp_18 * m23 +
+                tmp_21 * m33 -
+                (tmp_12 * m03 + tmp_19 * m23 + tmp_20 * m33));
+    v[<span class="hljs-number">10</span>] =
+        d *
+            (tmp_14 * m03 +
+                tmp_19 * m13 +
+                tmp_22 * m33 -
+                (tmp_15 * m03 + tmp_18 * m13 + tmp_23 * m33));
+    v[<span class="hljs-number">11</span>] =
+        d *
+            (tmp_17 * m03 +
+                tmp_20 * m13 +
+                tmp_23 * m23 -
+                (tmp_16 * m03 + tmp_21 * m13 + tmp_22 * m23));
+    v[<span class="hljs-number">12</span>] =
+        d *
+            (tmp_14 * m22 +
+                tmp_17 * m32 +
+                tmp_13 * m12 -
+                (tmp_16 * m32 + tmp_12 * m12 + tmp_15 * m22));
+    v[<span class="hljs-number">13</span>] =
+        d *
+            (tmp_20 * m32 +
+                tmp_12 * m02 +
+                tmp_19 * m22 -
+                (tmp_18 * m22 + tmp_21 * m32 + tmp_13 * m02));
+    v[<span class="hljs-number">14</span>] =
+        d *
+            (tmp_18 * m12 +
+                tmp_23 * m32 +
+                tmp_15 * m02 -
+                (tmp_22 * m32 + tmp_14 * m02 + tmp_19 * m12));
+    v[<span class="hljs-number">15</span>] =
+        d *
+            (tmp_22 * m22 +
+                tmp_16 * m02 +
+                tmp_21 * m12 -
+                (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02));
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">lookAt4_4</span>(<span class="hljs-params">cameraPosition, target, up, op4_4 = createObjectPool(createMatrix4_4</span>), <span class="hljs-title">op3_1</span> = <span class="hljs-title">createObjectPool</span>(<span class="hljs-params">createMatrix3_1</span>)) </span>{
+    <span class="hljs-keyword">const</span> z1 = subtract3_1(cameraPosition, target, op3_1);
+    <span class="hljs-keyword">const</span> z = normalize3_1(z1, op3_1);
+    <span class="hljs-keyword">const</span> x1 = multiply3_1(up, z, op3_1);
+    <span class="hljs-keyword">const</span> x = normalize3_1(x1, op3_1);
+    <span class="hljs-keyword">const</span> y1 = multiply3_1(z, x, op3_1);
+    <span class="hljs-keyword">const</span> y = normalize3_1(y1, op3_1);
+    <span class="hljs-keyword">const</span> v = op4_4.malloc();
+    v[<span class="hljs-number">0</span>] = x[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">1</span>] = x[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">2</span>] = x[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">3</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">4</span>] = y[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">5</span>] = y[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">6</span>] = y[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">7</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">8</span>] = z[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">9</span>] = z[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">10</span>] = z[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">11</span>] = <span class="hljs-number">0</span>;
+    v[<span class="hljs-number">12</span>] = cameraPosition[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">13</span>] = cameraPosition[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">14</span>] = cameraPosition[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">15</span>] = <span class="hljs-number">1</span>;
+    op3_1.free(x1);
+    op3_1.free(x);
+    op3_1.free(y1);
+    op3_1.free(y);
+    op3_1.free(z1);
+    op3_1.free(z);
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">transpose4_4</span>(<span class="hljs-params">m, op = createObjectPool(createMatrix4_4</span>)) </span>{
+    <span class="hljs-keyword">const</span> v = op.malloc();
+    v[<span class="hljs-number">0</span>] = m[<span class="hljs-number">0</span>];
+    v[<span class="hljs-number">1</span>] = m[<span class="hljs-number">4</span>];
+    v[<span class="hljs-number">2</span>] = m[<span class="hljs-number">8</span>];
+    v[<span class="hljs-number">3</span>] = m[<span class="hljs-number">12</span>];
+    v[<span class="hljs-number">4</span>] = m[<span class="hljs-number">1</span>];
+    v[<span class="hljs-number">5</span>] = m[<span class="hljs-number">5</span>];
+    v[<span class="hljs-number">6</span>] = m[<span class="hljs-number">9</span>];
+    v[<span class="hljs-number">7</span>] = m[<span class="hljs-number">13</span>];
+    v[<span class="hljs-number">8</span>] = m[<span class="hljs-number">2</span>];
+    v[<span class="hljs-number">9</span>] = m[<span class="hljs-number">6</span>];
+    v[<span class="hljs-number">10</span>] = m[<span class="hljs-number">10</span>];
+    v[<span class="hljs-number">11</span>] = m[<span class="hljs-number">14</span>];
+    v[<span class="hljs-number">12</span>] = m[<span class="hljs-number">3</span>];
+    v[<span class="hljs-number">13</span>] = m[<span class="hljs-number">7</span>];
+    v[<span class="hljs-number">14</span>] = m[<span class="hljs-number">11</span>];
+    v[<span class="hljs-number">15</span>] = m[<span class="hljs-number">15</span>];
+    <span class="hljs-keyword">return</span> v;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">vectorMultiply</span>(<span class="hljs-params">v, m</span>) </span>{
+    <span class="hljs-keyword">const</span> dst = [];
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">4</span>; ++i) {
+        dst[i] = <span class="hljs-number">0.0</span>;
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> j = <span class="hljs-number">0</span>; j &lt; <span class="hljs-number">4</span>; ++j) {
+            dst[i] += v[j] * m[j * <span class="hljs-number">4</span> + i];
+        }
+    }
+    <span class="hljs-keyword">return</span> dst;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createObjectPool</span>(<span class="hljs-params">create, initialSize = <span class="hljs-number">0</span></span>) </span>{
+    <span class="hljs-keyword">const</span> pool = [];
+    <span class="hljs-keyword">if</span> (initialSize) {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; initialSize; i += <span class="hljs-number">1</span>) {
+            pool.push(create());
+        }
+    }
+    <span class="hljs-keyword">return</span> {
+        free(obj) {
+            pool.push(obj);
+        },
+        malloc() {
+            <span class="hljs-keyword">if</span> (pool.length) {
+                <span class="hljs-keyword">const</span> o = pool.pop();
+                <span class="hljs-keyword">if</span> (o) {
+                    <span class="hljs-keyword">return</span> o;
+                }
+                <span class="hljs-keyword">return</span> create();
+            }
+            <span class="hljs-keyword">return</span> create();
+        },
+    };
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>

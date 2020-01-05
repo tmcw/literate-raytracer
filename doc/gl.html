@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>gl.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="custom.css" />
+</head>
+<body>
+  <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
+        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    </div>
+    <canvas id='c'></canvas>
+    <center>
+        <button id='play'>play</button>
+        <button id='stop'>stop</button>
+    </center>
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="accelerators.html">
+                accelerators.js
+              </a>
+            
+              
+              <a class="source" href="cube.html">
+                cube.js
+              </a>
+            
+              
+              <a class="source" href="gl.html">
+                gl.js
+              </a>
+            
+              
+              <a class="source" href="html.html">
+                html.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="matrix.html">
+                matrix.js
+              </a>
+            
+              
+              <a class="source" href="scene.html">
+                scene.js
+              </a>
+            
+              
+              <a class="source" href="shader-configuration.html">
+                shader-configuration.js
+              </a>
+            
+              
+              <a class="source" href="shaders.html">
+                shaders.js
+              </a>
+            
+              
+              <a class="source" href="utility.html">
+                utility.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>gl.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">bindProgram</span>(<span class="hljs-params">gl, vertexSource, fragmentSource</span>) </span>{
+    <span class="hljs-keyword">const</span> vs = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+    <span class="hljs-keyword">const</span> fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+    <span class="hljs-keyword">const</span> program = createProgram(gl, vs, fs);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>look up where the vertex data needs to go.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> positionLocation = gl.getAttribLocation(program, <span class="hljs-string">"a_position"</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Create a buffer.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> positionBuffer = gl.createBuffer();
+    <span class="hljs-keyword">if</span> (!positionBuffer) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'fail to get position buffer'</span>);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Put a unit quad in the buffer</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> positions = [
+        <span class="hljs-number">-1</span>, <span class="hljs-number">-1</span>,
+        <span class="hljs-number">-1</span>, <span class="hljs-number">1</span>,
+        <span class="hljs-number">1</span>, <span class="hljs-number">-1</span>,
+        <span class="hljs-number">1</span>, <span class="hljs-number">-1</span>,
+        <span class="hljs-number">-1</span>, <span class="hljs-number">1</span>,
+        <span class="hljs-number">1</span>, <span class="hljs-number">1</span>,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Float32Array</span>(positions), gl.STATIC_DRAW);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Tell WebGL to use our shader program pair</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    gl.useProgram(program);
+    <span class="hljs-keyword">return</span> {
+        positionBuffer,
+        positionLocation,
+        program,
+    };
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createProgram</span>(<span class="hljs-params">gl, vertexShader, fragmentShader</span>) </span>{
+    <span class="hljs-keyword">const</span> program = gl.createProgram();
+    <span class="hljs-keyword">if</span> (!program) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'could not create GL program'</span>);
+    }
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    <span class="hljs-keyword">const</span> success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    <span class="hljs-keyword">if</span> (success) {
+        <span class="hljs-keyword">return</span> program;
+    }
+    <span class="hljs-keyword">const</span> log = gl.getProgramInfoLog(program);
+    gl.deleteProgram(program);
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'could not compile GL: '</span> + log);
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createShader</span>(<span class="hljs-params">gl, type, source</span>) </span>{
+    <span class="hljs-keyword">const</span> shader = gl.createShader(type);
+    <span class="hljs-keyword">if</span> (!shader) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'could not create shader: '</span> + source);
+    }
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    <span class="hljs-keyword">const</span> success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    <span class="hljs-keyword">if</span> (success) {
+        <span class="hljs-keyword">return</span> shader;
+    }
+    <span class="hljs-keyword">const</span> log = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'shader error: '</span> + log + <span class="hljs-string">'\n\n'</span> + source);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Unlike images, textures do not have a width and height associated
+with them so we’ll pass in the width and height of the texture</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">draw</span>(<span class="hljs-params">gl, context, canvas</span>) </span>{
+    <span class="hljs-keyword">if</span> (resize(canvas)) {
+        setupScene(gl, context, g_scene);
+    }
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enableVertexAttribArray(context.positionLocation);
+    gl.vertexAttribPointer(context.positionLocation, <span class="hljs-number">2</span>, gl.FLOAT, <span class="hljs-literal">false</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>draw the quad (2 triangles, 6 vertices)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    gl.drawArrays(gl.TRIANGLES, <span class="hljs-number">0</span>, <span class="hljs-number">6</span>);
+}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>

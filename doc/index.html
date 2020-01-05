@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>index.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="custom.css" />
+</head>
+<body>
+  <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
+        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    </div>
+    <canvas id='c'></canvas>
+    <center>
+        <button id='play'>play</button>
+        <button id='stop'>stop</button>
+    </center>
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="accelerators.html">
+                accelerators.js
+              </a>
+            
+              
+              <a class="source" href="cube.html">
+                cube.js
+              </a>
+            
+              
+              <a class="source" href="gl.html">
+                gl.js
+              </a>
+            
+              
+              <a class="source" href="html.html">
+                html.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="matrix.html">
+                matrix.js
+              </a>
+            
+              
+              <a class="source" href="scene.html">
+                scene.js
+              </a>
+            
+              
+              <a class="source" href="shader-configuration.html">
+                shader-configuration.js
+              </a>
+            
+              
+              <a class="source" href="shaders.html">
+                shaders.js
+              </a>
+            
+              
+              <a class="source" href="utility.html">
+                utility.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>index.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>Welcome to the Literate Ray Tracer, a program that reads like a book.
+This book is a long winded fork of <a href="https://github.com/tmcw/literate-raytracer" title="tom macwright&#39;s literate ray tracer">Tom Macwright’s</a>
+In addition to Tom’s work, the following websights were leveraged extensively</p>
+<ul>
+<li><a href="https://webglfundamentals.org/" title="WebGL Fundamentals, a great source for learning WebGL from scratch">WebGL Fundamentals</a>, for learning to grok WebGL</li>
+<li><a href="https://learnopengl.com/" title="Learn OpenGL, a great source for traditional and PBR approaches to lighting and 3D">Learn OpenGL</a>, for getting a better handle on lighting</li>
+<li><a href="https://www.scratchapixel.com/" title="Scratchapixel has loads of details on the maths behind raytracing and rasterization as well as loads of source code">Scratchapixel</a>, for ray tracing and more</li>
+</ul>
+<h2 id="how-to-read-this-book">How To Read This Book</h2>
+<p>With any luck this book reads like any other “book” on the web in 2020
+with the literate programming twist that there’s real running code snippets
+inbetween prose.</p>
+<p>The code is all real and is <a href="https://github.com/bennett000/literate-raytracer" title="Literate Ray Tracer">written in TypeScript</a>
+and runs in a slightly “simpler” way than most web apps in 2020.</p>
+<p>To keep it simple,</p>
+<ol>
+<li>The code is all here, no libraries required</li>
+<li>The code all executes in the global browser space, no official “modules”</li>
+<li>Performance is <em>not</em> prioritized, it’s not ignored entirely but the focus is on simplicity</li>
+</ol>
+<h2 id="30000-foot-view">30,000 Foot View</h2>
+<p>We’re going to be working in a prety “weird” way for most JS devs, and many other devs.
+Web developers are already used to jumping from HTML to JS to CSS and back.  On top of
+that we’re going to be jumping into <a href="https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)" title="GL Shader Language">GLSL</a>
+specifically an older version that is used on embedded devices and the web.  It’s somewhat
+like a simplified C with a dash of C++</p>
+<h3 id="tech-overview">Tech Overview</h3>
+<ul>
+<li>HTML + CSS show the 3D graphics output in a canvas</li>
+<li>JavaScript controls the HTML and orchestrates the GLSL program(s)</li>
+<li>GLSL compiles and runs on the GPU (video card)</li>
+</ul>
+<h3 id="ray-tracer-overview">Ray Tracer Overview</h3>
+<p>We’ll assume the audience knows what a ray tracer is, if not, checkout the links
+at the top and wikipedia.</p>
+<p>This particular ray tracer is built to show people a bunch of fun graphics things that
+can be done in a relatively cross compatible way in the browser.  We’re using WebGL
+1.x to keep it as compatable as possible. </p>
+<p>The high level algorithm is:</p>
+<ol>
+<li>For each frame JavaScript will update a 3D universe and inform the GPU</li>
+<li>For each <em>pixel</em> in each frame the GPU will cast out a ray and see if it hits an object.<ol>
+<li>If <em>no</em> object is hit, render a background colour</li>
+<li>If an object is hit, check if it can see any lights, if so draw a colour, if not, a shadow</li>
+</ol>
+</li>
+</ol>
+<p>Beyond that we’ll also look at casting more rays to do things like reflections, and refractions</p>
+<h2 id="0-configuration">0. Configuration</h2>
+<p><code>g_floorPlaneSize</code> is an arbitrary boundary to our scene and describes
+sizing used to bound animations and define a “floor plane” on which we
+can see shadows</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_floorPlaneSize = <span class="hljs-number">25</span>;
+<span class="hljs-keyword">const</span> g_scene = getScene();
+<span class="hljs-keyword">const</span> g_configShader = getShaderConfiguration(g_scene);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2 id="1-html">1. HTML</h2>
+<p>We’ll <a href="html.html" title="HTML Setup code">setup the HTML</a></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_html = bindToHTML();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="2-webgl-initialization">2. WebGL Initialization</h2>
+<p>In order to upload things to the GPU and renderthem on the canvas we’ll need to work
+with an API.  We can ask our canvas for a <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext" title="WebGL Rendering Context is the API we use to upload stuff to the GPU">WebGLRenderingContext</a>;
+which will be the API we use to upload stuff to the GPU.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_gl = g_html.canvas.getContext(<span class="hljs-string">'webgl'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>The world is an imperfect place, let’s make sure we got a valid context</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>throwIfFalsey(g_gl, <span class="hljs-string">'could not get a WebGL context'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Okay, great, so we’ve got a an API that let’s us talk to the GPU.  Alone that’s
+not enough for us to get started.  We need to give the GPU some code to run
+we’re going to need at least one GLSL program, that code is <a href="shaders.js" title="Our shaders, the &#39;body&#39; of our program">located in shaders.ts</a></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
+<span class="hljs-keyword">const</span> g_uniforms = setupScene(g_gl, g_ctx, g_scene);
+draw(g_gl, g_ctx, g_html.canvas);
+<span class="hljs-keyword">const</span> g_planetStates = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">const</span> states = [];
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; g_scene.spheres.length; i += <span class="hljs-number">1</span>) {
+        <span class="hljs-keyword">const</span> p = g_scene.spheres[i].point;
+        <span class="hljs-keyword">const</span> x = (<span class="hljs-built_in">Math</span>.random() - <span class="hljs-number">0.5</span>);
+        <span class="hljs-keyword">const</span> y = (<span class="hljs-built_in">Math</span>.random() - <span class="hljs-number">0.5</span>);
+        <span class="hljs-keyword">const</span> z = (<span class="hljs-built_in">Math</span>.random() - <span class="hljs-number">0.5</span>);
+        states.push({
+            <span class="hljs-attr">matrix</span>: translate4_4(identity4_4(), p[<span class="hljs-number">0</span>], p[<span class="hljs-number">1</span>], p[<span class="hljs-number">2</span>]),
+            <span class="hljs-attr">vector</span>: normalize3_1([x, y, z]),
+        });
+    }
+    <span class="hljs-keyword">return</span> states;
+}());
+<span class="hljs-keyword">const</span> g_fps = {
+    <span class="hljs-attr">countTime</span>: <span class="hljs-number">0</span>,
+    <span class="hljs-attr">lastTime</span>: <span class="hljs-number">0</span>,
+    <span class="hljs-attr">frames</span>: <span class="hljs-number">0</span>,
+    <span class="hljs-attr">sampleDuration</span>: <span class="hljs-number">5000</span>,
+};
+<span class="hljs-keyword">const</span> animate = <span class="hljs-function">(<span class="hljs-params">time</span>) =&gt;</span> {
+    g_fps.frames += <span class="hljs-number">1</span>;
+    g_fps.countTime += time - g_fps.lastTime;
+    g_fps.lastTime = time;
+    <span class="hljs-keyword">if</span> (g_fps.countTime &gt;= g_fps.sampleDuration) {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'fps'</span>, g_fps.frames / (g_fps.countTime / <span class="hljs-number">1000</span>));
+        g_fps.frames = <span class="hljs-number">0</span>;
+        g_fps.countTime = <span class="hljs-number">0</span>;
+    }
+    g_planetStates.forEach(<span class="hljs-function">(<span class="hljs-params">state, i</span>) =&gt;</span> {
+        <span class="hljs-keyword">if</span> (i &gt; <span class="hljs-number">0</span>) {
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">12</span>] &gt; g_floorPlaneSize) {
+                state.vector = normalize3_1([<span class="hljs-number">-1</span>, state.vector[<span class="hljs-number">1</span>], state.vector[<span class="hljs-number">2</span>]]);
+            }
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">13</span>] &gt; <span class="hljs-number">15</span>) {
+                state.vector = normalize3_1([state.vector[<span class="hljs-number">0</span>], <span class="hljs-number">-1</span>, state.vector[<span class="hljs-number">2</span>]]);
+            }
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">14</span>] &gt; g_floorPlaneSize) {
+                state.vector = normalize3_1([state.vector[<span class="hljs-number">0</span>], state.vector[<span class="hljs-number">1</span>], <span class="hljs-number">-1</span>]);
+            }
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">12</span>] &lt; -g_floorPlaneSize) {
+                state.vector = normalize3_1([<span class="hljs-number">1</span>, state.vector[<span class="hljs-number">1</span>], state.vector[<span class="hljs-number">2</span>]]);
+            }
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">13</span>] &lt; <span class="hljs-number">0.5</span>) {
+                state.vector = normalize3_1([state.vector[<span class="hljs-number">0</span>], <span class="hljs-number">1</span>, state.vector[<span class="hljs-number">2</span>]]);
+            }
+            <span class="hljs-keyword">if</span> (state.matrix[<span class="hljs-number">14</span>] &lt; -g_floorPlaneSize) {
+                state.vector = normalize3_1([state.vector[<span class="hljs-number">0</span>], state.vector[<span class="hljs-number">1</span>], <span class="hljs-number">1</span>]);
+            }
+            <span class="hljs-keyword">const</span> speed = <span class="hljs-built_in">Math</span>.random() * <span class="hljs-number">3</span> + <span class="hljs-number">5</span>;
+            <span class="hljs-keyword">const</span> x = state.vector[<span class="hljs-number">0</span>] / speed;
+            <span class="hljs-keyword">const</span> y = state.vector[<span class="hljs-number">1</span>] / speed;
+            <span class="hljs-keyword">const</span> z = state.vector[<span class="hljs-number">2</span>] / speed;
+            state.matrix = translate4_4(state.matrix, x, y, z);
+        }
+        <span class="hljs-keyword">const</span> sphere = g_scene.spheres[i];
+        <span class="hljs-keyword">if</span> (i &gt; <span class="hljs-number">0</span>) {
+            sphere.point = [state.matrix[<span class="hljs-number">12</span>], state.matrix[<span class="hljs-number">13</span>], state.matrix[<span class="hljs-number">14</span>]];
+            g_planetStates[i] = state;
+        }
+        g_uniforms.spheres(i, sphere.radius, sphere.material, sphere.point);
+    });
+    g_scene.triangleNormals(<span class="hljs-function">(<span class="hljs-params">normal, t, i</span>) =&gt;</span> {
+        g_uniforms.triangles(i, t.points[<span class="hljs-number">0</span>], t.points[<span class="hljs-number">1</span>], t.points[<span class="hljs-number">2</span>], t.material, normal);
+    }, <span class="hljs-literal">true</span>);
+    draw(g_gl, g_ctx, g_html.canvas);
+    requestAnimationFrame(animate);
+};
+animate(<span class="hljs-number">0</span>);</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>

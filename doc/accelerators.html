@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>accelerators.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="custom.css" />
+</head>
+<body>
+  <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
+        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    </div>
+    <canvas id='c'></canvas>
+    <center>
+        <button id='play'>play</button>
+        <button id='stop'>stop</button>
+    </center>
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="accelerators.html">
+                accelerators.js
+              </a>
+            
+              
+              <a class="source" href="cube.html">
+                cube.js
+              </a>
+            
+              
+              <a class="source" href="gl.html">
+                gl.js
+              </a>
+            
+              
+              <a class="source" href="html.html">
+                html.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="matrix.html">
+                matrix.js
+              </a>
+            
+              
+              <a class="source" href="scene.html">
+                scene.js
+              </a>
+            
+              
+              <a class="source" href="shader-configuration.html">
+                shader-configuration.js
+              </a>
+            
+              
+              <a class="source" href="shaders.html">
+                shaders.js
+              </a>
+            
+              
+              <a class="source" href="utility.html">
+                utility.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>accelerators.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> negInfinity = [-<span class="hljs-literal">Infinity</span>, -<span class="hljs-literal">Infinity</span>, -<span class="hljs-literal">Infinity</span>];
+<span class="hljs-keyword">const</span> posInfinity = [<span class="hljs-literal">Infinity</span>, <span class="hljs-literal">Infinity</span>, <span class="hljs-literal">Infinity</span>];
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BBox</span> </span>{
+    <span class="hljs-keyword">constructor</span>(min = BBox.negInfinity, max = BBox.posInfinity) {
+        <span class="hljs-keyword">this</span>.bounds = [BBox.negInfinity, BBox.posInfinity];
+        <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>] = min;
+        <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>] = max;
+    }
+    <span class="hljs-keyword">static</span> create() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> BBox();
+    }
+    centroid() {
+        <span class="hljs-keyword">return</span> [
+            (<span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] + <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]) * <span class="hljs-number">0.5</span>,
+            (<span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] + <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]) * <span class="hljs-number">0.5</span>,
+            (<span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] + <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]) * <span class="hljs-number">0.5</span>,
+        ];
+    }
+    extendBy(p) {
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">0</span>] &lt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = p[<span class="hljs-number">0</span>];
+        }
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">1</span>] &lt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] = p[<span class="hljs-number">1</span>];
+        }
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">2</span>] &lt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] = p[<span class="hljs-number">2</span>];
+        }
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">0</span>] &gt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = p[<span class="hljs-number">0</span>];
+        }
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">1</span>] &gt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = p[<span class="hljs-number">1</span>];
+        }
+        <span class="hljs-keyword">if</span> (p[<span class="hljs-number">2</span>] &gt; <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]) {
+            <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = p[<span class="hljs-number">2</span>];
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
+    }
+    min() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">0</span>];
+    }
+    max() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.bounds[<span class="hljs-number">1</span>];
+    }
+}
+BBox.negInfinity = [-<span class="hljs-literal">Infinity</span>, -<span class="hljs-literal">Infinity</span>, -<span class="hljs-literal">Infinity</span>];
+BBox.posInfinity = [<span class="hljs-literal">Infinity</span>, <span class="hljs-literal">Infinity</span>, <span class="hljs-literal">Infinity</span>];
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Extents</span> </span>{
+    <span class="hljs-keyword">constructor</span>(numPlaneSetNormals = 7, op = createObjectPool(createMatrix3_1)) {
+        <span class="hljs-keyword">this</span>.numPlaneSetNormals = numPlaneSetNormals;
+        <span class="hljs-keyword">this</span>.op = op;
+        <span class="hljs-keyword">this</span>.d = [];
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; numPlaneSetNormals; ++i) {
+            <span class="hljs-keyword">this</span>.d[i] = [<span class="hljs-literal">Infinity</span>, -<span class="hljs-literal">Infinity</span>];
+        }
+    }
+    <span class="hljs-keyword">static</span> create(numPlaneSetNormals = <span class="hljs-number">7</span>, op = createObjectPool(createMatrix3_1)) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Extents(numPlaneSetNormals, op);
+    }
+    extendBy(e) {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-keyword">this</span>.numPlaneSetNormals; ++i) {
+            <span class="hljs-keyword">if</span> (e.d[i][<span class="hljs-number">0</span>] &lt; <span class="hljs-keyword">this</span>.d[i][<span class="hljs-number">0</span>]) {
+                <span class="hljs-keyword">this</span>.d[i][<span class="hljs-number">0</span>] = e.d[i][<span class="hljs-number">0</span>];
+            }
+            <span class="hljs-keyword">if</span> (e.d[i][<span class="hljs-number">1</span>] &gt; <span class="hljs-keyword">this</span>.d[i][<span class="hljs-number">1</span>]) {
+                <span class="hljs-keyword">this</span>.d[i][<span class="hljs-number">1</span>] = e.d[i][<span class="hljs-number">1</span>];
+            }
+        }
+    }
+    centroid() {
+        <span class="hljs-keyword">const</span> ret = <span class="hljs-keyword">this</span>.op.malloc();
+        ret[<span class="hljs-number">0</span>] = <span class="hljs-keyword">this</span>.d[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] + <span class="hljs-keyword">this</span>.d[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] * <span class="hljs-number">0.5</span>;
+        ret[<span class="hljs-number">1</span>] = <span class="hljs-keyword">this</span>.d[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] + <span class="hljs-keyword">this</span>.d[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] * <span class="hljs-number">0.5</span>;
+        ret[<span class="hljs-number">2</span>] = <span class="hljs-keyword">this</span>.d[<span class="hljs-number">2</span>][<span class="hljs-number">0</span>] + <span class="hljs-keyword">this</span>.d[<span class="hljs-number">2</span>][<span class="hljs-number">1</span>] * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">return</span> ret;
+    }
+}
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">OctreeNode</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>.child = [
+            <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>,
+        ];
+        <span class="hljs-keyword">this</span>.isLeaf = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">this</span>.nodeExtents = Extents.create();
+        <span class="hljs-keyword">this</span>.nodeExtentsList = [];
+    }
+    <span class="hljs-keyword">static</span> create() {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> OctreeNode();
+    }
+}
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Octree</span> </span>{
+    <span class="hljs-keyword">constructor</span>(sceneExtents) {
+        <span class="hljs-keyword">this</span>.bbox = BBox.create();
+        <span class="hljs-keyword">this</span>.root = OctreeNode.create();
+        <span class="hljs-keyword">const</span> xDiff = sceneExtents.d[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] - sceneExtents.d[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>];
+        <span class="hljs-keyword">const</span> yDiff = sceneExtents.d[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] - sceneExtents.d[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>];
+        <span class="hljs-keyword">const</span> zDiff = sceneExtents.d[<span class="hljs-number">2</span>][<span class="hljs-number">1</span>] - sceneExtents.d[<span class="hljs-number">2</span>][<span class="hljs-number">0</span>];
+        <span class="hljs-keyword">const</span> maxDiff = <span class="hljs-built_in">Math</span>.max(xDiff, <span class="hljs-built_in">Math</span>.max(yDiff, zDiff));
+        <span class="hljs-keyword">const</span> minPlusMax = [
+            sceneExtents.d[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] + sceneExtents.d[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>],
+            sceneExtents.d[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] + sceneExtents.d[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>],
+            sceneExtents.d[<span class="hljs-number">2</span>][<span class="hljs-number">0</span>] + sceneExtents.d[<span class="hljs-number">2</span>][<span class="hljs-number">1</span>],
+        ];
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = (minPlusMax[<span class="hljs-number">0</span>] - maxDiff) * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] = (minPlusMax[<span class="hljs-number">1</span>] - maxDiff) * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] = (minPlusMax[<span class="hljs-number">2</span>] - maxDiff) * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = (minPlusMax[<span class="hljs-number">0</span>] + maxDiff) * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = (minPlusMax[<span class="hljs-number">1</span>] + maxDiff) * <span class="hljs-number">0.5</span>;
+        <span class="hljs-keyword">this</span>.bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = (minPlusMax[<span class="hljs-number">2</span>] + maxDiff) * <span class="hljs-number">0.5</span>;
+    }
+    <span class="hljs-keyword">static</span> create(sceneExtents) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Octree(sceneExtents);
+    }
+    _build(node, bbox) {
+        <span class="hljs-keyword">if</span> (node.isLeaf) {
+            node.nodeExtentsList.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+                node.nodeExtents.extendBy(e);
+            });
+        }
+        <span class="hljs-keyword">else</span> {
+            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">8</span>; ++i) {
+                <span class="hljs-keyword">const</span> child = node.child[i];
+                <span class="hljs-keyword">if</span> (child) {
+                    <span class="hljs-keyword">const</span> childBBox = BBox.create();
+                    ;
+                    <span class="hljs-keyword">const</span> centroid = bbox.centroid();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>x-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = (i &amp; <span class="hljs-number">4</span>) ? centroid[<span class="hljs-number">0</span>] : bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>];
+                    childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = (i &amp; <span class="hljs-number">4</span>) ? bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] : centroid[<span class="hljs-number">0</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>y-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] = (i &amp; <span class="hljs-number">2</span>) ? centroid[<span class="hljs-number">1</span>] : bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>];
+                    childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = (i &amp; <span class="hljs-number">2</span>) ? bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] : centroid[<span class="hljs-number">1</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>z-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] = (i &amp; <span class="hljs-number">1</span>) ? centroid[<span class="hljs-number">2</span>] : bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>];
+                    childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = (i &amp; <span class="hljs-number">1</span>) ? bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] : centroid[<span class="hljs-number">2</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Inspect child</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">this</span>._build(child, childBBox);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Expand extents with extents of child</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    node.nodeExtents.extendBy(child.nodeExtents);
+                }
+            }
+        }
+    }
+    _insert(node, extents, bbox, depth) {
+        <span class="hljs-keyword">if</span> (node.isLeaf) {
+            <span class="hljs-keyword">if</span> (node.nodeExtentsList.length === <span class="hljs-number">0</span> || depth === Octree.MAX_DEPTH) {
+                node.nodeExtentsList.push(extents);
+            }
+            <span class="hljs-keyword">else</span> {
+                node.isLeaf = <span class="hljs-literal">false</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Re-insert extents held by this node</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">while</span> (node.nodeExtentsList.length) {
+                    <span class="hljs-keyword">const</span> ne = node.nodeExtentsList.pop();
+                    <span class="hljs-keyword">if</span> (!ne) {
+                        <span class="hljs-keyword">break</span>;
+                    }
+                    <span class="hljs-keyword">this</span>._insert(node, ne, bbox, depth);
+                }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>Insert new extent</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">this</span>._insert(node, extents, bbox, depth);
+            }
+        }
+        <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Need to compute in which child of the current node this extents should
+be inserted into</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">const</span> extentsCentroid = extents.centroid();
+            <span class="hljs-keyword">const</span> nodeCentroid = [
+                (bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] + bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>]) * <span class="hljs-number">0.5</span>,
+                (bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] + bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]) * <span class="hljs-number">0.5</span>,
+                (bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] + bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>]) * <span class="hljs-number">0.5</span>,
+            ];
+            <span class="hljs-keyword">let</span> childBBox = BBox.create();
+            <span class="hljs-keyword">let</span> childIndex = <span class="hljs-number">0</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>x-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (extentsCentroid[<span class="hljs-number">0</span>] &gt; nodeCentroid[<span class="hljs-number">0</span>]) {
+                childIndex = <span class="hljs-number">4</span>;
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = nodeCentroid[<span class="hljs-number">0</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>];
+            }
+            <span class="hljs-keyword">else</span> {
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = nodeCentroid[<span class="hljs-number">0</span>];
+            }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>y-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (extentsCentroid[<span class="hljs-number">1</span>] &gt; nodeCentroid[<span class="hljs-number">1</span>]) {
+                childIndex += <span class="hljs-number">2</span>;
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] = nodeCentroid[<span class="hljs-number">1</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>];
+            }
+            <span class="hljs-keyword">else</span> {
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>] = bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">1</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = nodeCentroid[<span class="hljs-number">1</span>];
+            }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>z-axis</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (extentsCentroid[<span class="hljs-number">2</span>] &gt; nodeCentroid[<span class="hljs-number">2</span>]) {
+                childIndex += <span class="hljs-number">1</span>;
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] = nodeCentroid[<span class="hljs-number">2</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = bbox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>];
+            }
+            <span class="hljs-keyword">else</span> {
+                childBBox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>] = bbox.bounds[<span class="hljs-number">0</span>][<span class="hljs-number">2</span>];
+                childBBox.bounds[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = nodeCentroid[<span class="hljs-number">2</span>];
+            }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>Create the child node if it doesn’t exsit yet and then insert the extents in it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">let</span> nc = node.child[childIndex];
+            <span class="hljs-keyword">if</span> (nc === <span class="hljs-literal">null</span>) {
+                nc = OctreeNode.create();
+                node.child[childIndex] = nc;
+            }
+            <span class="hljs-keyword">this</span>._insert(nc, extents, childBBox, depth + <span class="hljs-number">1</span>);
+        }
+    }
+    build() {
+        <span class="hljs-keyword">this</span>._build(<span class="hljs-keyword">this</span>.root, <span class="hljs-keyword">this</span>.bbox);
+    }
+    insert(extents) {
+        <span class="hljs-keyword">this</span>._insert(<span class="hljs-keyword">this</span>.root, extents, <span class="hljs-keyword">this</span>.bbox, <span class="hljs-number">0</span>);
+    }
+}
+Octree.MAX_DEPTH = <span class="hljs-number">16</span>;</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>

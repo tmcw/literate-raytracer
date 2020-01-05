@@ -16,7 +16,7 @@
     "3d"
   ],
   "author": "",
-  "license": "BSD-2-Clause",
+  "license": "CC0-1.0",
   "devDependencies": {
     "docco": "~0.6.2",
     "rimraf": "^3.0.0",

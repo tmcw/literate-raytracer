@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>shaders.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="custom.css" />
+</head>
+<body>
+  <div id="container">
+    <div class='cred'>
+        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
+        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    </div>
+    <canvas id='c'></canvas>
+    <center>
+        <button id='play'>play</button>
+        <button id='stop'>stop</button>
+    </center>
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="accelerators.html">
+                accelerators.js
+              </a>
+            
+              
+              <a class="source" href="cube.html">
+                cube.js
+              </a>
+            
+              
+              <a class="source" href="gl.html">
+                gl.js
+              </a>
+            
+              
+              <a class="source" href="html.html">
+                html.js
+              </a>
+            
+              
+              <a class="source" href="index.html">
+                index.js
+              </a>
+            
+              
+              <a class="source" href="matrix.html">
+                matrix.js
+              </a>
+            
+              
+              <a class="source" href="scene.html">
+                scene.js
+              </a>
+            
+              
+              <a class="source" href="shader-configuration.html">
+                shader-configuration.js
+              </a>
+            
+              
+              <a class="source" href="shaders.html">
+                shaders.js
+              </a>
+            
+              
+              <a class="source" href="utility.html">
+                utility.js
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>shaders.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h2 id="shader">Shader</h2>
+<p>Shaders are programs that run on the GPU.  In OpenGL and specifically WebGL
+there are two different programs that work together.  There’s a vertex shader
+and there’s a fragment shader.  They’re both part of a <em>rasterization</em> pipeline</p>
+<p>we’re not rasterizing (much).</p>
+<p>Instead of rasterizing 3D objects as OpenGL intended, we’ll be rasterizing a
+rectangle the size of our view 😂</p>
+<p>Normally in OpenGL we’d run a <em>vertex</em> shader on each point in a triangle, and for each
+<em>fragment</em> (pixel) in the triangle, we’d run a <em>fragment</em> shader to compute the colour.</p>
+<ul>
+<li>Our vertex shader will essentially do “nothing”, and we can not think about it too much</li>
+<li>Our fragment shader will run on each pixel and is essentially the “body” of this application</li>
+</ul>
+<p>For more information on <a href="https://webglfundamentals.org/" title="Deeply learn about shaders">shaders checkout WebGL Fundamentals</a></p>
+<h3 id="vertex-shader">Vertex Shader</h3>
+<p>Our vertex shader code is a simple string</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getVertexSource</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-string">``</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Vertex shaders can take two types of input</p>
+<ul>
+<li><code>attribute</code>s</li>
+<li>uniforms`</li>
+</ul>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    attribute vec4 a_position; `</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    void main() {
+       gl_Position = a_position;
+    }
+`</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h3 id="fragment-shader">Fragment Shader</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getFragmentSource</span>(<span class="hljs-params">config</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>for brevity’s sake break out the config values</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;
+    <span class="hljs-keyword">return</span> <span class="hljs-string">`precision mediump float;
+
+    struct Ray {
+        vec3 point;
+        vec3 vector;
+        float ior;
+    };
+
+    struct Material {
+        vec3 colourOrAlbedo;
+        float ambient;
+        float diffuseOrRoughness;
+        float specularOrMetallic;
+        float refraction;
+        int isTranslucent;
+    };
+
+    struct Hit {
+        float distance;
+        Material material;
+        vec3 normal;
+        vec3 position;
+        Ray ray;
+    };
+
+    struct Sphere {
+        vec3 point;
+        float radius;
+        int material;
+    };
+
+    struct SphereDistance {
+        float distance;
+        Sphere sphere;
+    };
+
+    struct Triangle {
+        vec3 a;
+        vec3 b;
+        vec3 c;
+        vec3 normal;
+        int material;
+    };
+
+    struct TriangleDistance {
+        float distance;
+        Triangle triangle;
+        vec3 intersectPoint;
+        float u;
+        float v;
+    };
+
+    struct PointLight {
+        vec3 point;
+    };
+    const vec3 bgColour = vec3(<span class="hljs-subst">${bg.r}</span>, <span class="hljs-subst">${bg.g}</span>, <span class="hljs-subst">${bg.b}</span>);
+    const float PI = <span class="hljs-subst">${<span class="hljs-built_in">Math</span>.PI}</span>;
+    const float refractionMedium = 1.0;
+
+    uniform float aspectRatio;
+    uniform vec3 cameraPos;
+    uniform mat4 cameraMatrix;
+    uniform float globalAmbientIntensity;
+    uniform float height;
+    uniform float scale;
+    uniform float width;
+     
+    uniform Material materials[<span class="hljs-subst">${materialCount}</span>];
+    uniform Sphere spheres[<span class="hljs-subst">${sphereCount}</span>];
+    uniform PointLight pointLights[<span class="hljs-subst">${lightCount}</span>];
+    uniform Triangle triangles[<span class="hljs-subst">${triangleCount}</span>];
+
+    float sphereIntersection(Sphere sphere, Ray ray);
+    TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
+    SphereDistance intersectSpheres(Ray ray, bool useAnyHit);
+    TriangleDistance intersectTriangles(Ray ray);
+    vec3 cast1(Ray ray);
+    vec3 cast2(Ray ray);
+    vec3 cast3(Ray ray);
+    vec3 sphereNormal(Sphere sphere, vec3 pos);
+    vec3 surfacePhong(Hit hit);
+    vec3 surfacePbr1(Hit hit);
+    vec3 surfacePbr2(Hit hit);
+    bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
+    bool areEqualish(float a, float b);
+    vec3 draw(float xo, float yo);
+    float DistributionGGX(vec3 N, vec3 H, float roughness);
+    float GeometrySchlickGGX(float NdotV, float roughness);
+    float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+    vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
+    Material getMaterial(int index);
+
+     
+    void main() {
+        vec3 total = vec3(0.0);
+        float divisor = 1.0;
+
+        if (<span class="hljs-subst">${aa}</span> == 2) {
+            divisor = 2.0;
+            total += draw(0.25, 0.25).rgb;
+            total += draw(0.75, 0.75).rgb;
+        } else if (<span class="hljs-subst">${aa}</span> == 4) {
+            divisor = 4.0;
+            total += draw(0.25, 0.25).rgb;
+            total += draw(0.75, 0.25).rgb;
+            total += draw(0.75, 0.75).rgb;
+            total += draw(0.25, 0.75).rgb;
+        } else {
+            total += draw(0.5, 0.5).rgb;
+        }
+
+        gl_FragColor = vec4(total.rgb / divisor, 1.0);
+    }
+
+    vec3 draw(float xo, float yo) {
+        float px = gl_FragCoord.x;
+        float py = gl_FragCoord.y;
+
+        float x = (2.0 * (px + xo) / width - 1.0) * scale;
+        float y = (2.0 * (py + yo) / height - 1.0) * scale * 1.0 / aspectRatio;
+
+        vec3 dir = vec3(0.0, 0.0, 0.0);
+
+        dir.x = x    * cameraMatrix[0][0] + y * cameraMatrix[1][0] + -1.0 * cameraMatrix[2][0];
+        dir.y = y    * cameraMatrix[0][1] + y * cameraMatrix[1][1] + -1.0 * cameraMatrix[2][1];
+        dir.z = -1.0 * cameraMatrix[0][2] + y * cameraMatrix[1][2] + -1.0 * cameraMatrix[2][2];
+
+        Ray ray = Ray(cameraPos, normalize(dir), refractionMedium);
+
+        return cast1(ray);
+    }
+
+    Hit trace(Ray ray) {
+       SphereDistance sd = intersectSpheres(ray, false);
+       TriangleDistance td = intersectTriangles(ray);
+       if (sd.distance &lt;= 0.0 &amp;&amp; td.distance &lt;= 0.0) {
+           return Hit(
+               -1.0,
+               Material(vec3(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0),
+               vec3(0.0, 0.0, 0.0),
+               vec3(0.0, 0.0, 0.0),
+               ray
+           );
+       }
+
+       if (sd.distance &gt;= 0.0 &amp;&amp; td.distance &gt;= 0.0) {
+           if (sd.distance &lt; td.distance) {
+            vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+            vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+            return Hit(
+                sd.distance,
+                getMaterial(sd.sphere.material),
+                normal,
+                sd.sphere.point,
+                ray
+            );
+           } else {
+            return Hit(
+                td.distance,
+                getMaterial(td.triangle.material),
+                td.triangle.normal,
+                td.intersectPoint,
+                ray
+            );
+           }
+       }
+
+
+       if (sd.distance &gt;= 0.0) {
+        vec3 pointAtTime = ray.point + vec3(ray.vector.xyz * sd.distance);
+        vec3 normal = sphereNormal(sd.sphere, pointAtTime);
+
+        return Hit(
+            sd.distance,
+            getMaterial(sd.sphere.material),
+            normal,
+            sd.sphere.point,
+            ray
+        );
+       }
+
+       return Hit(
+            td.distance,
+            getMaterial(td.triangle.material),
+            td.triangle.normal,
+            td.intersectPoint,
+            ray
+        );
+    }
+
+    vec3 cast1(Ray ray) {
+        Hit hit = trace(ray);
+
+        if (hit.distance &lt; 0.0) {
+            return bgColour;
+        }
+
+        if (hit.distance &lt; 0.0) {
+            return surfacePbr1(hit);
+        } else {
+            return surfacePhong(hit);
+        }
+    }
+
+    vec3 cast2(Ray ray) {
+        Hit hit = trace(ray);
+
+        if (hit.distance &lt; 0.0) {
+            return bgColour;
+        }
+
+        if (hit.distance &lt; 0.0) {
+            return surfacePbr2(hit);
+        } else {
+            return surfacePhong(hit);
+        }
+    }
+
+    vec3 cast3(Ray ray) {
+        Hit hit = trace(ray);
+
+        if (hit.distance &lt; 0.0) {
+            return bgColour;
+        }
+
+        return surfacePhong(hit);
+    }
+
+    vec3 sphereNormal(Sphere sphere, vec3 pos) {
+        return normalize(pos - sphere.point);
+    }
+
+    SphereDistance intersectSpheres(Ray ray, bool useAnyHit) {
+        SphereDistance sd = SphereDistance(-1.0, Sphere(
+            vec3(0.0, 0.0, 0.0), 
+            -1.0,
+            0));
+        for (int i = 0; i &lt; <span class="hljs-subst">${sphereCount}</span>; i += 1) {
+            Sphere s = spheres[i];
+            float dist = sphereIntersection(s, ray);
+            if (dist &gt;= 0.0) {
+                if (sd.distance &lt;= 0.0 || dist &lt; sd.distance) {
+                    sd.distance = dist;
+                    sd.sphere = s;
+                }
+                if (useAnyHit) {
+                    sd.distance = dist;
+                    sd.sphere = s;
+                }
+            }
+        }
+        return sd;
+    }
+
+    TriangleDistance intersectTriangles(Ray ray) {
+        TriangleDistance least = TriangleDistance(
+            -1.0, 
+            Triangle(
+                vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), 
+                vec3(0.0, 0.0, 0.0), 
+                0),
+            vec3(0.0, 0.0, 0.0),
+            0.0,
+            0.0);
+
+        for (int i = 0; i &lt; <span class="hljs-subst">${triangleCount}</span>; i += 1) {
+            Triangle t = triangles[i];
+            TriangleDistance td = triangleIntersection(t, ray);
+            if (td.distance &gt;= 0.0) {
+                if (least.distance &lt;= 0.0 || td.distance &lt; least.distance) {
+                    least = td;
+                }
+            }
+        }
+        return least;
+    }
+
+    TriangleDistance triangleIntersection(Triangle triangle, Ray ray) {
+        TriangleDistance td = TriangleDistance(
+            -1.0, 
+            triangle,
+            vec3(0.0, 0.0, 0.0),
+            0.0,
+            0.0);
+    
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>compute full scale normal</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        vec3 v0v1 = triangle.b - triangle.a;
+        vec3 v0v2 = triangle.c - triangle.a;
+        vec3 pvec = cross(ray.vector, v0v2);
+        float det = dot(v0v1, pvec);
+
+        <span class="hljs-keyword">if</span> (abs(det) &lt; ${epsilon}) {
+            <span class="hljs-keyword">return</span> td;
+        }
+
+        float invDet = <span class="hljs-number">1.0</span> / det;
+
+        vec3 tvec = ray.point - triangle.a;
+        float u = dot(tvec, pvec) * invDet;
+        <span class="hljs-keyword">if</span> (u &lt; <span class="hljs-number">0.0</span> || u &gt; <span class="hljs-number">1.0</span>) {
+            <span class="hljs-keyword">return</span> td;
+        }
+
+        vec3 qvec = cross(tvec, v0v1);
+        float v = dot(ray.vector, qvec) * invDet;
+        <span class="hljs-keyword">if</span> (v &lt; <span class="hljs-number">0.0</span> || (u + v) &gt; <span class="hljs-number">1.0</span>) {
+            <span class="hljs-keyword">return</span> td;
+        }
+
+        td.u = u;
+        td.v = v;
+        td.distance = dot(v0v2, qvec) * invDet;
+        td.intersectPoint = vec3(triangle.a.xyz + u * v0v1.xyz + v * v0v2.xyz);
+
+        <span class="hljs-keyword">return</span> td;
+    }
+
+    float sphereIntersection(Sphere sphere, Ray ray) {
+        vec3 eyeToCentre = sphere.point - ray.point;
+        float v = dot(eyeToCentre, ray.vector);
+        float eoDot = dot(eyeToCentre, eyeToCentre);
+        float discriminant = (sphere.radius * sphere.radius) - eoDot + (v * v);
+
+        <span class="hljs-keyword">if</span> (discriminant &lt; <span class="hljs-number">0.0</span>) {
+            <span class="hljs-keyword">return</span> <span class="hljs-number">-1.0</span>;
+        }
+
+        <span class="hljs-keyword">return</span> v - sqrt(discriminant);
+    }
+
+    bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
+        vec3 unit = normalize(light - pt);
+        Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit, refractionMedium);
+        SphereDistance sd = intersectSpheres(ray, <span class="hljs-literal">true</span>);
+
+        <span class="hljs-keyword">if</span> (sd.distance &gt; <span class="hljs-number">0.0</span>) {
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+        }
+
+        TriangleDistance td = intersectTriangles(ray);
+
+        <span class="hljs-keyword">return</span> td.distance &lt; <span class="hljs-number">0.0</span>;
+    }
+
+    float sRgb8ChannelToLinear(float colour8) {
+        <span class="hljs-keyword">const</span> float sThresh = <span class="hljs-number">0.04045</span>;
+
+        float colourf = colour8 / <span class="hljs-number">255.0</span>;
+        <span class="hljs-keyword">if</span> (colourf &lt;= sThresh) {
+            <span class="hljs-keyword">return</span> colourf / <span class="hljs-number">12.92</span>;
+        }
+
+        <span class="hljs-keyword">return</span> pow((colourf + <span class="hljs-number">0.055</span>) / <span class="hljs-number">1.055</span>, <span class="hljs-number">2.4</span>);
+    }
+
+    vec3 sRgb8ToLinear(vec3 srgb8) {
+        <span class="hljs-keyword">return</span> vec3(
+            sRgb8ChannelToLinear(srgb8.r),
+            sRgb8ChannelToLinear(srgb8.g),
+            sRgb8ChannelToLinear(srgb8.b)
+            );
+    }
+
+    float linearChannelToSrgbF(float linear) {
+        <span class="hljs-keyword">if</span> (linear &lt;= <span class="hljs-number">0.0031308</span>) {
+            <span class="hljs-keyword">return</span> (linear * <span class="hljs-number">12.92</span>);
+        }
+
+        <span class="hljs-keyword">return</span> (<span class="hljs-number">1.055</span> * pow(linear, <span class="hljs-number">1.0</span>/<span class="hljs-number">2.4</span>) - <span class="hljs-number">0.055</span>);
+    }
+
+    vec3 linearToSrgbF(vec3 linear) {
+        <span class="hljs-keyword">return</span> vec3(
+            linearChannelToSrgbF(linear.r),
+            linearChannelToSrgbF(linear.g),
+            linearChannelToSrgbF(linear.b)
+        );
+    }
+
+    vec3 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour, vec3 refractColour) {
+        Material material = hit.material;
+        vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); <span class="hljs-comment">// pow(material.colourOrAlbedo.rgb, vec3(2.2));</span>
+        float ao = material.ambient;
+        float metallic = material.specularOrMetallic;
+        float roughness = material.diffuseOrRoughness;
+
+        vec3 F0 = vec3(${defaultF0}); 
+        F0 = mix(F0, albedo, metallic);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>reflectance equation</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        bool didLight = <span class="hljs-literal">false</span>;
+        vec3 Lo = vec3(<span class="hljs-number">0.0</span>);
+        <span class="hljs-keyword">for</span> (int i = <span class="hljs-number">0</span>; i &lt; ${lightCount}; i += <span class="hljs-number">1</span>) {
+            <span class="hljs-keyword">if</span> (isLightVisible(hit.position, pointLights[i].point, hit.normal) == <span class="hljs-literal">true</span>) {
+                didLight = <span class="hljs-literal">true</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>calculate per-light radiance</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 lightDir = pointLights[i].point - hit.position;
+                float distance = length(lightDir);
+                vec3 L = normalize(lightDir);
+                vec3 H = normalize(V + L);
+                float attenuation = <span class="hljs-number">1.0</span> / (distance * distance);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>@todo light colour</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 lightColour = sRgb8ToLinear(vec3(<span class="hljs-number">255.0</span>, <span class="hljs-number">255.0</span>, <span class="hljs-number">255.0</span>) * <span class="hljs-number">35.0</span>);
+                vec3 radiance = lightColour.rgb * attenuation;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Cook-Torrance BRDF</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                float NDF = DistributionGGX(N, H, roughness);   
+                float G   = GeometrySmith(N, V, L, roughness);      
+                vec3 F    = fresnelSchlickRoughness(max(dot(H, V), <span class="hljs-number">0.0</span>), F0, roughness);
+
+                vec3 nominator    = NDF * G * F; 
+                float denominator = <span class="hljs-number">4.0</span> * max(dot(N, V), <span class="hljs-number">0.0</span>) * max(dot(N, L), <span class="hljs-number">0.0</span>) + <span class="hljs-number">0.001</span>; <span class="hljs-comment">// 0.001 to prevent divide by zero.</span>
+                <span class="hljs-comment">/** @todo use real physics, this violates the PBR to some extent */</span>
+                vec3 specular = nominator / denominator + F * reflectColour * metallic;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>kS is equal to Fresnel</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 kS = F;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>for energy conservation, the diffuse and specular light can’t
+be above 1.0 (unless the surface emits light); to preserve this
+relationship the diffuse component (kD) should equal 1.0 - kS.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 kD = vec3(<span class="hljs-number">1.0</span>) - kS;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>multiply kD by the inverse metalness such that only non-metals 
+have diffuse lighting, or a linear blend if partly metal (pure metals
+have no diffuse light).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                kD *= <span class="hljs-number">1.0</span> - metallic;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>scale light by NdotL</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                float NdotL = max(dot(N, L), <span class="hljs-number">0.0</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>add to outgoing radiance Lo</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                Lo += (kD * (albedo + refractColour) / PI + specular) * radiance * NdotL;  <span class="hljs-comment">// note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again</span>
+            }
+        }
+
+        <span class="hljs-keyword">if</span> (didLight == <span class="hljs-literal">false</span>) {
+            <span class="hljs-keyword">return</span> vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>ambient lighting (will replace this ambient lighting with 
+environment lighting).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        vec3 ambient = vec3(<span class="hljs-number">0.03</span>) * albedo * ao;
+    
+        vec3 colour = ambient + Lo;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>HDR tonemapping</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        colour = colour / (colour + vec3(<span class="hljs-number">1.0</span>));
+
+        colour = linearToSrgbF(colour);
+
+        <span class="hljs-keyword">return</span> colour;
+    }
+
+    vec3 surfacePbr1(Hit hit) {
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+        vec3 R = reflect(-V, N);  
+        vec3 reflectColour = cast2(Ray(hit.position, R, hit.ray.ior)).rgb;
+        vec3 refractColour = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+
+        <span class="hljs-keyword">if</span> (hit.material.isTranslucent == <span class="hljs-number">1</span>) {
+            <span class="hljs-keyword">if</span> (areEqualish(hit.ray.ior, hit.material.refraction) == <span class="hljs-literal">false</span>) {
+            }
+        }
+
+        <span class="hljs-keyword">return</span> surfacePbrReflectance(hit, N, V, R, reflectColour, refractColour);
+    }
+
+    vec3 surfacePbr2(Hit hit) {
+        vec3 N = hit.normal;
+        vec3 V = normalize(hit.ray.point - hit.position);
+        vec3 R = reflect(-V, N);   
+
+        <span class="hljs-keyword">return</span> surfacePbrReflectance(hit, N, V, R, vec3(<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>), vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>));
+    }
+
+    vec3 surfacePhong(Hit hit) {
+        Material material = hit.material;
+        vec3 fullColour = vec3(material.colourOrAlbedo.rgb / <span class="hljs-number">255.0</span>);
+        vec3 diffuse = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+        vec3 specular = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+
+        <span class="hljs-keyword">for</span> (int i = <span class="hljs-number">0</span>; i &lt; ${lightCount}; i += <span class="hljs-number">1</span>) {
+            <span class="hljs-keyword">if</span> (isLightVisible(hit.position, pointLights[i].point, hit.normal) == <span class="hljs-literal">true</span>) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>@todo light colour</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 lightColour = vec3(<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>);
+                vec3 lightDir = normalize(pointLights[i].point - hit.position);
+                float lightIntensity = <span class="hljs-number">1.0</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>diffuse</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                float dco = dot(hit.normal, lightDir);
+                <span class="hljs-keyword">if</span> (dco &lt; <span class="hljs-number">0.0</span>) { dco = <span class="hljs-number">0.0</span>; }
+
+                diffuse += vec3(fullColour.rgb * lightIntensity * dco);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>specular</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                vec3 halfway = normalize(lightDir - hit.ray.vector);
+                float sco = dot(hit.normal, normalize(halfway));
+                <span class="hljs-keyword">if</span> (sco &lt; <span class="hljs-number">0.0</span>) { sco = <span class="hljs-number">0.0</span>; }
+                
+                specular += vec3(lightColour.rgb * lightIntensity * pow(sco, ${phongSpecularExp}));
+            }
+        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>calculate ambient light</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        vec3 ambient = vec3(fullColour.rgb * globalAmbientIntensity);
+        ambient = vec3(ambient.rgb + (fullColour.rgb * material.ambient));
+
+        <span class="hljs-keyword">return</span> ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic;
+    }
+
+    bool areEqualish(float a, float b) {
+        <span class="hljs-keyword">if</span> (abs(a - b) &lt; ${epsilon}) {
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+    }
+
+    Material getMaterial(int index) {
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">0</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">0</span>];
+        }
+
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">1</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">1</span>];
+        }
+
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">2</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">2</span>];
+        }
+
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">3</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">3</span>];
+        }
+
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">4</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">4</span>];
+        }
+
+        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">5</span>) {
+            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">5</span>];
+        }
+
+        <span class="hljs-keyword">return</span> materials[<span class="hljs-number">0</span>];
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    float DistributionGGX(vec3 N, vec3 H, float roughness) {
+        float a = roughness*roughness;
+        float a2 = a*a;
+        float NdotH = max(dot(N, H), <span class="hljs-number">0.0</span>);
+        float NdotH2 = NdotH*NdotH;
+
+        float nom   = a2;
+        float denom = (NdotH2 * (a2 - <span class="hljs-number">1.0</span>) + <span class="hljs-number">1.0</span>);
+        denom = PI * denom * denom;
+
+        <span class="hljs-keyword">return</span> nom / denom;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    float GeometrySchlickGGX(float NdotV, float roughness) {
+        float r = (roughness + <span class="hljs-number">1.0</span>);
+        float k = (r*r) / <span class="hljs-number">8.0</span>;
+
+        float nom   = NdotV;
+        float denom = NdotV * (<span class="hljs-number">1.0</span> - k) + k;
+
+        <span class="hljs-keyword">return</span> nom / denom;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+        float NdotV = max(dot(N, V), <span class="hljs-number">0.0</span>);
+        float NdotL = max(dot(N, L), <span class="hljs-number">0.0</span>);
+        float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+        float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+        <span class="hljs-keyword">return</span> ggx1 * ggx2;
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+        <span class="hljs-keyword">return</span> F0 + (max(vec3(<span class="hljs-number">1.0</span> - roughness), F0) - F0) * pow(<span class="hljs-number">1.0</span> - cosTheta, <span class="hljs-number">5.0</span>);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-string">`;
+}
+
+</span></pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+  <script src="index.js"></script>
+</body>
+</html>

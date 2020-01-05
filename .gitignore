@@ -1,0 +1,27 @@
+# Mac.
+.DS_STORE
+
+# Node.
+node_modules
+npm-debug.log
+
+# Vim / Emacs / intellij
+*~
+*.swp
+*.swo
+*~
+*#
+.idea
+
+# tmp folders
+tmp
+
+# javascript
+*.js
+*.map
+
+.yarnclean
+yarn-error*
+
+# docs
+doc/

@@ -2,9 +2,13 @@
   "name": "literate-raytracer",
   "version": "0.0.0",
   "description": "a literate raytracer implementation",
-  "main": "raytracer.js",
   "scripts": {
-    "doc": "docco -t custom.jst --css=custom.css *.js --output=./"
+    "build": "tsc --outFile ./index.js",
+    "clean": "rimraf *.js && rimraf ./doc/",
+    "dev": "tsc -w --outFile ./index.js",
+    "predoc": "rimraf ./doc && tsc --noImplicitUseStrict --alwaysStrict false --outDir ./doc/ --sourceMap false",
+    "doc": "docco -t custom.jst --css=custom.css ./doc/*.js --output=./doc/",
+    "postdoc": "tsc --outFile ./doc/index.js"
   },
   "keywords": [
     "raytracer",
@@ -15,6 +19,7 @@
   "license": "BSD-2-Clause",
   "devDependencies": {
     "docco": "~0.6.2",
+    "rimraf": "^3.0.0",
     "typescript": "^3.7.3"
   }
 }

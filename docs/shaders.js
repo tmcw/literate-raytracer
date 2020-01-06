@@ -17,6 +17,7 @@
 // For more information on [shaders checkout WebGL Fundamentals](https://webglfundamentals.org/ "Deeply learn about shaders")
 //
 // ### Vertex Shader
+// <a name="vertexShader"></a>
 //
 // Our vertex shader code is a simple string
 function getVertexSource() {
@@ -34,6 +35,7 @@ function getVertexSource() {
 `;
 }
 // ### Fragment Shader
+// <a name="fragmentShader"></a>
 function getFragmentSource(config) {
     // for brevity's sake break out the config values
     const { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;

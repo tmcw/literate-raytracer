@@ -4,7 +4,7 @@
 // <a name="throwIfFalsey"></a>
 // Throw an error if `thingToTest` is false like
 // _optionally_ we'll take a custom `Error` constructor
-function throwIfFalsey(thingToTest: any, reason: string, Ctor = Error) {
+function throwIfFalsey(thingToTest: unknown, reason: string, Ctor = Error): asserts thingToTest {
   if (!thingToTest) {
     throw new Ctor(`Literate Ray Tracer: ${reason}`);
   }

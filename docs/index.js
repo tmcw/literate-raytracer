@@ -351,77 +351,115 @@ const g_cube = (function () {
     }
     return triangles;
 }());
+// ### createShader
+// <a name="crateShader"></a>
+//
+// We need a mechanism for compiling shader programs and checking if they failed to compile.
+// In this case `type` is a property of the brower's `WebGLRenderingContext`
+function createShader(gl, type, source) {
+    // WebGL is flexible.  Before we even compile the sahder we need to allocate
+    // a place to store it in the GPU, lets do that now
+    const shader = gl.createShader(type);
+    throwIfFalsey(shader, 'could not create shader: ' + source);
+    // with some memory in hand we can load in some source code and compile
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    // we need to manually confirm that everything is okay
+    const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+        return shader;
+    }
+    // if it's not okay let's figure out why
+    const log = gl.getShaderInfoLog(shader);
+    // and we'll clean up
+    gl.deleteShader(shader);
+    throwIfFalsey(false, 'shader error: ' + log + '\n\n' + source);
+}
+// ### createProgram
+// <a name="crateProgram"></a>
+//
+// WebGL programs have two components, vertex shaders, and fragment shaders.
+// Because WebGL is flexibile we could conceivably use one vertex shader with
+// multiple fragment shaders, or vice versa.
+//
+// In order to make a working program we need to `link` a vertex shader and a
+// fragment shader
+function createProgram(gl, vertexShader, fragmentShader) {
+    // first let's get some memory to store the program
+    const program = gl.createProgram();
+    // and make sure we get that memory
+    throwIfFalsey(program, 'could not create GL program');
+    // then we can attach the two shaders via reference
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    // and finally call link
+    gl.linkProgram(program);
+    // Again, we need to manually check for success
+    const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+        return program;
+    }
+    // and if things are bad, let's find out why
+    const log = gl.getProgramInfoLog(program);
+    // and clean up
+    gl.deleteProgram(program);
+    throwIfFalsey(false, 'could not compile GL: ' + log);
+}
+// ### bindProgram
+// <a name="bindProgram"></a>
+// Our shader approach is fairly simple and we don't need much flexibility
+// `bindProgram` sets up an opinionated vertex shader and a somewhat more flexibile
+// fragment shader..
 function bindProgram(gl, vertexSource, fragmentSource) {
+    // let's compile the shaders and link the program
     const vs = createShader(gl, gl.VERTEX_SHADER, vertexSource);
     const fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
     const program = createProgram(gl, vs, fs);
-    // look up where the vertex data needs to go.
-    const positionLocation = gl.getAttribLocation(program, "a_position");
-    // Create a buffer.
+    // our [vertex shader](./shader.html#vertexShader "our vertex shader's source") is strongly 
+    // opinionated. We need to bind our position data for a quad (two triangles) to the program
+    // but first we need to get the position location
+    const positionLocation = gl.getAttribLocation(program, 'a_position');
+    // Next we need some memory in the GPU to upload the data to
     const positionBuffer = gl.createBuffer();
-    if (!positionBuffer) {
-        throw new Error('fail to get position buffer');
-    }
+    // we might not get memory, let's make sure
+    throwIfFalsey(positionBuffer, 'fail to get position buffer');
+    // okay, tell the GPU/WebGL where in memory we want to upload
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    // Put a unit quad in the buffer
-    const positions = [
+    // then let's upload six vertices for the two triangles that will make up our
+    // rectangular display
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
         -1, -1,
         -1, 1,
         1, -1,
         1, -1,
         -1, 1,
         1, 1,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    // Tell WebGL to use our shader program pair
+    ]), gl.STATIC_DRAW);
+    // because we have a simple workflow we can mostly assume we're using this opinionated
+    // program
     gl.useProgram(program);
+    // finally let's wrap up the impportant bits in an object and give them to our consumer
     return {
         positionBuffer,
         positionLocation,
         program,
     };
 }
-function createProgram(gl, vertexShader, fragmentShader) {
-    const program = gl.createProgram();
-    if (!program) {
-        throw new Error('could not create GL program');
-    }
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    const success = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (success) {
-        return program;
-    }
-    const log = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    throw new Error('could not compile GL: ' + log);
-}
-function createShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    if (!shader) {
-        throw new Error('could not create shader: ' + source);
-    }
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (success) {
-        return shader;
-    }
-    const log = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw new Error('shader error: ' + log + '\n\n' + source);
-}
-// Unlike images, textures do not have a width and height associated
-// with them so we'll pass in the width and height of the texture
+// ### draw
+// <a name="draw"></a>
+// each time we want to render a frame we need to setup the program's data the way we want it
+// then press "go".  This `draw` function is our "go" button.
 function draw(gl, context, canvas) {
+    // if the screen resized, re-initatlize the scene
     if (resize(canvas)) {
         setupScene(gl, context, g_scene);
     }
+    // clear the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
+    // make sure our rectangle is setup
     gl.enableVertexAttribArray(context.positionLocation);
     gl.vertexAttribPointer(context.positionLocation, 2, gl.FLOAT, false, 0, 0);
-    // draw the quad (2 triangles, 6 vertices)
+    // draw the rectangle (2 triangles, 6 vertices)
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 // ## HTML
@@ -1455,6 +1493,7 @@ function getShaderConfiguration(scene) {
 // For more information on [shaders checkout WebGL Fundamentals](https://webglfundamentals.org/ "Deeply learn about shaders")
 //
 // ### Vertex Shader
+// <a name="vertexShader"></a>
 //
 // Our vertex shader code is a simple string
 function getVertexSource() {
@@ -1472,6 +1511,7 @@ function getVertexSource() {
 `;
 }
 // ### Fragment Shader
+// <a name="fragmentShader"></a>
 function getFragmentSource(config) {
     // for brevity's sake break out the config values
     const { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;

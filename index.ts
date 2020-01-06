@@ -90,7 +90,7 @@ const g_html = bindToHTML();
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
-const g_gl = g_html.canvas.getContext('webgl') as WebGLRenderingContext;
+const g_gl = g_html.canvas.getContext('webgl');
 
 // The world is an imperfect place, let's make sure we got a valid context
 throwIfFalsey(g_gl, 'could not get a WebGL context');

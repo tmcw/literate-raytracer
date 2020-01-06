@@ -17,7 +17,7 @@ npm-debug.log
 tmp
 
 # javascript
-*.js
+./*.js
 *.map
 
 .yarnclean

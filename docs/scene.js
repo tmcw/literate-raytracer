@@ -19,7 +19,9 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // we'll need a place to cache triangle normals
     let triangleNormals = [];
     //
+    // <a name="spheres"></a>
     // #### Build the Spheres
+    //
     // We'll have one large static sphere in the centre and many other spheres
     // that we'll animate around the scene
     const spheres = (function () {
@@ -60,7 +62,10 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         // ##### We now have some spheres!
         return s;
     }());
+    //
+    // <a name="triangles"></a>
     // #### Triangles
+    //
     // Triangles and ray intersections are harder to calculate than sphere intersections
     // we'll be focusing more on triangles later.  Right now we have some just to demonstrate
     // shadows
@@ -91,7 +96,10 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     ];
     // now that we have some triangles, let's pre-compute the normals
     triangleNormals = triangles.map(triangleToNormal);
+    //
+    // <a name="materials"></a>
     // #### Materials
+    //
     // materials are currently a bit of a mess.  The objects do double duty in both
     // the Blinn Phong (BP) model and in the PBR model
     //
@@ -151,6 +159,8 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             isTranslucent: false,
         },
     ];
+    //
+    // <a name="scene"></a>
     // ### The Actual Scene Object
     return {
         // let's build a camera

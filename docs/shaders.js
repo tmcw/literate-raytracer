@@ -26,9 +26,15 @@ function getVertexSource() {
         // * `attribute`s
         // *  uniforms`
         //
+        // In this app we can effectively ignore the vertex shader and we won't be binding
+        // and uniforms to it
+        //
+        // The only attributes we'll use are the 3 points of each of the 2 triangles
+        // that make up our rectangle
         `
     attribute vec4 a_position; ` +
-        //
+        // our main function in this version of GLSL has one obligation and that is to set
+        // `gl_Position` to some value.  `gl_Position` is a `vec4` x/y/z/w
         `    void main() {
        gl_Position = a_position;
     }
@@ -37,17 +43,30 @@ function getVertexSource() {
 //
 // <a name="fragmentShader"></a>
 // ### Fragment Shader
+//
+// The fragment shader is the body of our application it figures out what colour to make
+// each pixel
 function getFragmentSource(config) {
     // for brevity's sake break out the config values
     const { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;
-    return `precision mediump float;
-
+    // Then we'll get into the source
+    // we start by telling WebGL what level of precision we require with floats
+    // we could probably get away with highp but mediump is more universally supported
+    return `precision mediump float; ` +
+        // Every pixel needs to create at least one ray
+        // `Ray`s are just `point`s x/y/z with a direction (`vector`), also x/y/z
+        // `ior` is the "Index of Refraction" in the volume the ray was cast
+        `    
     struct Ray {
         vec3 point;
         vec3 vector;
         float ior;
     };
-
+` +
+        // `Material`s are a bit of a mess, their "shape" is shared between
+        // JavaScript and GLSL, full descriptions of shape can be found in
+        // [the js scene docs](scene.html#materials)
+        `    
     struct Material {
         vec3 colourOrAlbedo;
         float ambient;
@@ -56,7 +75,9 @@ function getFragmentSource(config) {
         float refraction;
         int isTranslucent;
     };
-
+` +
+        // `Hit`s describe the intersection of a `Ray` and an object
+        `    
     struct Hit {
         float distance;
         Material material;
@@ -64,18 +85,26 @@ function getFragmentSource(config) {
         vec3 position;
         Ray ray;
     };
-
+` +
+        // `Sphere`s in our case are mathematical spheres
+        // They are a simple point, a radius, and a pointer to an element in the `materials`
+        // array
+        `    
     struct Sphere {
         vec3 point;
         float radius;
         int material;
     };
-
+` +
+        // `SphereDistance` lets us return a `Sphere` and how far we are from it
+        `    
     struct SphereDistance {
         float distance;
         Sphere sphere;
     };
-
+` +
+        // `Triangle`s share a "shape" with JavaScript and are [documented here](scene.html#triangles)
+        `   
     struct Triangle {
         vec3 a;
         vec3 b;
@@ -83,7 +112,11 @@ function getFragmentSource(config) {
         vec3 normal;
         int material;
     };
-
+` +
+        // `TriangleDistance` lets us return a `Triangle`, how far we are from it, the
+        // point at which our ray intersected the triangle, and "barycentric" coordinates
+        // `u` and `v` for future texturing
+        `    
     struct TriangleDistance {
         float distance;
         Triangle triangle;
@@ -91,14 +124,21 @@ function getFragmentSource(config) {
         float u;
         float v;
     };
-
+` +
+        // `PointLight` is a wrapper around a `point`, lights will have colours in the future
+        `
     struct PointLight {
         vec3 point;
     };
+` +
+        // we have a few constants, `bg`, the background colour is configurable
+        `
     const vec3 bgColour = vec3(${bg.r}, ${bg.g}, ${bg.b});
     const float PI = ${Math.PI};
     const float refractionMedium = 1.0;
-
+` +
+        // uniforms are values uploaded by javascript, there are a few essentialls here
+        `
     uniform float aspectRatio;
     uniform vec3 cameraPos;
     uniform mat4 cameraMatrix;
@@ -106,16 +146,30 @@ function getFragmentSource(config) {
     uniform float height;
     uniform float scale;
     uniform float width;
-     
+` +
+        // we have a few "look up" tables here
+        // GLSL arrays in this version aren't so much random access chunks of memory
+        // as they are "fixed access" chunks of memory.  GLSL wants to know up front
+        // exactly how much space to use.
+        //
+        // _Additionally_ outside of loops we are _not allowed_ to reference arrays 
+        // with variables.  This is a seemingly severe limitation but we can hack
+        // around it
+        //
+        //
+        `
     uniform Material materials[${materialCount}];
     uniform Sphere spheres[${sphereCount}];
     uniform PointLight pointLights[${lightCount}];
     uniform Triangle triangles[${triangleCount}];
-
+` +
+        // in GLSL if you want to call your functions "out of the order their written" you'll
+        // need to declare them upfront
+        `
     float sphereIntersection(Sphere sphere, Ray ray);
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
     SphereDistance intersectSpheres(Ray ray, bool useAnyHit);
-    TriangleDistance intersectTriangles(Ray ray);
+    TriangleDistance intersectTriangles(Ray ray, bool useAnyHit);
     vec3 cast1(Ray ray);
     vec3 cast2(Ray ray);
     vec3 cast3(Ray ray);
@@ -125,36 +179,63 @@ function getFragmentSource(config) {
     vec3 surfacePbr2(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
     bool areEqualish(float a, float b);
-    vec3 draw(float xo, float yo);
+    vec3 primaryRay(float xo, float yo);
     float DistributionGGX(vec3 N, vec3 H, float roughness);
     float GeometrySchlickGGX(float NdotV, float roughness);
     float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
     vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
     Material getMaterial(int index);
-
-     
-    void main() {
+` +
+        //
+        // <a name="fragmentMain"></a>
+        // #### Fragment Main
+        //
+        // Like the vector shader, the fragment shader also has to have a main function
+        // in the fragment shader, our requirement is to set `gl_FragColor`.  `gl_FragColor` is
+        // a `vec4` r/g/b/a
+        `    void main() {
+` +
+        // we'll support casting 2, 4, or 1 rays from the camera to _this_ pixel
+        // the more rays the better the anti-aliasing.  That said these values literally
+        // multiply the cost of the function per pixel, so 4xAA 1080P mean `1920 * 1080 * 4`
+        // primary rays!
+        `
         vec3 total = vec3(0.0);
+` +
+        // we need to average the colours at the end of this, and we'll use this divisor to do it
+        `
         float divisor = 1.0;
 
         if (${aa} == 2) {
             divisor = 2.0;
-            total += draw(0.25, 0.25).rgb;
-            total += draw(0.75, 0.75).rgb;
+            total += primaryRay(0.25, 0.25).rgb;
+            total += primaryRay(0.75, 0.75).rgb;
         } else if (${aa} == 4) {
             divisor = 4.0;
-            total += draw(0.25, 0.25).rgb;
-            total += draw(0.75, 0.25).rgb;
-            total += draw(0.75, 0.75).rgb;
-            total += draw(0.25, 0.75).rgb;
+            total += primaryRay(0.25, 0.25).rgb;
+            total += primaryRay(0.75, 0.25).rgb;
+            total += primaryRay(0.75, 0.75).rgb;
+            total += primaryRay(0.25, 0.75).rgb;
         } else {
-            total += draw(0.5, 0.5).rgb;
+            total += primaryRay(0.5, 0.5).rgb;
         }
 
+` +
+        // finally we set `gl_FragColor`, averaging the rays we cast
+        // we hard code the alpha value to `1.0` as we'll be doing
+        // translucency differently
+        `
         gl_FragColor = vec4(total.rgb / divisor, 1.0);
     }
-
-    vec3 draw(float xo, float yo) {
+` +
+        //
+        // <a name="primaryRay"></a>
+        // #### primaryRay
+        //
+        // the primaryRay function computes the primary ray from the pinhole camera location
+        // to the _portion of the pixel_ specified by `xo` and `yo`
+        `
+    vec3 primaryRay(float xo, float yo) {
         float px = gl_FragCoord.x;
         float py = gl_FragCoord.y;
 
@@ -171,10 +252,17 @@ function getFragmentSource(config) {
 
         return cast1(ray);
     }
-
+` +
+        //
+        // <a name="trace"></a>
+        // #### trace
+        //
+        // the trace function checks if a ray intersects _any_ spheres _or_ triangles
+        // in the scene.  In the future it's ripe for "acceleration"
+        `
     Hit trace(Ray ray) {
        SphereDistance sd = intersectSpheres(ray, false);
-       TriangleDistance td = intersectTriangles(ray);
+       TriangleDistance td = intersectTriangles(ray, false);
        if (sd.distance <= 0.0 && td.distance <= 0.0) {
            return Hit(
                -1.0,
@@ -230,7 +318,13 @@ function getFragmentSource(config) {
             ray
         );
     }
-
+` +
+        // the `castX` functions cast rays and call a surface function to
+        // get the colour
+        //
+        // right now they're a mess in that they are being hard code toggled
+        // to produce results
+        `
     vec3 cast1(Ray ray) {
         Hit hit = trace(ray);
 
@@ -268,10 +362,15 @@ function getFragmentSource(config) {
 
         return surfacePhong(hit);
     }
-
+` +
+        // compute the normal of a sphere
+        `
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
         return normalize(pos - sphere.point);
     }
+` +
+        // ray spehre intersection iterator
+        `
 
     SphereDistance intersectSpheres(Ray ray, bool useAnyHit) {
         SphereDistance sd = SphereDistance(-1.0, Sphere(
@@ -294,8 +393,10 @@ function getFragmentSource(config) {
         }
         return sd;
     }
-
-    TriangleDistance intersectTriangles(Ray ray) {
+` +
+        // Ray triangle intersection iterator
+        `
+    TriangleDistance intersectTriangles(Ray ray, bool useAnyHit) {
         TriangleDistance least = TriangleDistance(
             -1.0, 
             Triangle(
@@ -313,11 +414,16 @@ function getFragmentSource(config) {
                 if (least.distance <= 0.0 || td.distance < least.distance) {
                     least = td;
                 }
+                if (useAnyHit == true) {
+                    return td;
+                }
             }
         }
         return least;
     }
-
+` +
+        // calculate the intersection of a ray and a triangle
+        `
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray) {
         TriangleDistance td = TriangleDistance(
             -1.0, 
@@ -370,7 +476,9 @@ function getFragmentSource(config) {
 
         return v - sqrt(discriminant);
     }
-
+` +
+        // is there a light visible from a point? (shadows)
+        `
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
         vec3 unit = normalize(light - pt);
         Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit, refractionMedium);
@@ -380,11 +488,13 @@ function getFragmentSource(config) {
             return false;
         }
 
-        TriangleDistance td = intersectTriangles(ray);
+        TriangleDistance td = intersectTriangles(ray, true);
 
         return td.distance < 0.0;
     }
-
+` +
+        // colour space conversion functions
+        `
     float sRgb8ChannelToLinear(float colour8) {
         const float sThresh = 0.04045;
 
@@ -420,6 +530,9 @@ function getFragmentSource(config) {
         );
     }
 
+` +
+        // the bulk of the PBR loop
+        `
     vec3 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour, vec3 refractColour) {
         Material material = hit.material;
         vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); // pow(material.colourOrAlbedo.rgb, vec3(2.2));
@@ -492,7 +605,9 @@ function getFragmentSource(config) {
 
         return colour;
     }
-
+` +
+        // PBR Surface functions
+        `
     vec3 surfacePbr1(Hit hit) {
         vec3 N = hit.normal;
         vec3 V = normalize(hit.ray.point - hit.position);
@@ -515,7 +630,9 @@ function getFragmentSource(config) {
 
         return surfacePbrReflectance(hit, N, V, R, vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 0.0));
     }
-
+` +
+        // Blinn Phong functions
+        `
     vec3 surfacePhong(Hit hit) {
         Material material = hit.material;
         vec3 fullColour = vec3(material.colourOrAlbedo.rgb / 255.0);
@@ -550,14 +667,18 @@ function getFragmentSource(config) {
 
         return ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic;
     }
-
+` +
+        // are two floating points roughly equal?
+        `
     bool areEqualish(float a, float b) {
         if (abs(a - b) < ${epsilon}) {
             return true;
         }
         return false;
     }
-
+` +
+        // hack around GLSL's inability to index arrays
+        `
     Material getMaterial(int index) {
         if (index == 0) {
             return materials[0];
@@ -585,8 +706,10 @@ function getFragmentSource(config) {
 
         return materials[0];
     }
-
-
+` +
+        // PBR Computations
+        // essentially straight from [Learn OpenGL](https://learnopengl.com/PBR/Theory "Learn OpenGL`")
+        `
 // ----------------------------------------------------------------------------
     float DistributionGGX(vec3 N, vec3 H, float roughness) {
         float a = roughness*roughness;

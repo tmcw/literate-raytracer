@@ -180,6 +180,10 @@ rectangle the size of our view 😂</p>
 <li><code>attribute</code>s</li>
 <li>uniforms`</li>
 </ul>
+<p>In this app we can effectively ignore the vertex shader and we won’t be binding
+and uniforms to it</p>
+<p>The only attributes we’ll use are the 3 points of each of the 2 triangles
+that make up our rectangle</p>
 
             </div>
             
@@ -195,7 +199,9 @@ rectangle the size of our view 😂</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              
+              <p>our main function in this version of GLSL has one obligation and that is to set
+<code>gl_Position</code> to some value.  <code>gl_Position</code> is a <code>vec4</code> x/y/z/w</p>
+
             </div>
             
             <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    void main() {
@@ -215,6 +221,8 @@ rectangle the size of our view 😂</p>
               </div>
               <p><a name="fragmentShader"></a></p>
 <h3 id="fragment-shader">Fragment Shader</h3>
+<p>The fragment shader is the body of our application it figures out what colour to make
+each pixel</p>
 
             </div>
             
@@ -233,15 +241,64 @@ rectangle the size of our view 😂</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;
-    <span class="hljs-keyword">return</span> <span class="hljs-string">`precision mediump float;
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Then we’ll get into the source
+we start by telling WebGL what level of precision we require with floats
+we could probably get away with highp but mediump is more universally supported</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> <span class="hljs-string">`precision mediump float; `</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Every pixel needs to create at least one ray
+<code>Ray</code>s are just <code>point</code>s x/y/z with a direction (<code>vector</code>), also x/y/z
+<code>ior</code> is the “Index of Refraction” in the volume the ray was cast</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct Ray {
         vec3 point;
         vec3 vector;
         float ior;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p><code>Material</code>s are a bit of a mess, their “shape” is shared between
+JavaScript and GLSL, full descriptions of shape can be found in
+<a href="scene.html#materials">the js scene docs</a></p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct Material {
         vec3 colourOrAlbedo;
         float ambient;
@@ -250,7 +307,22 @@ rectangle the size of our view 😂</p>
         float refraction;
         int isTranslucent;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p><code>Hit</code>s describe the intersection of a <code>Ray</code> and an object</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct Hit {
         float distance;
         Material material;
@@ -258,18 +330,65 @@ rectangle the size of our view 😂</p>
         vec3 position;
         Ray ray;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p><code>Sphere</code>s in our case are mathematical spheres
+They are a simple point, a radius, and a pointer to an element in the <code>materials</code>
+array</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct Sphere {
         vec3 point;
         float radius;
         int material;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p><code>SphereDistance</code> lets us return a <code>Sphere</code> and how far we are from it</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct SphereDistance {
         float distance;
         Sphere sphere;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p><code>Triangle</code>s share a “shape” with JavaScript and are <a href="scene.html#triangles">documented here</a></p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`   
     struct Triangle {
         vec3 a;
         vec3 b;
@@ -277,7 +396,24 @@ rectangle the size of our view 😂</p>
         vec3 normal;
         int material;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p><code>TriangleDistance</code> lets us return a <code>Triangle</code>, how far we are from it, the
+point at which our ray intersected the triangle, and “barycentric” coordinates
+<code>u</code> and <code>v</code> for future texturing</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    
     struct TriangleDistance {
         float distance;
         Triangle triangle;
@@ -285,14 +421,60 @@ rectangle the size of our view 😂</p>
         float u;
         float v;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p><code>PointLight</code> is a wrapper around a <code>point</code>, lights will have colours in the future</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     struct PointLight {
         vec3 point;
     };
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>we have a few constants, <code>bg</code>, the background colour is configurable</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     const vec3 bgColour = vec3(<span class="hljs-subst">${bg.r}</span>, <span class="hljs-subst">${bg.g}</span>, <span class="hljs-subst">${bg.b}</span>);
     const float PI = <span class="hljs-subst">${<span class="hljs-built_in">Math</span>.PI}</span>;
     const float refractionMedium = 1.0;
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>uniforms are values uploaded by javascript, there are a few essentialls here</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     uniform float aspectRatio;
     uniform vec3 cameraPos;
     uniform mat4 cameraMatrix;
@@ -300,16 +482,53 @@ rectangle the size of our view 😂</p>
     uniform float height;
     uniform float scale;
     uniform float width;
-     
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>we have a few “look up” tables here
+GLSL arrays in this version aren’t so much random access chunks of memory
+as they are “fixed access” chunks of memory.  GLSL wants to know up front
+exactly how much space to use.</p>
+<p><em>Additionally</em> outside of loops we are <em>not allowed</em> to reference arrays 
+with variables.  This is a seemingly severe limitation but we can hack
+around it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     uniform Material materials[<span class="hljs-subst">${materialCount}</span>];
     uniform Sphere spheres[<span class="hljs-subst">${sphereCount}</span>];
     uniform PointLight pointLights[<span class="hljs-subst">${lightCount}</span>];
     uniform Triangle triangles[<span class="hljs-subst">${triangleCount}</span>];
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>in GLSL if you want to call your functions “out of the order their written” you’ll
+need to declare them upfront</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     float sphereIntersection(Sphere sphere, Ray ray);
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray);
     SphereDistance intersectSpheres(Ray ray, bool useAnyHit);
-    TriangleDistance intersectTriangles(Ray ray);
+    TriangleDistance intersectTriangles(Ray ray, bool useAnyHit);
     vec3 cast1(Ray ray);
     vec3 cast2(Ray ray);
     vec3 cast3(Ray ray);
@@ -319,36 +538,124 @@ rectangle the size of our view 😂</p>
     vec3 surfacePbr2(Hit hit);
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal);
     bool areEqualish(float a, float b);
-    vec3 draw(float xo, float yo);
+    vec3 primaryRay(float xo, float yo);
     float DistributionGGX(vec3 N, vec3 H, float roughness);
     float GeometrySchlickGGX(float NdotV, float roughness);
     float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
     vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
     Material getMaterial(int index);
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p><a name="fragmentMain"></a></p>
+<h4 id="fragment-main">Fragment Main</h4>
+<p>Like the vector shader, the fragment shader also has to have a main function
+in the fragment shader, our requirement is to set <code>gl_FragColor</code>.  <code>gl_FragColor</code> is
+a <code>vec4</code> r/g/b/a</p>
 
-     
-    void main() {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`    void main() {
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>we’ll support casting 2, 4, or 1 rays from the camera to <em>this</em> pixel
+the more rays the better the anti-aliasing.  That said these values literally
+multiply the cost of the function per pixel, so 4xAA 1080P mean <code>1920 * 1080 * 4</code>
+primary rays!</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
         vec3 total = vec3(0.0);
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>we need to average the colours at the end of this, and we’ll use this divisor to do it</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
         float divisor = 1.0;
 
         if (<span class="hljs-subst">${aa}</span> == 2) {
             divisor = 2.0;
-            total += draw(0.25, 0.25).rgb;
-            total += draw(0.75, 0.75).rgb;
+            total += primaryRay(0.25, 0.25).rgb;
+            total += primaryRay(0.75, 0.75).rgb;
         } else if (<span class="hljs-subst">${aa}</span> == 4) {
             divisor = 4.0;
-            total += draw(0.25, 0.25).rgb;
-            total += draw(0.75, 0.25).rgb;
-            total += draw(0.75, 0.75).rgb;
-            total += draw(0.25, 0.75).rgb;
+            total += primaryRay(0.25, 0.25).rgb;
+            total += primaryRay(0.75, 0.25).rgb;
+            total += primaryRay(0.75, 0.75).rgb;
+            total += primaryRay(0.25, 0.75).rgb;
         } else {
-            total += draw(0.5, 0.5).rgb;
+            total += primaryRay(0.5, 0.5).rgb;
         }
 
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>finally we set <code>gl_FragColor</code>, averaging the rays we cast
+we hard code the alpha value to <code>1.0</code> as we’ll be doing
+translucency differently</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
         gl_FragColor = vec4(total.rgb / divisor, 1.0);
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p><a name="primaryRay"></a></p>
+<h4 id="primaryray">primaryRay</h4>
+<p>the primaryRay function computes the primary ray from the pinhole camera location
+to the <em>portion of the pixel</em> specified by <code>xo</code> and <code>yo</code></p>
 
-    vec3 draw(float xo, float yo) {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    vec3 primaryRay(float xo, float yo) {
         float px = gl_FragCoord.x;
         float py = gl_FragCoord.y;
 
@@ -365,10 +672,28 @@ rectangle the size of our view 😂</p>
 
         return cast1(ray);
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p><a name="trace"></a></p>
+<h4 id="trace">trace</h4>
+<p>the trace function checks if a ray intersects <em>any</em> spheres <em>or</em> triangles
+in the scene.  In the future it’s ripe for “acceleration”</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     Hit trace(Ray ray) {
        SphereDistance sd = intersectSpheres(ray, false);
-       TriangleDistance td = intersectTriangles(ray);
+       TriangleDistance td = intersectTriangles(ray, false);
        if (sd.distance &lt;= 0.0 &amp;&amp; td.distance &lt;= 0.0) {
            return Hit(
                -1.0,
@@ -424,7 +749,25 @@ rectangle the size of our view 😂</p>
             ray
         );
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>the <code>castX</code> functions cast rays and call a surface function to
+get the colour</p>
+<p>right now they’re a mess in that they are being hard code toggled
+to produce results</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     vec3 cast1(Ray ray) {
         Hit hit = trace(ray);
 
@@ -462,10 +805,41 @@ rectangle the size of our view 😂</p>
 
         return surfacePhong(hit);
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>compute the normal of a sphere</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     vec3 sphereNormal(Sphere sphere, vec3 pos) {
         return normalize(pos - sphere.point);
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>ray spehre intersection iterator</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
 
     SphereDistance intersectSpheres(Ray ray, bool useAnyHit) {
         SphereDistance sd = SphereDistance(-1.0, Sphere(
@@ -488,8 +862,23 @@ rectangle the size of our view 😂</p>
         }
         return sd;
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>Ray triangle intersection iterator</p>
 
-    TriangleDistance intersectTriangles(Ray ray) {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    TriangleDistance intersectTriangles(Ray ray, bool useAnyHit) {
         TriangleDistance least = TriangleDistance(
             -1.0, 
             Triangle(
@@ -507,11 +896,29 @@ rectangle the size of our view 😂</p>
                 if (least.distance &lt;= 0.0 || td.distance &lt; least.distance) {
                     least = td;
                 }
+                if (useAnyHit == true) {
+                    return td;
+                }
             }
         }
         return least;
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>calculate the intersection of a ray and a triangle</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     TriangleDistance triangleIntersection(Triangle triangle, Ray ray) {
         TriangleDistance td = TriangleDistance(
             -1.0, 
@@ -525,11 +932,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
               <p>compute full scale normal</p>
 
@@ -578,34 +985,65 @@ rectangle the size of our view 😂</p>
 
         <span class="hljs-keyword">return</span> v - sqrt(discriminant);
     }
+<span class="hljs-string">` +
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>is there a light visible from a point? (shadows)</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     bool isLightVisible(vec3 pt, vec3 light, vec3 normal) {
         vec3 unit = normalize(light - pt);
-        Ray ray = Ray(pt + vec3(normal.xyz + ${epsilon}), unit, refractionMedium);
-        SphereDistance sd = intersectSpheres(ray, <span class="hljs-literal">true</span>);
+        Ray ray = Ray(pt + vec3(normal.xyz + <span class="hljs-subst">${epsilon}</span>), unit, refractionMedium);
+        SphereDistance sd = intersectSpheres(ray, true);
 
-        <span class="hljs-keyword">if</span> (sd.distance &gt; <span class="hljs-number">0.0</span>) {
-            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+        if (sd.distance &gt; 0.0) {
+            return false;
         }
 
-        TriangleDistance td = intersectTriangles(ray);
+        TriangleDistance td = intersectTriangles(ray, true);
 
-        <span class="hljs-keyword">return</span> td.distance &lt; <span class="hljs-number">0.0</span>;
+        return td.distance &lt; 0.0;
     }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>colour space conversion functions</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     float sRgb8ChannelToLinear(float colour8) {
-        <span class="hljs-keyword">const</span> float sThresh = <span class="hljs-number">0.04045</span>;
+        const float sThresh = 0.04045;
 
-        float colourf = colour8 / <span class="hljs-number">255.0</span>;
-        <span class="hljs-keyword">if</span> (colourf &lt;= sThresh) {
-            <span class="hljs-keyword">return</span> colourf / <span class="hljs-number">12.92</span>;
+        float colourf = colour8 / 255.0;
+        if (colourf &lt;= sThresh) {
+            return colourf / 12.92;
         }
 
-        <span class="hljs-keyword">return</span> pow((colourf + <span class="hljs-number">0.055</span>) / <span class="hljs-number">1.055</span>, <span class="hljs-number">2.4</span>);
+        return pow((colourf + 0.055) / 1.055, 2.4);
     }
 
     vec3 sRgb8ToLinear(vec3 srgb8) {
-        <span class="hljs-keyword">return</span> vec3(
+        return vec3(
             sRgb8ChannelToLinear(srgb8.r),
             sRgb8ChannelToLinear(srgb8.g),
             sRgb8ChannelToLinear(srgb8.b)
@@ -613,39 +1051,57 @@ rectangle the size of our view 😂</p>
     }
 
     float linearChannelToSrgbF(float linear) {
-        <span class="hljs-keyword">if</span> (linear &lt;= <span class="hljs-number">0.0031308</span>) {
-            <span class="hljs-keyword">return</span> (linear * <span class="hljs-number">12.92</span>);
+        if (linear &lt;= 0.0031308) {
+            return (linear * 12.92);
         }
 
-        <span class="hljs-keyword">return</span> (<span class="hljs-number">1.055</span> * pow(linear, <span class="hljs-number">1.0</span>/<span class="hljs-number">2.4</span>) - <span class="hljs-number">0.055</span>);
+        return (1.055 * pow(linear, 1.0/2.4) - 0.055);
     }
 
     vec3 linearToSrgbF(vec3 linear) {
-        <span class="hljs-keyword">return</span> vec3(
+        return vec3(
             linearChannelToSrgbF(linear.r),
             linearChannelToSrgbF(linear.g),
             linearChannelToSrgbF(linear.b)
         );
     }
 
-    vec3 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour, vec3 refractColour) {
-        Material material = hit.material;
-        vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); <span class="hljs-comment">// pow(material.colourOrAlbedo.rgb, vec3(2.2));</span>
-        float ao = material.ambient;
-        float metallic = material.specularOrMetallic;
-        float roughness = material.diffuseOrRoughness;
-
-        vec3 F0 = vec3(${defaultF0}); 
-        F0 = mix(F0, albedo, metallic);</pre></div></div>
+`</span> +</pre></div></div>
             
         </li>
         
         
-        <li id="section-7">
+        <li id="section-33">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>the bulk of the PBR loop</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    vec3 surfacePbrReflectance(Hit hit, vec3 N, vec3 V, vec3 R, vec3 reflectColour, vec3 refractColour) {
+        Material material = hit.material;
+        vec3 albedo = sRgb8ToLinear(material.colourOrAlbedo); // pow(material.colourOrAlbedo.rgb, vec3(2.2));
+        float ao = material.ambient;
+        float metallic = material.specularOrMetallic;
+        float roughness = material.diffuseOrRoughness;
+
+        vec3 F0 = vec3(<span class="hljs-subst">${defaultF0}</span>); 
+        F0 = mix(F0, albedo, metallic);
+
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>reflectance equation</p>
 
@@ -660,11 +1116,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>calculate per-light radiance</p>
 
@@ -679,11 +1135,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>@todo light colour</p>
 
@@ -695,11 +1151,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-10">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>Cook-Torrance BRDF</p>
 
@@ -717,11 +1173,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>kS is equal to Fresnel</p>
 
@@ -732,11 +1188,11 @@ rectangle the size of our view 😂</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
               <p>for energy conservation, the diffuse and specular light can’t
 be above 1.0 (unless the surface emits light); to preserve this
@@ -749,11 +1205,11 @@ relationship the diffuse component (kD) should equal 1.0 - kS.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-40">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-40">&#182;</a>
               </div>
               <p>multiply kD by the inverse metalness such that only non-metals 
 have diffuse lighting, or a linear blend if partly metal (pure metals
@@ -766,11 +1222,11 @@ have no diffuse light).</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-41">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-41">&#182;</a>
               </div>
               <p>scale light by NdotL</p>
 
@@ -781,11 +1237,11 @@ have no diffuse light).</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-42">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-42">&#182;</a>
               </div>
               <p>add to outgoing radiance Lo</p>
 
@@ -802,11 +1258,11 @@ have no diffuse light).</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-43">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-43">&#182;</a>
               </div>
               <p>ambient lighting (will replace this ambient lighting with 
 environment lighting).</p>
@@ -820,11 +1276,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-44">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-44">&#182;</a>
               </div>
               <p>HDR tonemapping</p>
 
@@ -836,20 +1292,36 @@ environment lighting).</p>
 
         <span class="hljs-keyword">return</span> colour;
     }
+<span class="hljs-string">` +
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>PBR Surface functions</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
     vec3 surfacePbr1(Hit hit) {
         vec3 N = hit.normal;
         vec3 V = normalize(hit.ray.point - hit.position);
         vec3 R = reflect(-V, N);  
         vec3 reflectColour = cast2(Ray(hit.position, R, hit.ray.ior)).rgb;
-        vec3 refractColour = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
+        vec3 refractColour = vec3(0.0, 0.0, 0.0);
 
-        <span class="hljs-keyword">if</span> (hit.material.isTranslucent == <span class="hljs-number">1</span>) {
-            <span class="hljs-keyword">if</span> (areEqualish(hit.ray.ior, hit.material.refraction) == <span class="hljs-literal">false</span>) {
+        if (hit.material.isTranslucent == 1) {
+            if (areEqualish(hit.ray.ior, hit.material.refraction) == false) {
             }
         }
 
-        <span class="hljs-keyword">return</span> surfacePbrReflectance(hit, N, V, R, reflectColour, refractColour);
+        return surfacePbrReflectance(hit, N, V, R, reflectColour, refractColour);
     }
 
     vec3 surfacePbr2(Hit hit) {
@@ -857,26 +1329,42 @@ environment lighting).</p>
         vec3 V = normalize(hit.ray.point - hit.position);
         vec3 R = reflect(-V, N);   
 
-        <span class="hljs-keyword">return</span> surfacePbrReflectance(hit, N, V, R, vec3(<span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>), vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>));
+        return surfacePbrReflectance(hit, N, V, R, vec3(1.0, 1.0, 1.0), vec3(0.0, 0.0, 0.0));
     }
-
-    vec3 surfacePhong(Hit hit) {
-        Material material = hit.material;
-        vec3 fullColour = vec3(material.colourOrAlbedo.rgb / <span class="hljs-number">255.0</span>);
-        vec3 diffuse = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
-        vec3 specular = vec3(<span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>);
-
-        <span class="hljs-keyword">for</span> (int i = <span class="hljs-number">0</span>; i &lt; ${lightCount}; i += <span class="hljs-number">1</span>) {
-            <span class="hljs-keyword">if</span> (isLightVisible(hit.position, pointLights[i].point, hit.normal) == <span class="hljs-literal">true</span>) {</pre></div></div>
+`</span> +</pre></div></div>
             
         </li>
         
         
-        <li id="section-18">
+        <li id="section-46">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>Blinn Phong functions</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    vec3 surfacePhong(Hit hit) {
+        Material material = hit.material;
+        vec3 fullColour = vec3(material.colourOrAlbedo.rgb / 255.0);
+        vec3 diffuse = vec3(0.0, 0.0, 0.0);
+        vec3 specular = vec3(0.0, 0.0, 0.0);
+
+        for (int i = 0; i &lt; <span class="hljs-subst">${lightCount}</span>; i += 1) {
+            if (isLightVisible(hit.position, pointLights[i].point, hit.normal) == true) {
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
               </div>
               <p>@todo light colour</p>
 
@@ -889,11 +1377,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-48">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-48">&#182;</a>
               </div>
               <p>diffuse</p>
 
@@ -907,11 +1395,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-49">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-49">&#182;</a>
               </div>
               <p>specular</p>
 
@@ -928,11 +1416,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-50">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-50">&#182;</a>
               </div>
               <p>calculate ambient light</p>
 
@@ -943,50 +1431,99 @@ environment lighting).</p>
 
         <span class="hljs-keyword">return</span> ambient.rgb + diffuse.rgb * material.diffuseOrRoughness + specular.rgb * material.specularOrMetallic;
     }
-
-    bool areEqualish(float a, float b) {
-        <span class="hljs-keyword">if</span> (abs(a - b) &lt; ${epsilon}) {
-            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-        }
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-    }
-
-    Material getMaterial(int index) {
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">0</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">0</span>];
-        }
-
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">1</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">1</span>];
-        }
-
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">2</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">2</span>];
-        }
-
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">3</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">3</span>];
-        }
-
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">4</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">4</span>];
-        }
-
-        <span class="hljs-keyword">if</span> (index == <span class="hljs-number">5</span>) {
-            <span class="hljs-keyword">return</span> materials[<span class="hljs-number">5</span>];
-        }
-
-        <span class="hljs-keyword">return</span> materials[<span class="hljs-number">0</span>];
-    }</pre></div></div>
+<span class="hljs-string">` +
+</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-22">
+        <li id="section-51">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <p>are two floating points roughly equal?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    bool areEqualish(float a, float b) {
+        if (abs(a - b) &lt; <span class="hljs-subst">${epsilon}</span>) {
+            return true;
+        }
+        return false;
+    }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
+              </div>
+              <p>hack around GLSL’s inability to index arrays</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+    Material getMaterial(int index) {
+        if (index == 0) {
+            return materials[0];
+        }
+
+        if (index == 1) {
+            return materials[1];
+        }
+
+        if (index == 2) {
+            return materials[2];
+        }
+
+        if (index == 3) {
+            return materials[3];
+        }
+
+        if (index == 4) {
+            return materials[4];
+        }
+
+        if (index == 5) {
+            return materials[5];
+        }
+
+        return materials[0];
+    }
+`</span> +</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              <p>PBR Computations
+essentially straight from <a href="https://learnopengl.com/PBR/Theory" title="Learn OpenGL`">Learn OpenGL</a></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-string">`
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-54">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-54">&#182;</a>
               </div>
               <hr>
 
@@ -995,11 +1532,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-55">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-55">&#182;</a>
               </div>
               
             </div>
@@ -1020,11 +1557,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-56">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-56">&#182;</a>
               </div>
               <hr>
 
@@ -1033,11 +1570,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-57">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-57">&#182;</a>
               </div>
               
             </div>
@@ -1055,11 +1592,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-58">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-58">&#182;</a>
               </div>
               <hr>
 
@@ -1068,11 +1605,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-59">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-59">&#182;</a>
               </div>
               
             </div>
@@ -1089,11 +1626,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-28">
+        <li id="section-60">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-60">&#182;</a>
               </div>
               <hr>
 
@@ -1102,11 +1639,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-29">
+        <li id="section-61">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-61">&#182;</a>
               </div>
               
             </div>
@@ -1118,11 +1655,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-30">
+        <li id="section-62">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-62">&#182;</a>
               </div>
               <hr>
 
@@ -1131,11 +1668,11 @@ environment lighting).</p>
         </li>
         
         
-        <li id="section-31">
+        <li id="section-63">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-63">&#182;</a>
               </div>
               
             </div>

@@ -7,8 +7,6 @@ function getShaderConfiguration(scene) {
     // We're doing this to stop WebGL from complaining that `1` is not a float
     // this version of GLSL will want a full `1.0`
     return {
-        // How much anti aliasing?  O for none, 2, for some, 4 for more
-        aa: '0',
         // The colour of the background (if rays hit nothing this is the colour of the pixel) 
         bg: {
             r: '0.05',

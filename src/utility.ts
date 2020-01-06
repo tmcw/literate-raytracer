@@ -15,8 +15,9 @@ function throwIfFalsey(thingToTest: unknown, reason: string, Ctor = Error): asse
 // <a name="setupScene"></a>
 // ## setupScene
 function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene) {
-    const { camera, materials, spheres, triangles, lights } = scene;
-    const u = getUniformSetters(gl, context.program);
+    const { camera, materials, spheres, triangleNormals, lights } = scene;
+    // in typscript we're cheating with an any here
+    const u: any = getUniformSetters(gl, context.program, getUniformDescription());
 
     const cameraMatrix = 
     zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);
@@ -40,18 +41,34 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
     u.height(height);
     u.scale(scale);
     u.width(width);
+    u.aa(0);
 
     materials.forEach((m, i) => {
-        u.materials(i, m.colour, m.ambient, m.diffuse, m.specular, m.refraction, m.isTranslucent);
+        u.materials[i].colourOrAlbedo(m.colour);
+        u.materials[i].ambient(m.ambient);
+        u.materials[i].diffuseOrRoughness(m.diffuse);
+        u.materials[i].specularOrMetallic(m.specular);
+        u.materials[i].refraction(m.refraction);
+        u.materials[i].isTranslucent(m.isTranslucent);
     });
 
     spheres.forEach((s, i) => {
-        u.spheres(i, s.radius, s.material, s.point);
+        u.spheres[i].radius(s.radius);
+        u.spheres[i].material(s.material);
+        u.spheres[i].point(s.point);
     });
 
     lights.forEach((l, i) => {
-        u.lights(i, l);
+        u.pointLights[i].point(l);
     });
+
+    triangleNormals((normal, t, i) => {
+        u.triangles[i].a(t.points[0]);
+        u.triangles[i].b(t.points[1]);
+        u.triangles[i].c(t.points[2]);
+        u.triangles[i].normal(normal);
+        u.triangles[i].material(t.material);
+    }, false);
 
     return u;
 }
@@ -67,54 +84,25 @@ function getUniformLocation(gl: WebGLRenderingContext, program: WebGLProgram, na
     return location;
 }
 
+interface UniformDescription {
+    length?: number;
+    name: string;
+    type: string;
+    children?: UniformDescription[];
+}
+
+interface UniformSetter {
+    (value: any): void;
+}
+
+interface UniformDictionary {
+    [key: string]: UniformSetter | UniformDictionary | UniformSetter[] | UniformDictionary[];
+}
+
 //
 // <a name="getUniformSetters"></a>
 // ## getUniformSetters
-function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
-
-    const cameraMatrix = getUniformLocation(gl, program, 'cameraMatrix');
-    const cameraPos = getUniformLocation(gl, program, 'cameraPos');
-    const width = getUniformLocation(gl, program, 'width');
-    const globalAmbientIntensity = getUniformLocation(gl, program, 'globalAmbientIntensity');
-    const height = getUniformLocation(gl, program, 'height');
-    const aspectRatio = getUniformLocation(gl, program, 'aspectRatio');
-    const scale = getUniformLocation(gl, program, 'scale');
-
-    const materials = g_scene.materials.map((_, i) => {
-        return {
-            colour: getUniformLocation(gl, program, `materials[${i}].colourOrAlbedo`),
-            ambient: getUniformLocation(gl, program, `materials[${i}].ambient`),
-            diffuse: getUniformLocation(gl, program, `materials[${i}].diffuseOrRoughness`),
-            isTranslucent: getUniformLocation(gl, program, `materials[${i}].isTranslucent`),
-            refraction: getUniformLocation(gl, program, `materials[${i}].refraction`),
-            specular: getUniformLocation(gl, program, `materials[${i}].specularOrMetallic`),
-        };
-    });
-
-    const spheres = g_scene.spheres.map((_, i) => {
-        return {
-            material: getUniformLocation(gl, program, `spheres[${i}].material`),
-            point: getUniformLocation(gl, program, `spheres[${i}].point`),
-            radius: getUniformLocation(gl, program, `spheres[${i}].radius`),
-        };
-    });
-
-    const triangles = g_scene.triangles.map((_, i) => {
-        return {
-            a: getUniformLocation(gl, program, `triangles[${i}].a`),
-            b: getUniformLocation(gl, program, `triangles[${i}].b`),
-            c: getUniformLocation(gl, program, `triangles[${i}].c`),
-            material: getUniformLocation(gl, program, `triangles[${i}].material`),
-            normal: getUniformLocation(gl, program, `triangles[${i}].normal`),
-        };
-    });
-
-    const lights = g_scene.lights.map((_, i) => {
-        return {
-            point: getUniformLocation(gl, program, `pointLights[${i}].point`),
-        };
-    });
-
+function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram, desc: UniformDescription[]) {
     const setVec3 = (loc: WebGLUniformLocation, v: Matrix3_1) => {
         gl.uniform3fv(loc, v);
     };
@@ -124,60 +112,58 @@ function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
     const setInt = (loc: WebGLUniformLocation, i: number) => {
         gl.uniform1i(loc, i);
     };
-     
-    return {
-        aspectRatio(aspect: number) {
-            setFloat(aspectRatio, aspect);
-        },
-        cameraMatrix(matrix: Matrix4_4) {
-            gl.uniformMatrix4fv(cameraMatrix, false, matrix);
-        },
-        cameraPos(pos: Matrix3_1) {
-            setVec3(cameraPos, pos);
-        },
-        globalAmbientIntensity(intensity: number) {
-            setFloat(globalAmbientIntensity, intensity);
-        },
-        height(h: number) {
-            setFloat(height, h);
-        },
-        lights(index: number, point: Matrix3_1) {
-            if (!lights[index]) {
-                throw new RangeError('out of bounds light');
-            }
-            setVec3(lights[index].point, point);
-        },
-        materials(index: number, colourOrAlbedo: Matrix3_1, ambient: number, diffuseOrRoughness: number, specularOrMetallic: number, refraction: number, isTranslucent: boolean) {
-            setVec3(materials[index].colour, colourOrAlbedo);
-            setFloat(materials[index].ambient, ambient);
-            setFloat(materials[index].diffuse, diffuseOrRoughness);
-            setFloat(materials[index].refraction, refraction);
-            setFloat(materials[index].specular, specularOrMetallic);
-            setInt(materials[index].isTranslucent, isTranslucent ? 1 : 0);
-        },
-        scale(s: number) {
-            setFloat(scale, s);
-        },
-        spheres(index: number, radius: number, materialIndex: number, point: Matrix3_1) {
-            if (!spheres[index]) {
-                throw new RangeError('out of bounds sphere');
-            }
-            setVec3(spheres[index].point, point);
-            setFloat(spheres[index].radius, radius);
-            setInt(spheres[index].material, materialIndex);
-        },
-        triangles(index: number, a: Matrix3_1, b: Matrix3_1, c: Matrix3_1, materialIndex: number, normal: Matrix3_1) {
-            if (!triangles[index]) {
-                throw new RangeError('out of bounds triangle');
-            }
-            setVec3(triangles[index].a, a);
-            setVec3(triangles[index].b, b);
-            setVec3(triangles[index].c, c);
-            setVec3(triangles[index].normal, normal);
-            setInt(triangles[index].material, materialIndex);
-        },
-        width(w: number) {
-            setFloat(width, w);
-        },
+
+    const buildSetter = (
+        { name, type }: UniformDescription,
+        prefix: string,
+        postfix: string,
+    ) => {
+        const loc = getUniformLocation(gl, program, prefix + name + postfix);
+        switch (type) {
+            case 'int':
+                return (value: number) => setInt(loc, value);
+            case 'float':
+                return (value: number) => setFloat(loc, value);
+            case 'mat4':
+                return (value: Matrix4_4) => gl.uniformMatrix4fv(loc, false, value);
+            case 'vec3':
+                return (value: Matrix3_1) => setVec3(loc, value);
+            default:
+                throw new Error('unsupported GLSL type ' + type);
+        }
     };
+
+    const createReduceUniformDescription = (prefix: string) => (
+        dictionary: UniformDictionary, 
+        d: UniformDescription
+    ) => {
+        const { children, length, name } = d;
+        if (length && children && children.length) {
+            const arr: UniformDictionary[] = []
+            dictionary[name] = arr;
+            for (let i = 0; i < length; i += 1) {
+                arr.push(children.reduce(
+                    createReduceUniformDescription(prefix + name + `[${i}].`), 
+                    {}
+                ));
+            }
+        } else if (length) {
+            const arr: UniformSetter[] = []
+            dictionary[name] = arr;
+            for (let i = 0; i < length; i += 1) {
+                arr.push(buildSetter(d, prefix, `[${i}]`));
+            }
+        } else if (children && children.length) {
+            dictionary[name] = children.reduce(
+                createReduceUniformDescription(prefix + name + '.'),
+                {}
+            );
+        } else {
+            dictionary[name] = buildSetter(d, prefix, '');
+        }
+
+        return dictionary;
+    };
+     
+    return desc.reduce(createReduceUniformDescription(''), {});
 }

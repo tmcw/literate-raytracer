@@ -55,14 +55,23 @@
 </head>
 <body>
   <div id="container">
-    <div class='cred'>
-        <a href='https://github.com/tmcw/literate-raytracer'>based on an open source project by tom macwright</a>,
-        <a href='https://github.com/bennett000/literate-raytracer'>extended by michael bennett</a>
+    <div class="cred">
+        <a href="https://github.com/tmcw/literate-raytracer">based on an open source project by tom macwright</a>,
+        <a href="https://github.com/bennett000/literate-raytracer">extended by michael bennett</a>
     </div>
-    <canvas id='c'></canvas>
+    <canvas id="c"></canvas>
     <center>
-        <button id='play'>play</button>
-        <button id='stop'>stop</button>
+        <button id="play">play</button>
+        <button id="stop">stop</button>
+        <select id="shading">
+          <option selected value="1">Blinn Phong</option>
+          <option selected value="0">PBR</option>
+        </select>
+        <select id="aa">
+          <option selected value="0">0X AA</option>
+          <option selected value="2">2X AA</option>
+          <option selected value="4">4X AA</option>
+        </select>
     </center>
     <div id="background"></div>
     
@@ -604,6 +613,150 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
             </div>
             
             <div class="content"><div class='highlight'><pre>    gl.drawArrays(gl.TRIANGLES, <span class="hljs-number">0</span>, <span class="hljs-number">6</span>);
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p><a name="getUniformDescription"></a></p>
+<h3 id="getuniformdescription">getUniformDescription</h3>
+<p>what variables are bound to our program?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformDescription</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> [
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'aa'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'int'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'aspectRatio'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'cameraMatrix'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'mat4'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'cameraPos'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'globalAmbientIntensity'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'height'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'scale'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'shadingModel'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'int'</span>,
+        },
+        {
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'width'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+        },
+        {
+            <span class="hljs-attr">children</span>: [
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'colourOrAlbedo'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'ambient'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'diffuseOrRoughness'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'isTranslucent'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'int'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'refraction'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'specularOrMetallic'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+                },
+            ],
+            <span class="hljs-attr">length</span>: g_scene.materials.length,
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'materials'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
+        },
+        {
+            <span class="hljs-attr">children</span>: [
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'point'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+            ],
+            <span class="hljs-attr">length</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'pointLights'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>
+        },
+        {
+            <span class="hljs-attr">children</span>: [
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'material'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'int'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'point'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'radius'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
+                },
+            ],
+            <span class="hljs-attr">length</span>: g_scene.spheres.length,
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'spheres'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
+        },
+        {
+            <span class="hljs-attr">children</span>: [
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'a'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'b'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'c'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'material'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'int'</span>,
+                },
+                {
+                    <span class="hljs-attr">name</span>: <span class="hljs-string">'normal'</span>,
+                    <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
+                },
+            ],
+            <span class="hljs-attr">length</span>: g_scene.triangles.length,
+            <span class="hljs-attr">name</span>: <span class="hljs-string">'triangles'</span>,
+            <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
+        },
+    ];
 }</pre></div></div>
             
         </li>

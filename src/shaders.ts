@@ -50,7 +50,7 @@ function getVertexSource() {
 function getFragmentSource(config: ConfigShader) {
   // for brevity's sake break out the config values
   const { 
-    aa, bg, defaultF0, epsilon,
+    bg, defaultF0, epsilon,
     lightCount, materialCount, 
     phongSpecularExp, 
     sphereCount, triangleCount,
@@ -165,6 +165,20 @@ function getFragmentSource(config: ConfigShader) {
     uniform float scale;
     uniform float width;
 ` + 
+// For now we'll also use some uniforms to select rending options
+// in a performant app we'd want to dnyamically generate faster shaders
+// that can skip this check and have the models baked in
+//
+// for now let's set them up here
+//
+// 0 for Blinn Phong, 1 for PBR
+`
+    uniform int shadingModel;
+` + 
+// anti-aliasing amount 0 - none, 2 - some, 4, reasonable but 4x the work
+`
+    uniform int aa;
+` + 
      
 // we have a few "look up" tables here
 // GLSL arrays in this version aren't so much random access chunks of memory
@@ -227,11 +241,11 @@ function getFragmentSource(config: ConfigShader) {
 `
         float divisor = 1.0;
 
-        if (${aa} == 2) {
+        if (aa == 2) {
             divisor = 2.0;
             total += primaryRay(0.25, 0.25).rgb;
             total += primaryRay(0.75, 0.75).rgb;
-        } else if (${aa} == 4) {
+        } else if (aa == 4) {
             divisor = 4.0;
             total += primaryRay(0.25, 0.25).rgb;
             total += primaryRay(0.75, 0.25).rgb;
@@ -354,7 +368,7 @@ function getFragmentSource(config: ConfigShader) {
             return bgColour;
         }
 
-        if (hit.distance < 0.0) {
+        if (shadingModel == 0) {
             return surfacePbr1(hit);
         } else {
             return surfacePhong(hit);
@@ -368,7 +382,7 @@ function getFragmentSource(config: ConfigShader) {
             return bgColour;
         }
 
-        if (hit.distance < 0.0) {
+        if (shadingModel == 0) {
             return surfacePbr2(hit);
         } else {
             return surfacePhong(hit);

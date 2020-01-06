@@ -16,11 +16,16 @@ function bindToHTML() {
     // since we're still dealing with HTML let's get some references to the start/stop buttons
     const play = window.document.getElementById('play');
     const stop = window.document.getElementById('stop');
+    // and we'll add a select box for the shading model
+    const shading = window.document.getElementById('shading');
+    const aa = window.document.getElementById('aa');
     // unlike with the canvas, let's not panic if these buttons are not present
     // we'll group our HTML bindings into an object for easier consumption
     return {
+        aa,
         canvas,
         play,
+        shading,
         stop,
     };
 }

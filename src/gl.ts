@@ -150,3 +150,137 @@ function draw(gl: WebGLRenderingContext, context: ProgramContext, canvas: HTMLCa
   // draw the rectangle (2 triangles, 6 vertices)
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
+
+//
+// <a name="getUniformDescription"></a>
+// ### getUniformDescription
+//
+// what variables are bound to our program?
+function getUniformDescription(): UniformDescription[] {
+  return [
+    {
+      name: 'aa',
+      type: 'int',
+    },
+    {
+      name: 'aspectRatio',
+      type: 'float',
+    },
+    {
+      name: 'cameraMatrix',
+      type: 'mat4',
+    },
+    {
+      name: 'cameraPos',
+      type: 'vec3',
+    },
+    {
+      name: 'globalAmbientIntensity',
+      type: 'float',
+    },
+    {
+      name: 'height',
+      type: 'float',
+    },
+    {
+      name: 'scale',
+      type: 'float',
+    },
+    {
+      name: 'shadingModel',
+      type: 'int',
+    },
+    {
+      name: 'width',
+      type: 'float',
+    },
+    {
+      children: [
+        {
+          name: 'colourOrAlbedo',
+          type: 'vec3',
+        },
+        {
+          name: 'ambient',
+          type: 'float',
+        },
+        {
+          name: 'diffuseOrRoughness',
+          type: 'float',
+        },
+        {
+          name: 'isTranslucent',
+          type: 'int',
+        },
+        {
+          name: 'refraction',
+          type: 'float',
+        },
+        {
+          name: 'specularOrMetallic',
+          type: 'float',
+        },
+      ],
+      length: g_scene.materials.length,
+      name: 'materials',
+      type: 'struct',
+    },
+    {
+      children: [
+        {
+          name: 'point',
+          type: 'vec3',
+        },
+      ],
+      length: 1,
+      name: 'pointLights',
+      type: 'struct'
+    },
+    {
+      children: [
+        {
+          name: 'material',
+          type: 'int',
+        },
+        {
+          name: 'point',
+          type: 'vec3',
+        },
+        {
+          name: 'radius',
+          type: 'float',
+        },
+      ],
+      length: g_scene.spheres.length,
+      name: 'spheres',
+      type: 'struct',
+    },
+    {
+      children: [
+        {
+          name: 'a',
+          type: 'vec3',
+        },
+        {
+          name: 'b',
+          type: 'vec3',
+        },
+        {
+          name: 'c',
+          type: 'vec3',
+        },
+        {
+          name: 'material',
+          type: 'int',
+        },
+        {
+          name: 'normal',
+          type: 'vec3',
+        },
+      ],
+      length: g_scene.triangles.length,
+      name: 'triangles',
+      type: 'struct',
+    },
+  ];
+}

@@ -141,6 +141,9 @@ const g_fps = {
     sampleDuration: 5000,
 };
 
+let g_shadingModel = 0;
+let g_aa = 0;
+
 //
 // <a name="animate"></a>
 // 4. ## Animate!
@@ -202,12 +205,11 @@ const animate = (time: number) => {
             g_planetStates[i] = state;
         }
 
-        g_uniforms.spheres(i, sphere.radius, sphere.material, sphere.point);
+        g_uniforms.spheres[i].point(sphere.point);
     });
 
-    g_scene.triangleNormals((normal, t, i) => {
-        g_uniforms.triangles(i, t.points[0], t.points[1], t.points[2], t.material, normal);
-    }, true);
+    g_uniforms.shadingModel(g_shadingModel);
+    g_uniforms.aa(g_aa);
 
     draw(g_gl, g_ctx, g_html.canvas);
     requestAnimationFrame(animate);
@@ -229,6 +231,32 @@ if (g_html.stop) {
     g_html.stop.addEventListener('click', () => {
         g_isAnimating = false;
     });
+}
+
+// if we swap the shading, update the global
+if (g_html.shading) {
+    const onChange = (e: any) => {
+        g_shadingModel = parseInt(e.target.value, 10) === 1 ? 1 : 0;
+    };
+    g_html.shading.addEventListener('blur', onChange);
+    g_html.shading.addEventListener('change', onChange);
+}
+
+// if we swap the shading, update the global
+if (g_html.aa) {
+    const onChange = (e: any) => {
+        const value = parseInt(e.target.value, 10);
+
+        if (value === 4) {
+            g_aa = 4;
+        } else if (value === 2) {
+            g_aa = 2;
+        } else {
+            g_aa = 0;
+        }
+    };
+    g_html.aa.addEventListener('blur', onChange);
+    g_html.aa.addEventListener('change', onChange);
 }
 
 // finally kick it all off

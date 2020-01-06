@@ -11,6 +11,8 @@ This is intended as a learning platform for those trying to connect the mathemat
 and engineering explanations of raytracing and understand the behavior of the algorithm
 well enough to do interesting things.
 
+[See It Live Here](https://literate-raytracer.michaeljbennett.info "Live version of this book")
+
 ## Having Fun With The Code
 
 Unlike the original, the JavaScript parts of this codebase are written in TypeScript,

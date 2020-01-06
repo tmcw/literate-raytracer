@@ -191,6 +191,15 @@ can be done in a relatively cross compatible way in the browser.  We’re using 
 </li>
 </ol>
 <p>Beyond that we’ll also look at casting more rays to do things like reflections, and refractions</p>
+<h2 id="contents">Contents</h2>
+<ol start="0">
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#html">HTML</a></li>
+<li><a href="#webgl">WebGL</a></li>
+<li><a href="#state">Application State</a></li>
+<li><a href="#animation">Animation!</a></li>
+</ol>
+<p><a name="configuration"></a></p>
 <h2 id="0-configuration">0. Configuration</h2>
 <p><code>g_floorPlaneSize</code> is an arbitrary boundary to our scene and describes
 sizing used to bound animations and define a “floor plane” on which we
@@ -211,7 +220,8 @@ can see shadows</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <h2 id="1-html">1. HTML</h2>
+              <p><a name="html"></a></p>
+<h2 id="1-html">1. HTML</h2>
 <p>We’ll <a href="html.html" title="HTML Setup code">setup the HTML</a></p>
 
             </div>
@@ -227,7 +237,8 @@ can see shadows</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <h2 id="2-webgl-initialization">2. WebGL Initialization</h2>
+              <p><a name="webgl"></a></p>
+<h2 id="2-webgl-initialization">2. WebGL Initialization</h2>
 <p>In order to upload things to the GPU and renderthem on the canvas we’ll need to work
 with an API.  We can ask our canvas for a <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext" title="WebGL Rendering Context is the API we use to upload stuff to the GPU">WebGLRenderingContext</a>;
 which will be the API we use to upload stuff to the GPU.</p>
@@ -262,14 +273,29 @@ which will be the API we use to upload stuff to the GPU.</p>
               </div>
               <p>Okay, great, so we’ve got a an API that let’s us talk to the GPU.  Alone that’s
 not enough for us to get started.  We need to give the GPU some code to run
-we’re going to need at least one GLSL program, that code is <a href="shaders.js" title="Our shaders, the &#39;body&#39; of our program">located in shaders.ts</a></p>
+we’re going to need at least one GLSL program, that code is <a href="shaders.html" title="Our shaders, the &#39;body&#39; of our program">located in shaders.ts</a></p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 <span class="hljs-keyword">const</span> g_uniforms = setupScene(g_gl, g_ctx, g_scene);
-draw(g_gl, g_ctx, g_html.canvas);
-<span class="hljs-keyword">const</span> g_planetStates = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p><a name="state"></a></p>
+<h2 id="3-application-state">3. Application State</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_planetStates = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">const</span> states = [];
     <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; g_scene.spheres.length; i += <span class="hljs-number">1</span>) {
         <span class="hljs-keyword">const</span> p = g_scene.spheres[i].point;
@@ -288,8 +314,42 @@ draw(g_gl, g_ctx, g_html.canvas);
     <span class="hljs-attr">lastTime</span>: <span class="hljs-number">0</span>,
     <span class="hljs-attr">frames</span>: <span class="hljs-number">0</span>,
     <span class="hljs-attr">sampleDuration</span>: <span class="hljs-number">5000</span>,
-};
-<span class="hljs-keyword">const</span> animate = <span class="hljs-function">(<span class="hljs-params">time</span>) =&gt;</span> {
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p><a name="animate"></a>
+4. ## Animate!</p>
+<p>start the animation by default</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">let</span> g_isAnimating = <span class="hljs-literal">true</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>on each frame…</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> animate = <span class="hljs-function">(<span class="hljs-params">time</span>) =&gt;</span> {
+    <span class="hljs-keyword">if</span> (g_isAnimating === <span class="hljs-literal">false</span>) {
+        <span class="hljs-keyword">return</span>;
+    }
     g_fps.frames += <span class="hljs-number">1</span>;
     g_fps.countTime += time - g_fps.lastTime;
     g_fps.lastTime = time;
@@ -336,8 +396,64 @@ draw(g_gl, g_ctx, g_html.canvas);
     }, <span class="hljs-literal">true</span>);
     draw(g_gl, g_ctx, g_html.canvas);
     requestAnimationFrame(animate);
-};
-animate(<span class="hljs-number">0</span>);</pre></div></div>
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>if we press play, make sure we’re animating</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (g_html.play) {
+    g_html.play.addEventListener(<span class="hljs-string">'click'</span>, () =&gt; {
+        <span class="hljs-keyword">if</span> (g_isAnimating) {
+            <span class="hljs-keyword">return</span>;
+        }
+        g_isAnimating = <span class="hljs-literal">true</span>;
+        animate(<span class="hljs-number">0</span>);
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>if we press stop, stop the animation</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (g_html.stop) {
+    g_html.stop.addEventListener(<span class="hljs-string">'click'</span>, () =&gt; {
+        g_isAnimating = <span class="hljs-literal">false</span>;
+    });
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>finally kick it all off</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>animate(<span class="hljs-number">0</span>);</pre></div></div>
             
         </li>
         

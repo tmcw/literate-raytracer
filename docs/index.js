@@ -351,8 +351,9 @@ const g_cube = (function () {
     }
     return triangles;
 }());
-// ### createShader
+//
 // <a name="crateShader"></a>
+// ### createShader
 //
 // We need a mechanism for compiling shader programs and checking if they failed to compile.
 // In this case `type` is a property of the brower's `WebGLRenderingContext`
@@ -375,8 +376,9 @@ function createShader(gl, type, source) {
     gl.deleteShader(shader);
     throwIfFalsey(false, 'shader error: ' + log + '\n\n' + source);
 }
-// ### createProgram
+//
 // <a name="crateProgram"></a>
+// ### createProgram
 //
 // WebGL programs have two components, vertex shaders, and fragment shaders.
 // Because WebGL is flexibile we could conceivably use one vertex shader with
@@ -405,8 +407,10 @@ function createProgram(gl, vertexShader, fragmentShader) {
     gl.deleteProgram(program);
     throwIfFalsey(false, 'could not compile GL: ' + log);
 }
-// ### bindProgram
+//
 // <a name="bindProgram"></a>
+// ### bindProgram
+//
 // Our shader approach is fairly simple and we don't need much flexibility
 // `bindProgram` sets up an opinionated vertex shader and a somewhat more flexibile
 // fragment shader..
@@ -445,8 +449,10 @@ function bindProgram(gl, vertexSource, fragmentSource) {
         program,
     };
 }
-// ### draw
+//
 // <a name="draw"></a>
+// ### draw
+//
 // each time we want to render a frame we need to setup the program's data the way we want it
 // then press "go".  This `draw` function is our "go" button.
 function draw(gl, context, canvas) {
@@ -488,8 +494,10 @@ function bindToHTML() {
         stop,
     };
 }
-// ### Handling Resizes
+//
 // <a name="resize"></a>
+// ### Handling Resizes
+//
 // when working with a canvas we might want to be able to respond to resizes
 // of the browser window.  Let' handle that case
 function resize(canvas) {
@@ -561,7 +569,14 @@ function resize(canvas) {
 //      2.  If an object is hit, check if it can see any lights, if so draw a colour, if not, a shadow
 //
 // Beyond that we'll also look at casting more rays to do things like reflections, and refractions
+// ## Contents
+// 0. [Configuration](#configuration)
+// 1. [HTML](#html)
+// 2. [WebGL](#webgl)
+// 3. [Application State](#state)
+// 4. [Animation!](#animation)
 //
+// <a name="configuration"></a>
 // ## 0. Configuration
 //
 // `g_floorPlaneSize` is an arbitrary boundary to our scene and describes
@@ -571,13 +586,16 @@ const g_floorPlaneSize = 25;
 const g_scene = getScene();
 const g_configShader = getShaderConfiguration(g_scene);
 // 
+// <a name="html"></a>
 // ## 1. HTML
 //
 // We'll [setup the HTML](html.html "HTML Setup code")
 //
 const g_html = bindToHTML();
 //
+// <a name="webgl"></a>
 // ## 2. WebGL Initialization
+//
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
@@ -586,10 +604,14 @@ const g_gl = g_html.canvas.getContext('webgl');
 throwIfFalsey(g_gl, 'could not get a WebGL context');
 // Okay, great, so we've got a an API that let's us talk to the GPU.  Alone that's
 // not enough for us to get started.  We need to give the GPU some code to run
-// we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.js "Our shaders, the 'body' of our program")
+// we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
 draw(g_gl, g_ctx, g_html.canvas);
+//
+// <a name="state"></a>
+// ## 3. Application State
+//
 const g_planetStates = (function () {
     const states = [];
     for (let i = 0; i < g_scene.spheres.length; i += 1) {
@@ -610,7 +632,17 @@ const g_fps = {
     frames: 0,
     sampleDuration: 5000,
 };
+//
+// <a name="animate"></a>
+// 4. ## Animate!
+//
+// start the animation by default
+let g_isAnimating = true;
+// on each frame...
 const animate = (time) => {
+    if (g_isAnimating === false) {
+        return;
+    }
     g_fps.frames += 1;
     g_fps.countTime += time - g_fps.lastTime;
     g_fps.lastTime = time;
@@ -658,6 +690,23 @@ const animate = (time) => {
     draw(g_gl, g_ctx, g_html.canvas);
     requestAnimationFrame(animate);
 };
+// if we press play, make sure we're animating
+if (g_html.play) {
+    g_html.play.addEventListener('click', () => {
+        if (g_isAnimating) {
+            return;
+        }
+        g_isAnimating = true;
+        animate(0);
+    });
+}
+// if we press stop, stop the animation
+if (g_html.stop) {
+    g_html.stop.addEventListener('click', () => {
+        g_isAnimating = false;
+    });
+}
+// finally kick it all off
 animate(0);
 function createMatrix3_1() {
     return [0, 0, 0];
@@ -1492,8 +1541,8 @@ function getShaderConfiguration(scene) {
 //
 // For more information on [shaders checkout WebGL Fundamentals](https://webglfundamentals.org/ "Deeply learn about shaders")
 //
-// ### Vertex Shader
 // <a name="vertexShader"></a>
+// ### Vertex Shader
 //
 // Our vertex shader code is a simple string
 function getVertexSource() {
@@ -1510,8 +1559,9 @@ function getVertexSource() {
     }
 `;
 }
-// ### Fragment Shader
+//
 // <a name="fragmentShader"></a>
+// ### Fragment Shader
 function getFragmentSource(config) {
     // for brevity's sake break out the config values
     const { aa, bg, defaultF0, epsilon, lightCount, materialCount, phongSpecularExp, sphereCount, triangleCount, } = config;
@@ -2103,8 +2153,9 @@ function getFragmentSource(config) {
 }
 // ## Utility Functions
 // Utility functions can help us make our code more readable
-// ## Throw If Falsey
+//
 // <a name="throwIfFalsey"></a>
+// ## Throw If Falsey
 // Throw an error if `thingToTest` is false like
 // _optionally_ we'll take a custom `Error` constructor
 function throwIfFalsey(thingToTest, reason, Ctor = Error) {
@@ -2112,6 +2163,9 @@ function throwIfFalsey(thingToTest, reason, Ctor = Error) {
         throw new Ctor(`Literate Ray Tracer: ${reason}`);
     }
 }
+//
+// <a name="setupScene"></a>
+// ## setupScene
 function setupScene(gl, context, scene) {
     const { camera, materials, spheres, triangles, lights } = scene;
     const u = getUniformSetters(gl, context.program);
@@ -2143,6 +2197,9 @@ function setupScene(gl, context, scene) {
     });
     return u;
 }
+//
+// <a name="getUniformLocation"></a>
+// ## getUniformLocation
 function getUniformLocation(gl, program, name) {
     const location = gl.getUniformLocation(program, name);
     if (!location) {
@@ -2150,6 +2207,9 @@ function getUniformLocation(gl, program, name) {
     }
     return location;
 }
+//
+// <a name="getUniformSetters"></a>
+// ## getUniformSetters
 function getUniformSetters(gl, program) {
     const cameraMatrix = getUniformLocation(gl, program, 'cameraMatrix');
     const cameraPos = getUniformLocation(gl, program, 'cameraPos');

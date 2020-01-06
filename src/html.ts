@@ -30,8 +30,10 @@ function bindToHTML() {
 }
 
 
-// ### Handling Resizes
+//
 // <a name="resize"></a>
+// ### Handling Resizes
+//
 // when working with a canvas we might want to be able to respond to resizes
 // of the browser window.  Let' handle that case
 function resize(canvas: HTMLCanvasElement) {

@@ -145,9 +145,9 @@
               </div>
               <h2 id="utility-functions">Utility Functions</h2>
 <p>Utility functions can help us make our code more readable</p>
+<p><a name="throwIfFalsey"></a></p>
 <h2 id="throw-if-falsey">Throw If Falsey</h2>
-<p><a name="throwIfFalsey"></a>
-Throw an error if <code>thingToTest</code> is false like
+<p>Throw an error if <code>thingToTest</code> is false like
 <em>optionally</em> we’ll take a custom <code>Error</code> constructor</p>
 
             </div>
@@ -156,8 +156,23 @@ Throw an error if <code>thingToTest</code> is false like
     <span class="hljs-keyword">if</span> (!thingToTest) {
         <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> Ctor(<span class="hljs-string">`Literate Ray Tracer: <span class="hljs-subst">${reason}</span>`</span>);
     }
-}
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setupScene</span>(<span class="hljs-params">gl, context, scene</span>) </span>{
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p><a name="setupScene"></a></p>
+<h2 id="setupscene">setupScene</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setupScene</span>(<span class="hljs-params">gl, context, scene</span>) </span>{
     <span class="hljs-keyword">const</span> { camera, materials, spheres, triangles, lights } = scene;
     <span class="hljs-keyword">const</span> u = getUniformSetters(gl, context.program);
     <span class="hljs-keyword">const</span> cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[<span class="hljs-number">0</span>], camera.point[<span class="hljs-number">1</span>], camera.point[<span class="hljs-number">2</span>]), camera.rotation[<span class="hljs-number">0</span>]), camera.rotation[<span class="hljs-number">1</span>]), camera.rotation[<span class="hljs-number">2</span>]);
@@ -187,15 +202,45 @@ Throw an error if <code>thingToTest</code> is false like
         u.lights(i, l);
     });
     <span class="hljs-keyword">return</span> u;
-}
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformLocation</span>(<span class="hljs-params">gl, program, name</span>) </span>{
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p><a name="getUniformLocation"></a></p>
+<h2 id="getuniformlocation">getUniformLocation</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformLocation</span>(<span class="hljs-params">gl, program, name</span>) </span>{
     <span class="hljs-keyword">const</span> location = gl.getUniformLocation(program, name);
     <span class="hljs-keyword">if</span> (!location) {
         <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'could not get uniform location '</span> + name);
     }
     <span class="hljs-keyword">return</span> location;
-}
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformSetters</span>(<span class="hljs-params">gl, program</span>) </span>{
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p><a name="getUniformSetters"></a></p>
+<h2 id="getuniformsetters">getUniformSetters</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformSetters</span>(<span class="hljs-params">gl, program</span>) </span>{
     <span class="hljs-keyword">const</span> cameraMatrix = getUniformLocation(gl, program, <span class="hljs-string">'cameraMatrix'</span>);
     <span class="hljs-keyword">const</span> cameraPos = getUniformLocation(gl, program, <span class="hljs-string">'cameraPos'</span>);
     <span class="hljs-keyword">const</span> width = getUniformLocation(gl, program, <span class="hljs-string">'width'</span>);

@@ -1,7 +1,8 @@
 // ## Utility Functions
 // Utility functions can help us make our code more readable
-// ## Throw If Falsey
+//
 // <a name="throwIfFalsey"></a>
+// ## Throw If Falsey
 // Throw an error if `thingToTest` is false like
 // _optionally_ we'll take a custom `Error` constructor
 function throwIfFalsey(thingToTest: unknown, reason: string, Ctor = Error): asserts thingToTest {
@@ -10,6 +11,9 @@ function throwIfFalsey(thingToTest: unknown, reason: string, Ctor = Error): asse
   }
 }
 
+//
+// <a name="setupScene"></a>
+// ## setupScene
 function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene) {
     const { camera, materials, spheres, triangles, lights } = scene;
     const u = getUniformSetters(gl, context.program);
@@ -52,6 +56,9 @@ function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: S
     return u;
 }
 
+//
+// <a name="getUniformLocation"></a>
+// ## getUniformLocation
 function getUniformLocation(gl: WebGLRenderingContext, program: WebGLProgram, name: string): WebGLUniformLocation {
     const location = gl.getUniformLocation(program, name);
     if (!location) {
@@ -60,6 +67,9 @@ function getUniformLocation(gl: WebGLRenderingContext, program: WebGLProgram, na
     return location;
 }
 
+//
+// <a name="getUniformSetters"></a>
+// ## getUniformSetters
 function getUniformSetters(gl: WebGLRenderingContext, program: WebGLProgram) {
 
     const cameraMatrix = getUniformLocation(gl, program, 'cameraMatrix');

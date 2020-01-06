@@ -7,8 +7,10 @@ interface ProgramContext {
     positionLocation: number;
     program: WebGLProgram;
 }
-// ### createShader
+
+//
 // <a name="crateShader"></a>
+// ### createShader
 //
 // We need a mechanism for compiling shader programs and checking if they failed to compile.
 // In this case `type` is a property of the brower's `WebGLRenderingContext`
@@ -35,8 +37,9 @@ function createShader(gl: WebGLRenderingContext, type: number, source: string) {
   throwIfFalsey(false, 'shader error: ' + log + '\n\n' + source);
 }
 
-// ### createProgram
+//
 // <a name="crateProgram"></a>
+// ### createProgram
 //
 // WebGL programs have two components, vertex shaders, and fragment shaders.
 // Because WebGL is flexibile we could conceivably use one vertex shader with
@@ -76,8 +79,10 @@ function createProgram(
 }
 
 
-// ### bindProgram
+//
 // <a name="bindProgram"></a>
+// ### bindProgram
+//
 // Our shader approach is fairly simple and we don't need much flexibility
 // `bindProgram` sets up an opinionated vertex shader and a somewhat more flexibile
 // fragment shader..
@@ -124,8 +129,10 @@ function bindProgram(gl: WebGLRenderingContext, vertexSource: string, fragmentSo
   };
 }
 
-// ### draw
+//
 // <a name="draw"></a>
+// ### draw
+//
 // each time we want to render a frame we need to setup the program's data the way we want it
 // then press "go".  This `draw` function is our "go" button.
 function draw(gl: WebGLRenderingContext, context: ProgramContext, canvas: HTMLCanvasElement) {

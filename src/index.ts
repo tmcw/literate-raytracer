@@ -53,8 +53,16 @@
 //
 // Beyond that we'll also look at casting more rays to do things like reflections, and refractions
 
+// ## Contents
+// 0. [Configuration](#configuration)
+// 1. [HTML](#html)
+// 2. [WebGL](#webgl)
+// 3. [Application State](#state)
+// 4. [Animation!](#animation)
+
 
 //
+// <a name="configuration"></a>
 // ## 0. Configuration
 //
 
@@ -78,6 +86,7 @@ const g_configShader = getShaderConfiguration(g_scene);
 
 
 // 
+// <a name="html"></a>
 // ## 1. HTML
 //
 // We'll [setup the HTML](html.html "HTML Setup code")
@@ -86,7 +95,9 @@ const g_html = bindToHTML();
 
 
 //
+// <a name="webgl"></a>
 // ## 2. WebGL Initialization
+//
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
@@ -96,12 +107,16 @@ const g_gl = g_html.canvas.getContext('webgl');
 throwIfFalsey(g_gl, 'could not get a WebGL context');
 // Okay, great, so we've got a an API that let's us talk to the GPU.  Alone that's
 // not enough for us to get started.  We need to give the GPU some code to run
-// we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.js "Our shaders, the 'body' of our program")
+// we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
 draw(g_gl, g_ctx, g_html.canvas);
 
+//
+// <a name="state"></a>
+// ## 3. Application State
+//
 const g_planetStates = (function () {
     const states: { matrix: Matrix4_4, vector: Matrix3_1 }[] = [];
 
@@ -126,7 +141,18 @@ const g_fps = {
     sampleDuration: 5000,
 };
 
+//
+// <a name="animate"></a>
+// 4. ## Animate!
+//
+// start the animation by default
+let g_isAnimating = true;
+
+// on each frame...
 const animate = (time: number) => {
+    if (g_isAnimating === false) {
+        return;
+    }
     g_fps.frames += 1;
     g_fps.countTime += time - g_fps.lastTime;
     g_fps.lastTime = time;
@@ -186,5 +212,25 @@ const animate = (time: number) => {
     draw(g_gl, g_ctx, g_html.canvas);
     requestAnimationFrame(animate);
 };
+
+// if we press play, make sure we're animating
+if (g_html.play) {
+    g_html.play.addEventListener('click', () => {
+        if (g_isAnimating) {
+            return;
+        }
+        g_isAnimating = true;
+        animate(0);
+    });
+}
+
+// if we press stop, stop the animation
+if (g_html.stop) {
+    g_html.stop.addEventListener('click', () => {
+        g_isAnimating = false;
+    });
+}
+
+// finally kick it all off
 animate(0);
 

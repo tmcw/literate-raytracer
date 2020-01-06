@@ -1,7 +1,8 @@
 // ## Utility Functions
 // Utility functions can help us make our code more readable
-// ## Throw If Falsey
+//
 // <a name="throwIfFalsey"></a>
+// ## Throw If Falsey
 // Throw an error if `thingToTest` is false like
 // _optionally_ we'll take a custom `Error` constructor
 function throwIfFalsey(thingToTest, reason, Ctor = Error) {
@@ -9,6 +10,9 @@ function throwIfFalsey(thingToTest, reason, Ctor = Error) {
         throw new Ctor(`Literate Ray Tracer: ${reason}`);
     }
 }
+//
+// <a name="setupScene"></a>
+// ## setupScene
 function setupScene(gl, context, scene) {
     const { camera, materials, spheres, triangles, lights } = scene;
     const u = getUniformSetters(gl, context.program);
@@ -40,6 +44,9 @@ function setupScene(gl, context, scene) {
     });
     return u;
 }
+//
+// <a name="getUniformLocation"></a>
+// ## getUniformLocation
 function getUniformLocation(gl, program, name) {
     const location = gl.getUniformLocation(program, name);
     if (!location) {
@@ -47,6 +54,9 @@ function getUniformLocation(gl, program, name) {
     }
     return location;
 }
+//
+// <a name="getUniformSetters"></a>
+// ## getUniformSetters
 function getUniformSetters(gl, program) {
     const cameraMatrix = getUniformLocation(gl, program, 'cameraMatrix');
     const cameraPos = getUniformLocation(gl, program, 'cameraPos');

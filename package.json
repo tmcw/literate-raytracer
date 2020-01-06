@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "description": "a literate raytracer implementation",
   "scripts": {
-    "build": "tsc --outFile ./index.js",
-    "clean": "rimraf *.js && rimraf ./docs/",
-    "dev": "tsc -w --outFile ./index.js",
+    "build": "tsc --outFile ./js/index.js",
+    "clean": "rimraf ./js && rimraf ./docs/",
+    "dev": "tsc -w --outFile ./js/index.js",
     "predoc": "rimraf ./docs && tsc --noImplicitUseStrict --alwaysStrict false --outDir ./docs/ --sourceMap false",
     "doc": "docco -t custom.jst --css=custom.css ./docs/*.js --output=./docs/",
     "postdoc": "tsc --outFile ./docs/index.js && cpx ./CNAME ./docs/ && cpx ./icons/**/ ./docs/"

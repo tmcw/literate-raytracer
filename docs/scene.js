@@ -33,12 +33,21 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         let prevRadius = 0;
         // ##### Build a each sphere
         for (let i = 0; i < sphereCount; i += 1) {
-            // the radius is either
-            const radius = i === 0
-                // big for the centre sphere
-                ? minOrbit - 1
-                // or small for the other spheres
-                : (Math.random() / 2) + 0.1;
+            let radius = 0.1;
+            let material = Math.floor(Math.random() * 5 + 2);
+            // make the first circle large
+            // make the second circle tiny
+            // make all the rest randomly modest
+            if (i === 0) {
+                radius = minOrbit - 1;
+            }
+            else if (i === 1) {
+                radius = 0.05;
+                material = 1;
+            }
+            else {
+                radius = (Math.random() / 2) + 0.1;
+            }
             // build a simple sphere object
             s.push({
                 radius,
@@ -54,7 +63,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
                 ],
                 // each sphere has a "pointer" to a `material`
                 // the "pointer" is an index in the `scene.materials` array
-                material: Math.floor(Math.random() * 3),
+                material,
             });
             // update the radius for the next sphere
             prevRadius = radius;
@@ -78,7 +87,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // each triangle also has three points
     const triangles = [
         {
-            material: 4,
+            material: 0,
             points: [
                 [g_floorPlaneSize, 0, -g_floorPlaneSize],
                 [-g_floorPlaneSize, 0, -g_floorPlaneSize],
@@ -86,7 +95,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             ],
         },
         {
-            material: 4,
+            material: 0,
             points: [
                 [-g_floorPlaneSize, 0, g_floorPlaneSize],
                 [g_floorPlaneSize, 0, g_floorPlaneSize],
@@ -110,38 +119,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // * `refraction` (future)
     // * `isTranslucent` (future)
     const materials = [
-        {
-            colour: [100, 0, 0],
-            ambient: 0.01,
-            diffuse: 0.5,
-            specular: 0.1,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 0, 124],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.8,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 255, 0],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.9,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 100, 200],
-            ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
+        // we'll hard code these ones in some places
         {
             colour: [200, 200, 200],
             ambient: 0.1,
@@ -151,10 +129,51 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             isTranslucent: false,
         },
         {
-            colour: [0, 25, 50],
+            colour: [255, 255, 150],
             ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
+            diffuse: 0.999999,
+            specular: 0.99999,
+            refraction: 1.0,
+            isTranslucent: true,
+        },
+        // the rest of these we'll pick from randomly
+        {
+            colour: [100, 0, 0],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [150, 0, 150],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [0, 150, 50],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [10, 10, 200],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [50, 50, 50],
+            ambient: 0.2,
+            diffuse: 0.01,
+            specular: 0.999,
             refraction: 1.0,
             isTranslucent: false,
         },
@@ -173,7 +192,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         // in the BlinnPhong model we'll have a hard coded ambient lighting intensity
         globalAmbientIntensity: 0.002,
         // for simplicity our lights are just a single point in space
-        lights: [[-25, 30, 10]],
+        lights: [[-25, 30, 10], [0, 3, 0]],
         // place the materials object in the scene
         materials,
         // place the spheres object in the scene

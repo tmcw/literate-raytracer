@@ -251,7 +251,9 @@ to the scene</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; sphereCount; i += <span class="hljs-number">1</span>) {</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; sphereCount; i += <span class="hljs-number">1</span>) {
+            <span class="hljs-keyword">let</span> radius = <span class="hljs-number">0.1</span>;
+            <span class="hljs-keyword">let</span> material = <span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.random() * <span class="hljs-number">5</span> + <span class="hljs-number">2</span>);</pre></div></div>
             
         </li>
         
@@ -262,11 +264,22 @@ to the scene</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
-              <p>the radius is either</p>
+              <p>make the first circle large
+make the second circle tiny
+make all the rest randomly modest</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">const</span> radius = i === <span class="hljs-number">0</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (i === <span class="hljs-number">0</span>) {
+                radius = minOrbit - <span class="hljs-number">1</span>;
+            }
+            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (i === <span class="hljs-number">1</span>) {
+                radius = <span class="hljs-number">0.05</span>;
+                material = <span class="hljs-number">1</span>;
+            }
+            <span class="hljs-keyword">else</span> {
+                radius = (<span class="hljs-built_in">Math</span>.random() / <span class="hljs-number">2</span>) + <span class="hljs-number">0.1</span>;
+            }</pre></div></div>
             
         </li>
         
@@ -276,36 +289,6 @@ to the scene</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-9">&#182;</a>
-              </div>
-              <p>big for the centre sphere</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>                ? minOrbit - <span class="hljs-number">1</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-10">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
-              </div>
-              <p>or small for the other spheres</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>                : (<span class="hljs-built_in">Math</span>.random() / <span class="hljs-number">2</span>) + <span class="hljs-number">0.1</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-11">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>build a simple sphere object</p>
 
@@ -318,11 +301,11 @@ to the scene</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>we’ll start the spheres on the x axis</p>
 
@@ -333,11 +316,11 @@ to the scene</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p>the first sphere will be a the origin</p>
 
@@ -348,11 +331,11 @@ to the scene</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>the other spheres will fan out along the x axis</p>
 
@@ -363,11 +346,11 @@ to the scene</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>all sphere’s we’ll be</p>
 
@@ -379,28 +362,28 @@ to the scene</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>each sphere has a “pointer” to a <code>material</code>
 the “pointer” is an index in the <code>scene.materials</code> array</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>                material: <span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.random() * <span class="hljs-number">3</span>),
+            <div class="content"><div class='highlight'><pre>                material,
             });</pre></div></div>
             
         </li>
         
         
-        <li id="section-17">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>update the radius for the next sphere</p>
 
@@ -412,11 +395,11 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <h5 id="we-now-have-some-spheres">We now have some spheres!</h5>
 
@@ -428,11 +411,11 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p><a name="triangles"></a></p>
 <h4 id="triangles">Triangles</h4>
@@ -448,7 +431,7 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> triangles = [
         {
-            <span class="hljs-attr">material</span>: <span class="hljs-number">4</span>,
+            <span class="hljs-attr">material</span>: <span class="hljs-number">0</span>,
             <span class="hljs-attr">points</span>: [
                 [g_floorPlaneSize, <span class="hljs-number">0</span>, -g_floorPlaneSize],
                 [-g_floorPlaneSize, <span class="hljs-number">0</span>, -g_floorPlaneSize],
@@ -456,7 +439,7 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
             ],
         },
         {
-            <span class="hljs-attr">material</span>: <span class="hljs-number">4</span>,
+            <span class="hljs-attr">material</span>: <span class="hljs-number">0</span>,
             <span class="hljs-attr">points</span>: [
                 [-g_floorPlaneSize, <span class="hljs-number">0</span>, g_floorPlaneSize],
                 [g_floorPlaneSize, <span class="hljs-number">0</span>, g_floorPlaneSize],
@@ -468,11 +451,11 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>now that we have some triangles, let’s pre-compute the normals</p>
 
@@ -483,11 +466,11 @@ the “pointer” is an index in the <code>scene.materials</code> array</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p><a name="materials"></a></p>
 <h4 id="materials">Materials</h4>
@@ -504,40 +487,22 @@ the Blinn Phong (BP) model and in the PBR model</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> materials = [
-        {
-            <span class="hljs-attr">colour</span>: [<span class="hljs-number">100</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>],
-            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.01</span>,
-            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.5</span>,
-            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.1</span>,
-            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
-            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
-        },
-        {
-            <span class="hljs-attr">colour</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">124</span>],
-            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.1</span>,
-            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.01</span>,
-            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.8</span>,
-            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
-            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
-        },
-        {
-            <span class="hljs-attr">colour</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">255</span>, <span class="hljs-number">0</span>],
-            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.1</span>,
-            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.01</span>,
-            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.9</span>,
-            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
-            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
-        },
-        {
-            <span class="hljs-attr">colour</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">100</span>, <span class="hljs-number">200</span>],
-            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.1</span>,
-            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.8</span>,
-            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.02</span>,
-            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
-            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
-        },
-        {
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> materials = [</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>we’ll hard code these ones in some places</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        {
             <span class="hljs-attr">colour</span>: [<span class="hljs-number">200</span>, <span class="hljs-number">200</span>, <span class="hljs-number">200</span>],
             <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.1</span>,
             <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.8</span>,
@@ -546,10 +511,64 @@ the Blinn Phong (BP) model and in the PBR model</p>
             <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
         },
         {
-            <span class="hljs-attr">colour</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">25</span>, <span class="hljs-number">50</span>],
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">255</span>, <span class="hljs-number">255</span>, <span class="hljs-number">150</span>],
             <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.1</span>,
-            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.8</span>,
-            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.02</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.999999</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.99999</span>,
+            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
+            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">true</span>,
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>the rest of these we’ll pick from randomly</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        {
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">100</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>],
+            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.01</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.5</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.1</span>,
+            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
+            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
+        },
+        {
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">150</span>, <span class="hljs-number">0</span>, <span class="hljs-number">150</span>],
+            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.01</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.5</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.1</span>,
+            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
+            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
+        },
+        {
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">150</span>, <span class="hljs-number">50</span>],
+            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.01</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.5</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.1</span>,
+            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
+            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
+        },
+        {
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">10</span>, <span class="hljs-number">10</span>, <span class="hljs-number">200</span>],
+            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.01</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.5</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.1</span>,
+            <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
+            <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
+        },
+        {
+            <span class="hljs-attr">colour</span>: [<span class="hljs-number">50</span>, <span class="hljs-number">50</span>, <span class="hljs-number">50</span>],
+            <span class="hljs-attr">ambient</span>: <span class="hljs-number">0.2</span>,
+            <span class="hljs-attr">diffuse</span>: <span class="hljs-number">0.01</span>,
+            <span class="hljs-attr">specular</span>: <span class="hljs-number">0.999</span>,
             <span class="hljs-attr">refraction</span>: <span class="hljs-number">1.0</span>,
             <span class="hljs-attr">isTranslucent</span>: <span class="hljs-literal">false</span>,
         },
@@ -619,7 +638,7 @@ the Blinn Phong (BP) model and in the PBR model</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        lights: [[<span class="hljs-number">-25</span>, <span class="hljs-number">30</span>, <span class="hljs-number">10</span>]],</pre></div></div>
+            <div class="content"><div class='highlight'><pre>        lights: [[<span class="hljs-number">-25</span>, <span class="hljs-number">30</span>, <span class="hljs-number">10</span>], [<span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">0</span>]],</pre></div></div>
             
         </li>
         

@@ -395,13 +395,21 @@ function getFragmentSource(config) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
             if (dist >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(sd.sphere.material);
                 if (sd.distance <= 0.0 || dist < sd.distance) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                    }
                 }
                 if (useAnyHit) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                        return sd;
+                    }
                 }
             }
         }
@@ -425,11 +433,18 @@ function getFragmentSource(config) {
             Triangle t = triangles[i];
             TriangleDistance td = triangleIntersection(t, ray);
             if (td.distance >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(td.triangle.material);
                 if (least.distance <= 0.0 || td.distance < least.distance) {
-                    least = td;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        least = td;
+                    }
                 }
                 if (useAnyHit == true) {
-                    return td;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        return td;
+                    }
                 }
             }
         }
@@ -716,6 +731,10 @@ function getFragmentSource(config) {
 
         if (index == 5) {
             return materials[5];
+        }
+
+        if (index == 6) {
+            return materials[6];
         }
 
         return materials[0];

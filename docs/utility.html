@@ -170,7 +170,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setupScene</span>(<span class="hljs-params">gl, context, scene</span>) </span>{
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">setupScene</span>(<span class="hljs-params">gl, context, scene, shaderConfig</span>) </span>{
     <span class="hljs-keyword">const</span> { camera, materials, spheres, triangleNormals, lights } = scene;</pre></div></div>
             
         </li>
@@ -186,7 +186,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> u = getUniformSetters(gl, context.program, getUniformDescription());
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> u = getUniformSetters(gl, context.program, getUniformDescription(shaderConfig));
     <span class="hljs-keyword">const</span> cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[<span class="hljs-number">0</span>], camera.point[<span class="hljs-number">1</span>], camera.point[<span class="hljs-number">2</span>]), camera.rotation[<span class="hljs-number">0</span>]), camera.rotation[<span class="hljs-number">1</span>]), camera.rotation[<span class="hljs-number">2</span>]);
     <span class="hljs-keyword">const</span> scale = <span class="hljs-built_in">Math</span>.tan(<span class="hljs-built_in">Math</span>.PI * (camera.fieldOfView * <span class="hljs-number">0.5</span>) / <span class="hljs-number">180</span>);
     <span class="hljs-keyword">const</span> width = gl.canvas.clientWidth;

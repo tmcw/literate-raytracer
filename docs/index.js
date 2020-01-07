@@ -458,7 +458,7 @@ function bindProgram(gl, vertexSource, fragmentSource) {
 function draw(gl, context, canvas) {
     // if the screen resized, re-initatlize the scene
     if (resize(canvas)) {
-        setupScene(gl, context, g_scene);
+        setupScene(gl, context, g_scene, g_configShader);
     }
     // clear the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -473,7 +473,7 @@ function draw(gl, context, canvas) {
 // ### getUniformDescription
 //
 // what variables are bound to our program?
-function getUniformDescription() {
+function getUniformDescription(shaderConfig) {
     return [
         {
             name: 'aa',
@@ -538,7 +538,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.materials.length,
+            length: shaderConfig.materialCount,
             name: 'materials',
             type: 'struct',
         },
@@ -549,7 +549,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: 1,
+            length: shaderConfig.lightCount,
             name: 'pointLights',
             type: 'struct'
         },
@@ -568,7 +568,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.spheres.length,
+            length: shaderConfig.sphereCount,
             name: 'spheres',
             type: 'struct',
         },
@@ -595,7 +595,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: g_scene.triangles.length,
+            length: shaderConfig.triangleCount,
             name: 'triangles',
             type: 'struct',
         },
@@ -643,9 +643,35 @@ function createElement(type) {
     throwIfFalsey(el, 'could not create ' + type + ' html element');
     return el;
 }
-function createNumericInput(min = -Infinity, max = Infinity) {
+// numeric input will be used in several places
+function createNumericInput(init, onChange) {
     const input = createElement('input');
     input.type = 'number';
+    input.value = init + '';
+    const onUpdate = (e) => {
+        const n = parseInt(e.target.value, 10);
+        onChange(n);
+    };
+    input.addEventListener('change', onUpdate);
+    input.addEventListener('blur', onUpdate);
+    return {
+        element: input,
+        free: () => {
+            input.removeEventListener('change', onUpdate);
+            input.removeEventListener('blur', onUpdate);
+        },
+    };
+}
+// buttons are a useful control to have
+function createButton(label, onClick) {
+    const element = createElement('button');
+    element.innerHTML = label;
+    const on = () => onClick();
+    element.addEventListener('click', on);
+    return {
+        element,
+        free: () => element.removeEventListener('click', on),
+    };
 }
 // we'll want to be able to toggle things
 function createToggleButton(labelA, labelB, onToggle) {
@@ -838,7 +864,7 @@ throwIfFalsey(g_gl, 'could not get a WebGL context');
 // not enough for us to get started.  We need to give the GPU some code to run
 // we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
-const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
+const g_uniforms = setupScene(g_gl, g_ctx, g_scene, g_configShader);
 draw(g_gl, g_ctx, g_canvas);
 //
 // <a name="state"></a>
@@ -913,6 +939,13 @@ const animate = (time) => {
             const y = state.vector[1] / speed;
             const z = state.vector[2] / speed;
             state.matrix = translate4_4(state.matrix, x, y, z);
+            // pin the second light to the second sphere
+            if (i === 1) {
+                g_scene.lights[1][0] = state.matrix[12];
+                g_scene.lights[1][1] = state.matrix[13];
+                g_scene.lights[1][2] = state.matrix[14];
+                g_uniforms.pointLights[1].point(g_scene.lights[1]);
+            }
         }
         const sphere = g_scene.spheres[i];
         if (i > 0) {
@@ -1552,12 +1585,21 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         let prevRadius = 0;
         // ##### Build a each sphere
         for (let i = 0; i < sphereCount; i += 1) {
-            // the radius is either
-            const radius = i === 0
-                // big for the centre sphere
-                ? minOrbit - 1
-                // or small for the other spheres
-                : (Math.random() / 2) + 0.1;
+            let radius = 0.1;
+            let material = Math.floor(Math.random() * 5 + 2);
+            // make the first circle large
+            // make the second circle tiny
+            // make all the rest randomly modest
+            if (i === 0) {
+                radius = minOrbit - 1;
+            }
+            else if (i === 1) {
+                radius = 0.05;
+                material = 1;
+            }
+            else {
+                radius = (Math.random() / 2) + 0.1;
+            }
             // build a simple sphere object
             s.push({
                 radius,
@@ -1573,7 +1615,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
                 ],
                 // each sphere has a "pointer" to a `material`
                 // the "pointer" is an index in the `scene.materials` array
-                material: Math.floor(Math.random() * 3),
+                material,
             });
             // update the radius for the next sphere
             prevRadius = radius;
@@ -1597,7 +1639,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // each triangle also has three points
     const triangles = [
         {
-            material: 4,
+            material: 0,
             points: [
                 [g_floorPlaneSize, 0, -g_floorPlaneSize],
                 [-g_floorPlaneSize, 0, -g_floorPlaneSize],
@@ -1605,7 +1647,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             ],
         },
         {
-            material: 4,
+            material: 0,
             points: [
                 [-g_floorPlaneSize, 0, g_floorPlaneSize],
                 [g_floorPlaneSize, 0, g_floorPlaneSize],
@@ -1629,38 +1671,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // * `refraction` (future)
     // * `isTranslucent` (future)
     const materials = [
-        {
-            colour: [100, 0, 0],
-            ambient: 0.01,
-            diffuse: 0.5,
-            specular: 0.1,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 0, 124],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.8,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 255, 0],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.9,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 100, 200],
-            ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
+        // we'll hard code these ones in some places
         {
             colour: [200, 200, 200],
             ambient: 0.1,
@@ -1670,10 +1681,51 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             isTranslucent: false,
         },
         {
-            colour: [0, 25, 50],
+            colour: [255, 255, 150],
             ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
+            diffuse: 0.999999,
+            specular: 0.99999,
+            refraction: 1.0,
+            isTranslucent: true,
+        },
+        // the rest of these we'll pick from randomly
+        {
+            colour: [100, 0, 0],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [150, 0, 150],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [0, 150, 50],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [10, 10, 200],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [50, 50, 50],
+            ambient: 0.2,
+            diffuse: 0.01,
+            specular: 0.999,
             refraction: 1.0,
             isTranslucent: false,
         },
@@ -1692,7 +1744,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         // in the BlinnPhong model we'll have a hard coded ambient lighting intensity
         globalAmbientIntensity: 0.002,
         // for simplicity our lights are just a single point in space
-        lights: [[-25, 30, 10]],
+        lights: [[-25, 30, 10], [0, 3, 0]],
         // place the materials object in the scene
         materials,
         // place the spheres object in the scene
@@ -2150,13 +2202,21 @@ function getFragmentSource(config) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
             if (dist >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(sd.sphere.material);
                 if (sd.distance <= 0.0 || dist < sd.distance) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                    }
                 }
                 if (useAnyHit) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                        return sd;
+                    }
                 }
             }
         }
@@ -2180,11 +2240,18 @@ function getFragmentSource(config) {
             Triangle t = triangles[i];
             TriangleDistance td = triangleIntersection(t, ray);
             if (td.distance >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(td.triangle.material);
                 if (least.distance <= 0.0 || td.distance < least.distance) {
-                    least = td;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        least = td;
+                    }
                 }
                 if (useAnyHit == true) {
-                    return td;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        return td;
+                    }
                 }
             }
         }
@@ -2473,6 +2540,10 @@ function getFragmentSource(config) {
             return materials[5];
         }
 
+        if (index == 6) {
+            return materials[6];
+        }
+
         return materials[0];
     }
 ` +
@@ -2533,10 +2604,10 @@ function throwIfFalsey(thingToTest, reason, Ctor = Error) {
 //
 // <a name="setupScene"></a>
 // ## setupScene
-function setupScene(gl, context, scene) {
+function setupScene(gl, context, scene, shaderConfig) {
     const { camera, materials, spheres, triangleNormals, lights } = scene;
     // in typscript we're cheating with an any here
-    const u = getUniformSetters(gl, context.program, getUniformDescription());
+    const u = getUniformSetters(gl, context.program, getUniformDescription(shaderConfig));
     const cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);
     const scale = Math.tan(Math.PI * (camera.fieldOfView * 0.5) / 180);
     const width = gl.canvas.clientWidth;

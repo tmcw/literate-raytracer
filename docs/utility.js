@@ -13,10 +13,10 @@ function throwIfFalsey(thingToTest, reason, Ctor = Error) {
 //
 // <a name="setupScene"></a>
 // ## setupScene
-function setupScene(gl, context, scene) {
+function setupScene(gl, context, scene, shaderConfig) {
     const { camera, materials, spheres, triangleNormals, lights } = scene;
     // in typscript we're cheating with an any here
-    const u = getUniformSetters(gl, context.program, getUniformDescription());
+    const u = getUniformSetters(gl, context.program, getUniformDescription(shaderConfig));
     const cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);
     const scale = Math.tan(Math.PI * (camera.fieldOfView * 0.5) / 180);
     const width = gl.canvas.clientWidth;

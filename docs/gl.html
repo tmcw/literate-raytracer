@@ -554,7 +554,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (resize(canvas)) {
-        setupScene(gl, context, g_scene);
+        setupScene(gl, context, g_scene, g_configShader);
     }</pre></div></div>
             
         </li>
@@ -619,7 +619,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformDescription</span>(<span class="hljs-params"></span>) </span>{
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getUniformDescription</span>(<span class="hljs-params">shaderConfig</span>) </span>{
     <span class="hljs-keyword">return</span> [
         {
             <span class="hljs-attr">name</span>: <span class="hljs-string">'aa'</span>,
@@ -684,7 +684,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
                     <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
                 },
             ],
-            <span class="hljs-attr">length</span>: g_scene.materials.length,
+            <span class="hljs-attr">length</span>: shaderConfig.materialCount,
             <span class="hljs-attr">name</span>: <span class="hljs-string">'materials'</span>,
             <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
         },
@@ -695,7 +695,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
                     <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
                 },
             ],
-            <span class="hljs-attr">length</span>: <span class="hljs-number">1</span>,
+            <span class="hljs-attr">length</span>: shaderConfig.lightCount,
             <span class="hljs-attr">name</span>: <span class="hljs-string">'pointLights'</span>,
             <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>
         },
@@ -714,7 +714,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
                     <span class="hljs-attr">type</span>: <span class="hljs-string">'float'</span>,
                 },
             ],
-            <span class="hljs-attr">length</span>: g_scene.spheres.length,
+            <span class="hljs-attr">length</span>: shaderConfig.sphereCount,
             <span class="hljs-attr">name</span>: <span class="hljs-string">'spheres'</span>,
             <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
         },
@@ -741,7 +741,7 @@ then press “go”.  This <code>draw</code> function is our “go” button.</p
                     <span class="hljs-attr">type</span>: <span class="hljs-string">'vec3'</span>,
                 },
             ],
-            <span class="hljs-attr">length</span>: g_scene.triangles.length,
+            <span class="hljs-attr">length</span>: shaderConfig.triangleCount,
             <span class="hljs-attr">name</span>: <span class="hljs-string">'triangles'</span>,
             <span class="hljs-attr">type</span>: <span class="hljs-string">'struct'</span>,
         },

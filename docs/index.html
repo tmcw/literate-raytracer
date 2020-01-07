@@ -277,7 +277,7 @@ we’re going to need at least one GLSL program, that code is <a href="shaders.h
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
-<span class="hljs-keyword">const</span> g_uniforms = setupScene(g_gl, g_ctx, g_scene);
+<span class="hljs-keyword">const</span> g_uniforms = setupScene(g_gl, g_ctx, g_scene, g_configShader);
 draw(g_gl, g_ctx, g_canvas);</pre></div></div>
             
         </li>
@@ -373,7 +373,27 @@ on each frame…</p>
             <span class="hljs-keyword">const</span> x = state.vector[<span class="hljs-number">0</span>] / speed;
             <span class="hljs-keyword">const</span> y = state.vector[<span class="hljs-number">1</span>] / speed;
             <span class="hljs-keyword">const</span> z = state.vector[<span class="hljs-number">2</span>] / speed;
-            state.matrix = translate4_4(state.matrix, x, y, z);
+            state.matrix = translate4_4(state.matrix, x, y, z);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>pin the second light to the second sphere</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (i === <span class="hljs-number">1</span>) {
+                g_scene.lights[<span class="hljs-number">1</span>][<span class="hljs-number">0</span>] = state.matrix[<span class="hljs-number">12</span>];
+                g_scene.lights[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = state.matrix[<span class="hljs-number">13</span>];
+                g_scene.lights[<span class="hljs-number">1</span>][<span class="hljs-number">2</span>] = state.matrix[<span class="hljs-number">14</span>];
+                g_uniforms.pointLights[<span class="hljs-number">1</span>].point(g_scene.lights[<span class="hljs-number">1</span>]);
+            }
         }
         <span class="hljs-keyword">const</span> sphere = g_scene.spheres[i];
         <span class="hljs-keyword">if</span> (i &gt; <span class="hljs-number">0</span>) {
@@ -391,11 +411,11 @@ on each frame…</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>bind some controls</p>
 
@@ -406,11 +426,11 @@ on each frame…</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p>finally kick it all off</p>
 

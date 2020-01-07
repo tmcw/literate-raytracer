@@ -105,7 +105,7 @@ function bindProgram(gl, vertexSource, fragmentSource) {
 function draw(gl, context, canvas) {
     // if the screen resized, re-initatlize the scene
     if (resize(canvas)) {
-        setupScene(gl, context, g_scene);
+        setupScene(gl, context, g_scene, g_configShader);
     }
     // clear the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -120,7 +120,7 @@ function draw(gl, context, canvas) {
 // ### getUniformDescription
 //
 // what variables are bound to our program?
-function getUniformDescription() {
+function getUniformDescription(shaderConfig) {
     return [
         {
             name: 'aa',
@@ -185,7 +185,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.materials.length,
+            length: shaderConfig.materialCount,
             name: 'materials',
             type: 'struct',
         },
@@ -196,7 +196,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: 1,
+            length: shaderConfig.lightCount,
             name: 'pointLights',
             type: 'struct'
         },
@@ -215,7 +215,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.spheres.length,
+            length: shaderConfig.sphereCount,
             name: 'spheres',
             type: 'struct',
         },
@@ -242,7 +242,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: g_scene.triangles.length,
+            length: shaderConfig.triangleCount,
             name: 'triangles',
             type: 'struct',
         },

@@ -93,7 +93,7 @@ const g_configShader = getShaderConfiguration(g_scene);
 //
 // We'll [setup the HTML](html.html "HTML Setup code")
 //
-const g_html = bindToHTML();
+const g_canvas = getHtmlCanvas();
 
 
 //
@@ -103,7 +103,7 @@ const g_html = bindToHTML();
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
-const g_gl = g_html.canvas.getContext('webgl');
+const g_gl = g_canvas.getContext('webgl');
 
 // The world is an imperfect place, let's make sure we got a valid context
 throwIfFalsey(g_gl, 'could not get a WebGL context');
@@ -113,7 +113,7 @@ throwIfFalsey(g_gl, 'could not get a WebGL context');
 
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
-draw(g_gl, g_ctx, g_html.canvas);
+draw(g_gl, g_ctx, g_canvas);
 
 //
 // <a name="state"></a>
@@ -143,19 +143,25 @@ const g_fps = {
     sampleDuration: 5000,
 };
 
-let g_shadingModel = 0;
-let g_aa = 0;
+// let's centralize where the user controllable state is
+type UserControllableState = typeof g_userControllableState;
+const g_userControllableState = {
+    shadingModel: 0,
+    aa: 0,
+    isAnimating: true,
+};
+
 
 //
 // <a name="animate"></a>
 // 4. ## Animate!
 //
 // start the animation by default
-let g_isAnimating = true;
 
 // on each frame...
 const animate = (time: number) => {
-    if (g_isAnimating === false) {
+    const { aa, isAnimating, shadingModel } = g_userControllableState;
+    if (isAnimating === false) {
         return;
     }
     g_fps.frames += 1;
@@ -210,52 +216,16 @@ const animate = (time: number) => {
         g_uniforms.spheres[i].point(sphere.point);
     });
 
-    g_uniforms.shadingModel(g_shadingModel);
-    g_uniforms.aa(g_aa);
+    g_uniforms.shadingModel(shadingModel);
+    g_uniforms.aa(aa);
 
-    draw(g_gl, g_ctx, g_html.canvas);
+    draw(g_gl, g_ctx, g_canvas);
     requestAnimationFrame(animate);
 };
 
-// if we press stop, stop the animation
-if (g_html.pause) {
-    const { pause } = g_html;
-    pause.addEventListener('click', () => {
-        if (g_isAnimating) {
-            g_isAnimating = false;
-            pause.innerHTML = 'resume';
-        } else {
-            g_isAnimating = true;
-            pause.innerHTML = 'pause';
-        }
-    });
-}
+// bind some controls
+bindInputControls(g_userControllableState);
 
-// if we swap the shading, update the global
-if (g_html.shading) {
-    const onChange = (e: any) => {
-        g_shadingModel = parseInt(e.target.value, 10) === 1 ? 1 : 0;
-    };
-    g_html.shading.addEventListener('blur', onChange);
-    g_html.shading.addEventListener('change', onChange);
-}
-
-// if we swap the shading, update the global
-if (g_html.aa) {
-    const onChange = (e: any) => {
-        const value = parseInt(e.target.value, 10);
-
-        if (value === 4) {
-            g_aa = 4;
-        } else if (value === 2) {
-            g_aa = 2;
-        } else {
-            g_aa = 0;
-        }
-    };
-    g_html.aa.addEventListener('blur', onChange);
-    g_html.aa.addEventListener('change', onChange);
-}
 
 // finally kick it all off
 animate(0);

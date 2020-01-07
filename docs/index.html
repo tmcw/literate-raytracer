@@ -60,17 +60,7 @@
         <a href="https://github.com/bennett000/literate-raytracer">extended by michael bennett</a>
     </div>
     <canvas id="c"></canvas>
-    <center>
-        <button id="pause">pause</button>
-        <select id="shading">
-          <option value="1">Blinn Phong</option>
-          <option value="0" selected>PBR</option>
-        </select>
-        <select id="aa">
-          <option value="0" selected>0X AA</option>
-          <option value="2">2X AA</option>
-          <option value="4">4X AA</option>
-        </select>
+    <center id="i">
     </center>
     <div id="background"></div>
     
@@ -235,7 +225,7 @@ can see shadows</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_html = bindToHTML();</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_canvas = getHtmlCanvas();</pre></div></div>
             
         </li>
         
@@ -254,7 +244,7 @@ which will be the API we use to upload stuff to the GPU.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_gl = g_html.canvas.getContext(<span class="hljs-string">'webgl'</span>);</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_gl = g_canvas.getContext(<span class="hljs-string">'webgl'</span>);</pre></div></div>
             
         </li>
         
@@ -288,7 +278,7 @@ we’re going to need at least one GLSL program, that code is <a href="shaders.h
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 <span class="hljs-keyword">const</span> g_uniforms = setupScene(g_gl, g_ctx, g_scene);
-draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
+draw(g_gl, g_ctx, g_canvas);</pre></div></div>
             
         </li>
         
@@ -324,8 +314,11 @@ draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
     <span class="hljs-attr">frames</span>: <span class="hljs-number">0</span>,
     <span class="hljs-attr">sampleDuration</span>: <span class="hljs-number">5000</span>,
 };
-<span class="hljs-keyword">let</span> g_shadingModel = <span class="hljs-number">0</span>;
-<span class="hljs-keyword">let</span> g_aa = <span class="hljs-number">0</span>;</pre></div></div>
+<span class="hljs-keyword">const</span> g_userControllableState = {
+    <span class="hljs-attr">shadingModel</span>: <span class="hljs-number">0</span>,
+    <span class="hljs-attr">aa</span>: <span class="hljs-number">0</span>,
+    <span class="hljs-attr">isAnimating</span>: <span class="hljs-literal">true</span>,
+};</pre></div></div>
             
         </li>
         
@@ -338,27 +331,14 @@ draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
               </div>
               <p><a name="animate"></a>
 4. ## Animate!</p>
-<p>start the animation by default</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">let</span> g_isAnimating = <span class="hljs-literal">true</span>;</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-8">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
-              </div>
-              <p>on each frame…</p>
+<p>start the animation by default
+on each frame…</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> animate = <span class="hljs-function">(<span class="hljs-params">time</span>) =&gt;</span> {
-    <span class="hljs-keyword">if</span> (g_isAnimating === <span class="hljs-literal">false</span>) {
+    <span class="hljs-keyword">const</span> { aa, isAnimating, shadingModel } = g_userControllableState;
+    <span class="hljs-keyword">if</span> (isAnimating === <span class="hljs-literal">false</span>) {
         <span class="hljs-keyword">return</span>;
     }
     g_fps.frames += <span class="hljs-number">1</span>;
@@ -402,11 +382,26 @@ draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
         }
         g_uniforms.spheres[i].point(sphere.point);
     });
-    g_uniforms.shadingModel(g_shadingModel);
-    g_uniforms.aa(g_aa);
-    draw(g_gl, g_ctx, g_html.canvas);
+    g_uniforms.shadingModel(shadingModel);
+    g_uniforms.aa(aa);
+    draw(g_gl, g_ctx, g_canvas);
     requestAnimationFrame(animate);
 };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>bind some controls</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>bindInputControls(g_userControllableState);</pre></div></div>
             
         </li>
         
@@ -416,84 +411,6 @@ draw(g_gl, g_ctx, g_html.canvas);</pre></div></div>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-9">&#182;</a>
-              </div>
-              <p>if we press stop, stop the animation</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (g_html.pause) {
-    <span class="hljs-keyword">const</span> { pause } = g_html;
-    pause.addEventListener(<span class="hljs-string">'click'</span>, () =&gt; {
-        <span class="hljs-keyword">if</span> (g_isAnimating) {
-            g_isAnimating = <span class="hljs-literal">false</span>;
-            pause.innerHTML = <span class="hljs-string">'resume'</span>;
-        }
-        <span class="hljs-keyword">else</span> {
-            g_isAnimating = <span class="hljs-literal">true</span>;
-            pause.innerHTML = <span class="hljs-string">'pause'</span>;
-        }
-    });
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-10">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
-              </div>
-              <p>if we swap the shading, update the global</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (g_html.shading) {
-    <span class="hljs-keyword">const</span> onChange = <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
-        g_shadingModel = <span class="hljs-built_in">parseInt</span>(e.target.value, <span class="hljs-number">10</span>) === <span class="hljs-number">1</span> ? <span class="hljs-number">1</span> : <span class="hljs-number">0</span>;
-    };
-    g_html.shading.addEventListener(<span class="hljs-string">'blur'</span>, onChange);
-    g_html.shading.addEventListener(<span class="hljs-string">'change'</span>, onChange);
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-11">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
-              </div>
-              <p>if we swap the shading, update the global</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (g_html.aa) {
-    <span class="hljs-keyword">const</span> onChange = <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
-        <span class="hljs-keyword">const</span> value = <span class="hljs-built_in">parseInt</span>(e.target.value, <span class="hljs-number">10</span>);
-        <span class="hljs-keyword">if</span> (value === <span class="hljs-number">4</span>) {
-            g_aa = <span class="hljs-number">4</span>;
-        }
-        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (value === <span class="hljs-number">2</span>) {
-            g_aa = <span class="hljs-number">2</span>;
-        }
-        <span class="hljs-keyword">else</span> {
-            g_aa = <span class="hljs-number">0</span>;
-        }
-    };
-    g_html.aa.addEventListener(<span class="hljs-string">'blur'</span>, onChange);
-    g_html.aa.addEventListener(<span class="hljs-string">'change'</span>, onChange);
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-12">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>finally kick it all off</p>
 

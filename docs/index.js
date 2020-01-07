@@ -605,7 +605,7 @@ function getUniformDescription() {
 // it all begins with HTML somewhere out there we want a canvas to draw on, 
 // we could create one, but for the purposes of this document it will be easier
 // for us to ask the host HTML file to provide us a canvas element named `"c"`
-function bindToHTML() {
+function getHtmlCanvas() {
     const canvas = window.document.getElementById('c');
     // to keep things simple we're working in the global browser space, and we'll note
     // that with a `g_` prefix
@@ -615,22 +615,7 @@ function bindToHTML() {
     // we'll want to [resize](#resize, "Resize documentation")
     // to make sure our canvas is using all of the space it can
     resize(canvas);
-    // ### Controlling The Animation
-    // since we're still dealing with HTML let's get some references to the optional controls 
-    // a pause button
-    const pause = window.document.getElementById('pause');
-    // and we'll add a select box for the shading model
-    const shading = window.document.getElementById('shading');
-    // and a select box for the anti aliasing
-    const aa = window.document.getElementById('aa');
-    // unlike with the canvas, let's not panic if these buttons are not present
-    // we'll group our HTML bindings into an object for easier consumption
-    return {
-        aa,
-        canvas,
-        pause,
-        shading,
-    };
+    return canvas;
 }
 //
 // <a name="resize"></a>
@@ -652,6 +637,113 @@ function resize(canvas) {
     }
     // In the case we did _not_ resize we should also alert our invoker
     return false;
+}
+function createElement(type) {
+    const el = window.document.createElement(type);
+    throwIfFalsey(el, 'could not create ' + type + ' html element');
+    return el;
+}
+function createNumericInput(min = -Infinity, max = Infinity) {
+    const input = createElement('input');
+    input.type = 'number';
+}
+// we'll want to be able to toggle things
+function createToggleButton(labelA, labelB, onToggle) {
+    // let's make a toggle button
+    const element = createElement('button');
+    // we'll use `labelA` as the first state
+    let label = labelA;
+    element.innerHTML = label;
+    // and we'll want to manage the label and report clicks
+    const onClick = () => {
+        // swap the labels
+        if (label === labelA) {
+            label = labelB;
+        }
+        else {
+            label = labelA;
+        }
+        element.innerHTML = label;
+        // inform the consumer
+        onToggle();
+    };
+    // attach the handler
+    element.addEventListener('click', onClick);
+    // return the element so it can be mounted
+    // also provide a mechanism to release the event listener
+    return {
+        element,
+        free: () => element.removeEventListener('click', onClick),
+    };
+}
+// drop downs are one way to let people select between a few choices
+function createDropDown(list, selected, onSelect) {
+    const select = createElement('select');
+    list.map((label, i) => {
+        const option = createElement('option');
+        if (i === selected) {
+            option.selected = true;
+        }
+        option.value = i + '';
+        option.innerHTML = label;
+        select.appendChild(option);
+        return option;
+    });
+    const onChange = (e) => {
+        onSelect(parseInt(e.target.value, 10));
+    };
+    select.addEventListener('change', onChange);
+    select.addEventListener('blur', onChange);
+    return {
+        element: select,
+        free: () => {
+            select.removeEventListener('change', onChange);
+            select.removeEventListener('blour', onChange);
+        },
+    };
+}
+// and we'll provide a way to bind the optional input controls
+function bindInputControls(state) {
+    const inputArea = window.document.getElementById('i');
+    if (!inputArea) {
+        return;
+    }
+    const controls = [
+        createToggleButton('pause', 'resume', () => {
+            if (state.isAnimating) {
+                state.isAnimating = false;
+            }
+            else {
+                state.isAnimating = true;
+                animate(0);
+            }
+        }),
+        createDropDown(['PBR', 'Blinn Phong'], 0, (index) => {
+            if (index === 1) {
+                state.shadingModel = 1;
+            }
+            else {
+                state.shadingModel = 0;
+            }
+        }),
+        createDropDown(['0x AA', '2x AA', '4x AA'], 0, (index) => {
+            if (index === 4) {
+                state.aa = 4;
+            }
+            else if (index === 2) {
+                state.aa = 2;
+            }
+            else {
+                state.aa = 0;
+            }
+        }),
+    ];
+    controls.forEach(control => {
+        inputArea.appendChild(control.element);
+    });
+    return () => {
+        controls.forEach((control) => control.free());
+    };
 }
 // Welcome to the Literate Ray Tracer, a program that reads like a book.
 // This book is a long winded fork of [Tom Macwright's](https://github.com/tmcw/literate-raytracer "tom macwright's literate ray tracer")
@@ -731,7 +823,7 @@ const g_configShader = getShaderConfiguration(g_scene);
 //
 // We'll [setup the HTML](html.html "HTML Setup code")
 //
-const g_html = bindToHTML();
+const g_canvas = getHtmlCanvas();
 //
 // <a name="webgl"></a>
 // ## 2. WebGL Initialization
@@ -739,7 +831,7 @@ const g_html = bindToHTML();
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
-const g_gl = g_html.canvas.getContext('webgl');
+const g_gl = g_canvas.getContext('webgl');
 // The world is an imperfect place, let's make sure we got a valid context
 throwIfFalsey(g_gl, 'could not get a WebGL context');
 // Okay, great, so we've got a an API that let's us talk to the GPU.  Alone that's
@@ -747,7 +839,7 @@ throwIfFalsey(g_gl, 'could not get a WebGL context');
 // we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
 const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
-draw(g_gl, g_ctx, g_html.canvas);
+draw(g_gl, g_ctx, g_canvas);
 //
 // <a name="state"></a>
 // ## 3. Application State
@@ -772,17 +864,20 @@ const g_fps = {
     frames: 0,
     sampleDuration: 5000,
 };
-let g_shadingModel = 0;
-let g_aa = 0;
+const g_userControllableState = {
+    shadingModel: 0,
+    aa: 0,
+    isAnimating: true,
+};
 //
 // <a name="animate"></a>
 // 4. ## Animate!
 //
 // start the animation by default
-let g_isAnimating = true;
 // on each frame...
 const animate = (time) => {
-    if (g_isAnimating === false) {
+    const { aa, isAnimating, shadingModel } = g_userControllableState;
+    if (isAnimating === false) {
         return;
     }
     g_fps.frames += 1;
@@ -826,50 +921,13 @@ const animate = (time) => {
         }
         g_uniforms.spheres[i].point(sphere.point);
     });
-    g_uniforms.shadingModel(g_shadingModel);
-    g_uniforms.aa(g_aa);
-    draw(g_gl, g_ctx, g_html.canvas);
+    g_uniforms.shadingModel(shadingModel);
+    g_uniforms.aa(aa);
+    draw(g_gl, g_ctx, g_canvas);
     requestAnimationFrame(animate);
 };
-// if we press stop, stop the animation
-if (g_html.pause) {
-    const { pause } = g_html;
-    pause.addEventListener('click', () => {
-        if (g_isAnimating) {
-            g_isAnimating = false;
-            pause.innerHTML = 'resume';
-        }
-        else {
-            g_isAnimating = true;
-            pause.innerHTML = 'pause';
-        }
-    });
-}
-// if we swap the shading, update the global
-if (g_html.shading) {
-    const onChange = (e) => {
-        g_shadingModel = parseInt(e.target.value, 10) === 1 ? 1 : 0;
-    };
-    g_html.shading.addEventListener('blur', onChange);
-    g_html.shading.addEventListener('change', onChange);
-}
-// if we swap the shading, update the global
-if (g_html.aa) {
-    const onChange = (e) => {
-        const value = parseInt(e.target.value, 10);
-        if (value === 4) {
-            g_aa = 4;
-        }
-        else if (value === 2) {
-            g_aa = 2;
-        }
-        else {
-            g_aa = 0;
-        }
-    };
-    g_html.aa.addEventListener('blur', onChange);
-    g_html.aa.addEventListener('change', onChange);
-}
+// bind some controls
+bindInputControls(g_userControllableState);
 // finally kick it all off
 animate(0);
 function createMatrix3_1() {

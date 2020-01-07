@@ -60,18 +60,7 @@
         <a href="https://github.com/bennett000/literate-raytracer">extended by michael bennett</a>
     </div>
     <canvas id="c"></canvas>
-    <center>
-        <button id="play">play</button>
-        <button id="stop">stop</button>
-        <select id="shading">
-          <option value="1">Blinn Phong</option>
-          <option value="0" selected>PBR</option>
-        </select>
-        <select id="aa">
-          <option value="0" selected>0X AA</option>
-          <option value="2">2X AA</option>
-          <option value="4">4X AA</option>
-        </select>
+    <center id="i">
     </center>
     <div id="background"></div>
     
@@ -159,7 +148,7 @@ for us to ask the host HTML file to provide us a canvas element named <code>&quo
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">bindToHTML</span>(<span class="hljs-params"></span>) </span>{
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getHtmlCanvas</span>(<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">const</span> canvas = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'c'</span>);</pre></div></div>
             
         </li>
@@ -194,7 +183,9 @@ to make sure our canvas is using all of the space it can</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    resize(canvas);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    resize(canvas);
+    <span class="hljs-keyword">return</span> canvas;
+}</pre></div></div>
             
         </li>
         
@@ -204,62 +195,6 @@ to make sure our canvas is using all of the space it can</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
-              </div>
-              <h3 id="controlling-the-animation">Controlling The Animation</h3>
-<p>since we’re still dealing with HTML let’s get some references to the start/stop buttons</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> play = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'play'</span>);
-    <span class="hljs-keyword">const</span> stop = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'stop'</span>);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-5">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
-              </div>
-              <p>and we’ll add a select box for the shading model</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> shading = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'shading'</span>);
-    <span class="hljs-keyword">const</span> aa = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'aa'</span>);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-6">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
-              </div>
-              <p>unlike with the canvas, let’s not panic if these buttons are not present
-we’ll group our HTML bindings into an object for easier consumption</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> {
-        aa,
-        canvas,
-        play,
-        shading,
-        stop,
-    };
-}</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-7">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p><a name="resize"></a></p>
 <h3 id="handling-resizes">Handling Resizes</h3>
@@ -273,11 +208,11 @@ of the browser window.  Let’ handle that case</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-5">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <p>We’ll lookup the size the browser is displaying the canvas.</p>
 
@@ -289,11 +224,11 @@ of the browser window.  Let’ handle that case</p>
         </li>
         
         
-        <li id="section-9">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>Then we’ll check if the canvas is not the same size.</p>
 
@@ -304,11 +239,11 @@ of the browser window.  Let’ handle that case</p>
         </li>
         
         
-        <li id="section-10">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>If we have to, we’ll make the canvas the same size</p>
 
@@ -320,11 +255,11 @@ of the browser window.  Let’ handle that case</p>
         </li>
         
         
-        <li id="section-11">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Let’s give ourselves a signal that we <em>did</em> resize</p>
 
@@ -336,17 +271,254 @@ of the browser window.  Let’ handle that case</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>In the case we did <em>not</em> resize we should also alert our invoker</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createElement</span>(<span class="hljs-params">type</span>) </span>{
+    <span class="hljs-keyword">const</span> el = <span class="hljs-built_in">window</span>.document.createElement(type);
+    throwIfFalsey(el, <span class="hljs-string">'could not create '</span> + type + <span class="hljs-string">' html element'</span>);
+    <span class="hljs-keyword">return</span> el;
+}
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createNumericInput</span>(<span class="hljs-params">min = -Infinity, max = Infinity</span>) </span>{
+    <span class="hljs-keyword">const</span> input = createElement(<span class="hljs-string">'input'</span>);
+    input.type = <span class="hljs-string">'number'</span>;
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>we’ll want to be able to toggle things</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createToggleButton</span>(<span class="hljs-params">labelA, labelB, onToggle</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>let’s make a toggle button</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> element = createElement(<span class="hljs-string">'button'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>we’ll use <code>labelA</code> as the first state</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">let</span> label = labelA;
+    element.innerHTML = label;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>and we’ll want to manage the label and report clicks</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">const</span> onClick = <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>swap the labels</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">if</span> (label === labelA) {
+            label = labelB;
+        }
+        <span class="hljs-keyword">else</span> {
+            label = labelA;
+        }
+        element.innerHTML = label;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>inform the consumer</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        onToggle();
+    };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>attach the handler</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    element.addEventListener(<span class="hljs-string">'click'</span>, onClick);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>return the element so it can be mounted
+also provide a mechanism to release the event listener</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> {
+        element,
+        <span class="hljs-attr">free</span>: <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> element.removeEventListener(<span class="hljs-string">'click'</span>, onClick),
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>drop downs are one way to let people select between a few choices</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDropDown</span>(<span class="hljs-params">list, selected, onSelect</span>) </span>{
+    <span class="hljs-keyword">const</span> select = createElement(<span class="hljs-string">'select'</span>);
+    list.map(<span class="hljs-function">(<span class="hljs-params">label, i</span>) =&gt;</span> {
+        <span class="hljs-keyword">const</span> option = createElement(<span class="hljs-string">'option'</span>);
+        <span class="hljs-keyword">if</span> (i === selected) {
+            option.selected = <span class="hljs-literal">true</span>;
+        }
+        option.value = i + <span class="hljs-string">''</span>;
+        option.innerHTML = label;
+        select.appendChild(option);
+        <span class="hljs-keyword">return</span> option;
+    });
+    <span class="hljs-keyword">const</span> onChange = <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+        onSelect(<span class="hljs-built_in">parseInt</span>(e.target.value, <span class="hljs-number">10</span>));
+    };
+    select.addEventListener(<span class="hljs-string">'change'</span>, onChange);
+    select.addEventListener(<span class="hljs-string">'blur'</span>, onChange);
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">element</span>: select,
+        <span class="hljs-attr">free</span>: <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+            select.removeEventListener(<span class="hljs-string">'change'</span>, onChange);
+            select.removeEventListener(<span class="hljs-string">'blour'</span>, onChange);
+        },
+    };
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>and we’ll provide a way to bind the optional input controls</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">bindInputControls</span>(<span class="hljs-params">state</span>) </span>{
+    <span class="hljs-keyword">const</span> inputArea = <span class="hljs-built_in">window</span>.document.getElementById(<span class="hljs-string">'i'</span>);
+    <span class="hljs-keyword">if</span> (!inputArea) {
+        <span class="hljs-keyword">return</span>;
+    }
+    <span class="hljs-keyword">const</span> controls = [
+        createToggleButton(<span class="hljs-string">'pause'</span>, <span class="hljs-string">'resume'</span>, () =&gt; {
+            <span class="hljs-keyword">if</span> (state.isAnimating) {
+                state.isAnimating = <span class="hljs-literal">false</span>;
+            }
+            <span class="hljs-keyword">else</span> {
+                state.isAnimating = <span class="hljs-literal">true</span>;
+                animate(<span class="hljs-number">0</span>);
+            }
+        }),
+        createDropDown([<span class="hljs-string">'PBR'</span>, <span class="hljs-string">'Blinn Phong'</span>], <span class="hljs-number">0</span>, (index) =&gt; {
+            <span class="hljs-keyword">if</span> (index === <span class="hljs-number">1</span>) {
+                state.shadingModel = <span class="hljs-number">1</span>;
+            }
+            <span class="hljs-keyword">else</span> {
+                state.shadingModel = <span class="hljs-number">0</span>;
+            }
+        }),
+        createDropDown([<span class="hljs-string">'0x AA'</span>, <span class="hljs-string">'2x AA'</span>, <span class="hljs-string">'4x AA'</span>], <span class="hljs-number">0</span>, (index) =&gt; {
+            <span class="hljs-keyword">if</span> (index === <span class="hljs-number">4</span>) {
+                state.aa = <span class="hljs-number">4</span>;
+            }
+            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (index === <span class="hljs-number">2</span>) {
+                state.aa = <span class="hljs-number">2</span>;
+            }
+            <span class="hljs-keyword">else</span> {
+                state.aa = <span class="hljs-number">0</span>;
+            }
+        }),
+    ];
+    controls.forEach(<span class="hljs-function"><span class="hljs-params">control</span> =&gt;</span> {
+        inputArea.appendChild(control.element);
+    });
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+        controls.forEach(<span class="hljs-function">(<span class="hljs-params">control</span>) =&gt;</span> control.free());
+    };
 }</pre></div></div>
             
         </li>

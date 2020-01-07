@@ -2,7 +2,7 @@
 // it all begins with HTML somewhere out there we want a canvas to draw on, 
 // we could create one, but for the purposes of this document it will be easier
 // for us to ask the host HTML file to provide us a canvas element named `"c"`
-function bindToHTML() {
+function getHtmlCanvas() {
   const canvas = window.document.getElementById('c') as HTMLCanvasElement;
   // to keep things simple we're working in the global browser space, and we'll note
   // that with a `g_` prefix
@@ -15,25 +15,8 @@ function bindToHTML() {
   // to make sure our canvas is using all of the space it can
   resize(canvas);
 
-  // ### Controlling The Animation
-  // since we're still dealing with HTML let's get some references to the start/stop buttons
-  const play = window.document.getElementById('play');
-  const stop = window.document.getElementById('stop');
-  // and we'll add a select box for the shading model
-  const shading = window.document.getElementById('shading');
-  const aa = window.document.getElementById('aa');
-  // unlike with the canvas, let's not panic if these buttons are not present
-
-  // we'll group our HTML bindings into an object for easier consumption
-  return {
-    aa,
-    canvas,
-    play,
-    shading,
-    stop,
-  };
+  return canvas;
 }
-
 
 //
 // <a name="resize"></a>
@@ -58,4 +41,158 @@ function resize(canvas: HTMLCanvasElement) {
 
   // In the case we did _not_ resize we should also alert our invoker
   return false;
+}
+
+function createElement<T extends HTMLElement>(type: string): T {
+  const el = window.document.createElement(type) as T;
+
+  throwIfFalsey(el, 'could not create ' + type + ' html element');
+
+  return el;
+}
+
+// numeric input will be used in several places
+function createNumericInput(init: number, onChange: (value: number) => void) {
+  const input = createElement<HTMLInputElement>('input');
+  input.type = 'number';
+  input.value = init + '';
+
+  const onUpdate = (e: any) => {
+    const n = parseInt(e.target.value, 10);
+    onChange(n);
+  };
+
+  input.addEventListener('change', onUpdate);
+  input.addEventListener('blur', onUpdate);
+
+  return {
+    element: input,
+    free: () => {
+      input.removeEventListener('change', onUpdate);
+      input.removeEventListener('blur', onUpdate);
+    },
+  };
+}
+
+// buttons are a useful control to have
+function createButton(label: string, onClick: () => void) {
+  const element = createElement<HTMLButtonElement>('button');
+  element.innerHTML = label;
+
+  const on = () => onClick();
+
+  element.addEventListener('click', on);
+
+  return {
+    element,
+    free: () => element.removeEventListener('click', on),
+  };
+}
+
+// we'll want to be able to toggle things
+function createToggleButton(labelA: string, labelB: string, onToggle: () => void) {
+  // let's make a toggle button
+  const element = createElement<HTMLButtonElement>('button');
+  // we'll use `labelA` as the first state
+  let label = labelA;
+  element.innerHTML = label;
+
+  // and we'll want to manage the label and report clicks
+  const onClick = () => {
+    // swap the labels
+    if (label === labelA) {
+      label = labelB;
+    } else {
+      label = labelA;
+    }
+    element.innerHTML = label;
+    // inform the consumer
+    onToggle();
+  };
+
+  // attach the handler
+  element.addEventListener('click', onClick);
+
+  // return the element so it can be mounted
+  // also provide a mechanism to release the event listener
+  return {
+    element,
+    free: () => element.removeEventListener('click', onClick),
+  };
+}
+
+// drop downs are one way to let people select between a few choices
+function createDropDown(list: string[], selected: number, onSelect: (index: number) => void) {
+  const select = createElement<HTMLSelectElement>('select');
+  list.map((label, i) => {
+    const option = createElement<HTMLOptionElement>('option');
+    if (i === selected) {
+      option.selected = true;
+    }
+    option.value = i + '';
+    option.innerHTML = label;
+    select.appendChild(option);
+
+    return option;
+  });
+
+  const onChange = (e: any) => {
+    onSelect(parseInt(e.target.value, 10));
+  };
+
+  select.addEventListener('change', onChange);
+  select.addEventListener('blur', onChange);
+
+  return {
+    element: select,
+    free: () => {
+      select.removeEventListener('change', onChange);
+      select.removeEventListener('blour', onChange);
+    },
+  };
+}
+
+// and we'll provide a way to bind the optional input controls
+function bindInputControls(
+  state: UserControllableState,
+) {
+  const inputArea =  window.document.getElementById('i');
+  if (!inputArea) {
+    return;
+  }
+
+  const controls = [
+    createToggleButton('pause', 'resume', () => {
+      if (state.isAnimating) {
+        state.isAnimating = false;
+      } else {
+        state.isAnimating = true;
+        animate(0);
+      }
+    }),
+    createDropDown(['PBR', 'Blinn Phong'], 0, (index: number) => {
+      if (index === 1) {
+        state.shadingModel = 1;
+      } else {
+        state.shadingModel = 0;
+      }
+    }),
+    createDropDown(['0x AA', '2x AA', '4x AA'], 0, (index: number) => {
+      if (index === 4) {
+        state.aa = 4;
+      } else if (index === 2) {
+        state.aa = 2;
+      } else {
+        state.aa = 0;
+      }
+    }),
+  ];
+
+  controls.forEach(control => {
+      inputArea.appendChild(control.element);
+  });
+
+  return () => {
+    controls.forEach((control) => control.free());
+  };
 }

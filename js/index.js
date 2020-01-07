@@ -458,7 +458,7 @@ function bindProgram(gl, vertexSource, fragmentSource) {
 function draw(gl, context, canvas) {
     // if the screen resized, re-initatlize the scene
     if (resize(canvas)) {
-        setupScene(gl, context, g_scene);
+        setupScene(gl, context, g_scene, g_configShader);
     }
     // clear the screen
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -473,7 +473,7 @@ function draw(gl, context, canvas) {
 // ### getUniformDescription
 //
 // what variables are bound to our program?
-function getUniformDescription() {
+function getUniformDescription(shaderConfig) {
     return [
         {
             name: 'aa',
@@ -538,7 +538,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.materials.length,
+            length: shaderConfig.materialCount,
             name: 'materials',
             type: 'struct',
         },
@@ -549,7 +549,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: 1,
+            length: shaderConfig.lightCount,
             name: 'pointLights',
             type: 'struct'
         },
@@ -568,7 +568,7 @@ function getUniformDescription() {
                     type: 'float',
                 },
             ],
-            length: g_scene.spheres.length,
+            length: shaderConfig.sphereCount,
             name: 'spheres',
             type: 'struct',
         },
@@ -595,7 +595,7 @@ function getUniformDescription() {
                     type: 'vec3',
                 },
             ],
-            length: g_scene.triangles.length,
+            length: shaderConfig.triangleCount,
             name: 'triangles',
             type: 'struct',
         },
@@ -605,7 +605,7 @@ function getUniformDescription() {
 // it all begins with HTML somewhere out there we want a canvas to draw on, 
 // we could create one, but for the purposes of this document it will be easier
 // for us to ask the host HTML file to provide us a canvas element named `"c"`
-function bindToHTML() {
+function getHtmlCanvas() {
     const canvas = window.document.getElementById('c');
     // to keep things simple we're working in the global browser space, and we'll note
     // that with a `g_` prefix
@@ -615,22 +615,7 @@ function bindToHTML() {
     // we'll want to [resize](#resize, "Resize documentation")
     // to make sure our canvas is using all of the space it can
     resize(canvas);
-    // ### Controlling The Animation
-    // since we're still dealing with HTML let's get some references to the start/stop buttons
-    const play = window.document.getElementById('play');
-    const stop = window.document.getElementById('stop');
-    // and we'll add a select box for the shading model
-    const shading = window.document.getElementById('shading');
-    const aa = window.document.getElementById('aa');
-    // unlike with the canvas, let's not panic if these buttons are not present
-    // we'll group our HTML bindings into an object for easier consumption
-    return {
-        aa,
-        canvas,
-        play,
-        shading,
-        stop,
-    };
+    return canvas;
 }
 //
 // <a name="resize"></a>
@@ -653,6 +638,139 @@ function resize(canvas) {
     // In the case we did _not_ resize we should also alert our invoker
     return false;
 }
+function createElement(type) {
+    const el = window.document.createElement(type);
+    throwIfFalsey(el, 'could not create ' + type + ' html element');
+    return el;
+}
+// numeric input will be used in several places
+function createNumericInput(init, onChange) {
+    const input = createElement('input');
+    input.type = 'number';
+    input.value = init + '';
+    const onUpdate = (e) => {
+        const n = parseInt(e.target.value, 10);
+        onChange(n);
+    };
+    input.addEventListener('change', onUpdate);
+    input.addEventListener('blur', onUpdate);
+    return {
+        element: input,
+        free: () => {
+            input.removeEventListener('change', onUpdate);
+            input.removeEventListener('blur', onUpdate);
+        },
+    };
+}
+// buttons are a useful control to have
+function createButton(label, onClick) {
+    const element = createElement('button');
+    element.innerHTML = label;
+    const on = () => onClick();
+    element.addEventListener('click', on);
+    return {
+        element,
+        free: () => element.removeEventListener('click', on),
+    };
+}
+// we'll want to be able to toggle things
+function createToggleButton(labelA, labelB, onToggle) {
+    // let's make a toggle button
+    const element = createElement('button');
+    // we'll use `labelA` as the first state
+    let label = labelA;
+    element.innerHTML = label;
+    // and we'll want to manage the label and report clicks
+    const onClick = () => {
+        // swap the labels
+        if (label === labelA) {
+            label = labelB;
+        }
+        else {
+            label = labelA;
+        }
+        element.innerHTML = label;
+        // inform the consumer
+        onToggle();
+    };
+    // attach the handler
+    element.addEventListener('click', onClick);
+    // return the element so it can be mounted
+    // also provide a mechanism to release the event listener
+    return {
+        element,
+        free: () => element.removeEventListener('click', onClick),
+    };
+}
+// drop downs are one way to let people select between a few choices
+function createDropDown(list, selected, onSelect) {
+    const select = createElement('select');
+    list.map((label, i) => {
+        const option = createElement('option');
+        if (i === selected) {
+            option.selected = true;
+        }
+        option.value = i + '';
+        option.innerHTML = label;
+        select.appendChild(option);
+        return option;
+    });
+    const onChange = (e) => {
+        onSelect(parseInt(e.target.value, 10));
+    };
+    select.addEventListener('change', onChange);
+    select.addEventListener('blur', onChange);
+    return {
+        element: select,
+        free: () => {
+            select.removeEventListener('change', onChange);
+            select.removeEventListener('blour', onChange);
+        },
+    };
+}
+// and we'll provide a way to bind the optional input controls
+function bindInputControls(state) {
+    const inputArea = window.document.getElementById('i');
+    if (!inputArea) {
+        return;
+    }
+    const controls = [
+        createToggleButton('pause', 'resume', () => {
+            if (state.isAnimating) {
+                state.isAnimating = false;
+            }
+            else {
+                state.isAnimating = true;
+                animate(0);
+            }
+        }),
+        createDropDown(['PBR', 'Blinn Phong'], 0, (index) => {
+            if (index === 1) {
+                state.shadingModel = 1;
+            }
+            else {
+                state.shadingModel = 0;
+            }
+        }),
+        createDropDown(['0x AA', '2x AA', '4x AA'], 0, (index) => {
+            if (index === 4) {
+                state.aa = 4;
+            }
+            else if (index === 2) {
+                state.aa = 2;
+            }
+            else {
+                state.aa = 0;
+            }
+        }),
+    ];
+    controls.forEach(control => {
+        inputArea.appendChild(control.element);
+    });
+    return () => {
+        controls.forEach((control) => control.free());
+    };
+}
 // Welcome to the Literate Ray Tracer, a program that reads like a book.
 // This book is a long winded fork of [Tom Macwright's](https://github.com/tmcw/literate-raytracer "tom macwright's literate ray tracer")
 // In addition to Tom's work, the following websights were leveraged extensively
@@ -674,6 +792,8 @@ function resize(canvas) {
 //   1.  The code is all here, no libraries required
 //   2.  The code all executes in the global browser space, no official "modules"
 //   3.  Performance is _not_ prioritized, it's not ignored entirely but the focus is on simplicity
+//
+// Please [report and defects here](https://github.com/bennett000/literate-raytracer/issues "Report an issue with the book") and we'll attempt to address the issue in the next release
 //
 //
 // ## 30,000 Foot View
@@ -729,7 +849,7 @@ const g_configShader = getShaderConfiguration(g_scene);
 //
 // We'll [setup the HTML](html.html "HTML Setup code")
 //
-const g_html = bindToHTML();
+const g_canvas = getHtmlCanvas();
 //
 // <a name="webgl"></a>
 // ## 2. WebGL Initialization
@@ -737,15 +857,15 @@ const g_html = bindToHTML();
 // In order to upload things to the GPU and renderthem on the canvas we'll need to work
 // with an API.  We can ask our canvas for a [WebGLRenderingContext](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext "WebGL Rendering Context is the API we use to upload stuff to the GPU");
 // which will be the API we use to upload stuff to the GPU.
-const g_gl = g_html.canvas.getContext('webgl');
+const g_gl = g_canvas.getContext('webgl');
 // The world is an imperfect place, let's make sure we got a valid context
 throwIfFalsey(g_gl, 'could not get a WebGL context');
 // Okay, great, so we've got a an API that let's us talk to the GPU.  Alone that's
 // not enough for us to get started.  We need to give the GPU some code to run
 // we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
-const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
-draw(g_gl, g_ctx, g_html.canvas);
+const g_uniforms = setupScene(g_gl, g_ctx, g_scene, g_configShader);
+draw(g_gl, g_ctx, g_canvas);
 //
 // <a name="state"></a>
 // ## 3. Application State
@@ -770,17 +890,20 @@ const g_fps = {
     frames: 0,
     sampleDuration: 5000,
 };
-let g_shadingModel = 0;
-let g_aa = 0;
+const g_userControllableState = {
+    shadingModel: 0,
+    aa: 0,
+    isAnimating: true,
+};
 //
 // <a name="animate"></a>
 // 4. ## Animate!
 //
 // start the animation by default
-let g_isAnimating = true;
 // on each frame...
 const animate = (time) => {
-    if (g_isAnimating === false) {
+    const { aa, isAnimating, shadingModel } = g_userControllableState;
+    if (isAnimating === false) {
         return;
     }
     g_fps.frames += 1;
@@ -816,6 +939,13 @@ const animate = (time) => {
             const y = state.vector[1] / speed;
             const z = state.vector[2] / speed;
             state.matrix = translate4_4(state.matrix, x, y, z);
+            // pin the second light to the second sphere
+            if (i === 1) {
+                g_scene.lights[1][0] = state.matrix[12];
+                g_scene.lights[1][1] = state.matrix[13];
+                g_scene.lights[1][2] = state.matrix[14];
+                g_uniforms.pointLights[1].point(g_scene.lights[1]);
+            }
         }
         const sphere = g_scene.spheres[i];
         if (i > 0) {
@@ -824,52 +954,13 @@ const animate = (time) => {
         }
         g_uniforms.spheres[i].point(sphere.point);
     });
-    g_uniforms.shadingModel(g_shadingModel);
-    g_uniforms.aa(g_aa);
-    draw(g_gl, g_ctx, g_html.canvas);
+    g_uniforms.shadingModel(shadingModel);
+    g_uniforms.aa(aa);
+    draw(g_gl, g_ctx, g_canvas);
     requestAnimationFrame(animate);
 };
-// if we press play, make sure we're animating
-if (g_html.play) {
-    g_html.play.addEventListener('click', () => {
-        if (g_isAnimating) {
-            return;
-        }
-        g_isAnimating = true;
-        animate(0);
-    });
-}
-// if we press stop, stop the animation
-if (g_html.stop) {
-    g_html.stop.addEventListener('click', () => {
-        g_isAnimating = false;
-    });
-}
-// if we swap the shading, update the global
-if (g_html.shading) {
-    const onChange = (e) => {
-        g_shadingModel = parseInt(e.target.value, 10) === 1 ? 1 : 0;
-    };
-    g_html.shading.addEventListener('blur', onChange);
-    g_html.shading.addEventListener('change', onChange);
-}
-// if we swap the shading, update the global
-if (g_html.aa) {
-    const onChange = (e) => {
-        const value = parseInt(e.target.value, 10);
-        if (value === 4) {
-            g_aa = 4;
-        }
-        else if (value === 2) {
-            g_aa = 2;
-        }
-        else {
-            g_aa = 0;
-        }
-    };
-    g_html.aa.addEventListener('blur', onChange);
-    g_html.aa.addEventListener('change', onChange);
-}
+// bind some controls
+bindInputControls(g_userControllableState);
 // finally kick it all off
 animate(0);
 function createMatrix3_1() {
@@ -1494,12 +1585,21 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         let prevRadius = 0;
         // ##### Build a each sphere
         for (let i = 0; i < sphereCount; i += 1) {
-            // the radius is either
-            const radius = i === 0
-                // big for the centre sphere
-                ? minOrbit - 1
-                // or small for the other spheres
-                : (Math.random() / 2) + 0.1;
+            let radius = 0.1;
+            let material = Math.floor(Math.random() * 5 + 2);
+            // make the first circle large
+            // make the second circle tiny
+            // make all the rest randomly modest
+            if (i === 0) {
+                radius = minOrbit - 1;
+            }
+            else if (i === 1) {
+                radius = 0.05;
+                material = 1;
+            }
+            else {
+                radius = (Math.random() / 2) + 0.1;
+            }
             // build a simple sphere object
             s.push({
                 radius,
@@ -1515,7 +1615,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
                 ],
                 // each sphere has a "pointer" to a `material`
                 // the "pointer" is an index in the `scene.materials` array
-                material: Math.floor(Math.random() * 3),
+                material,
             });
             // update the radius for the next sphere
             prevRadius = radius;
@@ -1539,7 +1639,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // each triangle also has three points
     const triangles = [
         {
-            material: 4,
+            material: 0,
             points: [
                 [g_floorPlaneSize, 0, -g_floorPlaneSize],
                 [-g_floorPlaneSize, 0, -g_floorPlaneSize],
@@ -1547,7 +1647,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             ],
         },
         {
-            material: 4,
+            material: 0,
             points: [
                 [-g_floorPlaneSize, 0, g_floorPlaneSize],
                 [g_floorPlaneSize, 0, g_floorPlaneSize],
@@ -1571,38 +1671,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
     // * `refraction` (future)
     // * `isTranslucent` (future)
     const materials = [
-        {
-            colour: [100, 0, 0],
-            ambient: 0.01,
-            diffuse: 0.5,
-            specular: 0.1,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 0, 124],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.8,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 255, 0],
-            ambient: 0.1,
-            diffuse: 0.01,
-            specular: 0.9,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
-        {
-            colour: [0, 100, 200],
-            ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
-            refraction: 1.0,
-            isTranslucent: false,
-        },
+        // we'll hard code these ones in some places
         {
             colour: [200, 200, 200],
             ambient: 0.1,
@@ -1612,10 +1681,51 @@ function getScene(sphereCount = 57, minOrbit = 3) {
             isTranslucent: false,
         },
         {
-            colour: [0, 25, 50],
+            colour: [255, 255, 150],
             ambient: 0.1,
-            diffuse: 0.8,
-            specular: 0.02,
+            diffuse: 0.999999,
+            specular: 0.99999,
+            refraction: 1.0,
+            isTranslucent: true,
+        },
+        // the rest of these we'll pick from randomly
+        {
+            colour: [100, 0, 0],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [150, 0, 150],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [0, 150, 50],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [10, 10, 200],
+            ambient: 0.01,
+            diffuse: 0.5,
+            specular: 0.1,
+            refraction: 1.0,
+            isTranslucent: false,
+        },
+        {
+            colour: [50, 50, 50],
+            ambient: 0.2,
+            diffuse: 0.01,
+            specular: 0.999,
             refraction: 1.0,
             isTranslucent: false,
         },
@@ -1634,7 +1744,7 @@ function getScene(sphereCount = 57, minOrbit = 3) {
         // in the BlinnPhong model we'll have a hard coded ambient lighting intensity
         globalAmbientIntensity: 0.002,
         // for simplicity our lights are just a single point in space
-        lights: [[-25, 30, 10]],
+        lights: [[-25, 30, 10], [0, 3, 0]],
         // place the materials object in the scene
         materials,
         // place the spheres object in the scene
@@ -2092,13 +2202,21 @@ function getFragmentSource(config) {
             Sphere s = spheres[i];
             float dist = sphereIntersection(s, ray);
             if (dist >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(sd.sphere.material);
                 if (sd.distance <= 0.0 || dist < sd.distance) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                    }
                 }
                 if (useAnyHit) {
-                    sd.distance = dist;
-                    sd.sphere = s;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        sd.distance = dist;
+                        sd.sphere = s;
+                        return sd;
+                    }
                 }
             }
         }
@@ -2122,11 +2240,18 @@ function getFragmentSource(config) {
             Triangle t = triangles[i];
             TriangleDistance td = triangleIntersection(t, ray);
             if (td.distance >= 0.0) {
+                // we're temporarily hacking in an object that casts no shadow 
+                Material m = getMaterial(td.triangle.material);
                 if (least.distance <= 0.0 || td.distance < least.distance) {
-                    least = td;
+                    if (useAnyHit == false || m.isTranslucent == 0) {
+                        least = td;
+                    }
                 }
                 if (useAnyHit == true) {
-                    return td;
+                    // we're temporarily hacking in an object that casts no shadow 
+                    if (m.isTranslucent != 0) {
+                        return td;
+                    }
                 }
             }
         }
@@ -2415,6 +2540,10 @@ function getFragmentSource(config) {
             return materials[5];
         }
 
+        if (index == 6) {
+            return materials[6];
+        }
+
         return materials[0];
     }
 ` +
@@ -2475,10 +2604,10 @@ function throwIfFalsey(thingToTest, reason, Ctor = Error) {
 //
 // <a name="setupScene"></a>
 // ## setupScene
-function setupScene(gl, context, scene) {
+function setupScene(gl, context, scene, shaderConfig) {
     const { camera, materials, spheres, triangleNormals, lights } = scene;
     // in typscript we're cheating with an any here
-    const u = getUniformSetters(gl, context.program, getUniformDescription());
+    const u = getUniformSetters(gl, context.program, getUniformDescription(shaderConfig));
     const cameraMatrix = zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);
     const scale = Math.tan(Math.PI * (camera.fieldOfView * 0.5) / 180);
     const width = gl.canvas.clientWidth;

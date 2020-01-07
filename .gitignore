@@ -19,7 +19,7 @@ tmp
 static
 
 # javascript
-./*.js
+./js
 *.map
 
 .yarnclean

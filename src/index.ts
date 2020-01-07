@@ -217,21 +217,17 @@ const animate = (time: number) => {
     requestAnimationFrame(animate);
 };
 
-// if we press play, make sure we're animating
-if (g_html.play) {
-    g_html.play.addEventListener('click', () => {
-        if (g_isAnimating) {
-            return;
-        }
-        g_isAnimating = true;
-        animate(0);
-    });
-}
-
 // if we press stop, stop the animation
-if (g_html.stop) {
-    g_html.stop.addEventListener('click', () => {
-        g_isAnimating = false;
+if (g_html.pause) {
+    const { pause } = g_html;
+    pause.addEventListener('click', () => {
+        if (g_isAnimating) {
+            g_isAnimating = false;
+            pause.innerHTML = 'resume';
+        } else {
+            g_isAnimating = true;
+            pause.innerHTML = 'pause';
+        }
     });
 }
 

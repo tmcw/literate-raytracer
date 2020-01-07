@@ -13,20 +13,20 @@ function bindToHTML() {
     // to make sure our canvas is using all of the space it can
     resize(canvas);
     // ### Controlling The Animation
-    // since we're still dealing with HTML let's get some references to the start/stop buttons
-    const play = window.document.getElementById('play');
-    const stop = window.document.getElementById('stop');
+    // since we're still dealing with HTML let's get some references to the optional controls 
+    // a pause button
+    const pause = window.document.getElementById('pause');
     // and we'll add a select box for the shading model
     const shading = window.document.getElementById('shading');
+    // and a select box for the anti aliasing
     const aa = window.document.getElementById('aa');
     // unlike with the canvas, let's not panic if these buttons are not present
     // we'll group our HTML bindings into an object for easier consumption
     return {
         aa,
         canvas,
-        play,
+        pause,
         shading,
-        stop,
     };
 }
 //

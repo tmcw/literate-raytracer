@@ -13,6 +13,11 @@ well enough to do interesting things.
 
 [See It Live Here](https://literate-raytracer.michaeljbennett.info "Live version of this book")
 
+###
+
+Please [report and defects here](https://github.com/bennett000/literate-raytracer/issues "Report an issue with the book") and we'll attempt to address the issue in the next release
+
+
 ## Having Fun With The Code
 
 Unlike the original, the JavaScript parts of this codebase are written in TypeScript,

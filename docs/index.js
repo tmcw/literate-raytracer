@@ -675,6 +675,8 @@ function resize(canvas) {
 //   2.  The code all executes in the global browser space, no official "modules"
 //   3.  Performance is _not_ prioritized, it's not ignored entirely but the focus is on simplicity
 //
+// Please [report and defects here](https://github.com/bennett000/literate-raytracer/issues "Report an issue with the book") and we'll attempt to address the issue in the next release
+//
 //
 // ## 30,000 Foot View
 //

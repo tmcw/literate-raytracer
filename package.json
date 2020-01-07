@@ -2,6 +2,9 @@
   "name": "literate-raytracer",
   "version": "0.0.0",
   "description": "a literate raytracer implementation",
+  "bugs": {
+    "url": "https://github.com/bennett000/literate-raytracer/issues"
+  },
   "scripts": {
     "build": "tsc --outFile ./js/index.js",
     "clean": "rimraf ./js && rimraf ./docs/",

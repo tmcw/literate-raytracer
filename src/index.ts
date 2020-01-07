@@ -112,7 +112,7 @@ throwIfFalsey(g_gl, 'could not get a WebGL context');
 // we're going to need at least one GLSL program, that code is [located in shaders.ts](shaders.html "Our shaders, the 'body' of our program")
 
 const g_ctx = bindProgram(g_gl, getVertexSource(), getFragmentSource(g_configShader));
-const g_uniforms = setupScene(g_gl, g_ctx, g_scene);
+const g_uniforms = setupScene(g_gl, g_ctx, g_scene, g_configShader);
 draw(g_gl, g_ctx, g_canvas);
 
 //
@@ -205,6 +205,14 @@ const animate = (time: number) => {
             const z = state.vector[2] / speed;
 
             state.matrix = translate4_4(state.matrix, x, y, z);
+
+            // pin the second light to the second sphere
+            if (i === 1) {
+                g_scene.lights[1][0] = state.matrix[12];
+                g_scene.lights[1][1] = state.matrix[13];
+                g_scene.lights[1][2] = state.matrix[14];
+                g_uniforms.pointLights[1].point(g_scene.lights[1]);
+            }
         }
 
         const sphere = g_scene.spheres[i];

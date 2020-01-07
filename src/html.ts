@@ -51,9 +51,42 @@ function createElement<T extends HTMLElement>(type: string): T {
   return el;
 }
 
-function createNumericInput(min = -Infinity, max = Infinity) {
+// numeric input will be used in several places
+function createNumericInput(init: number, onChange: (value: number) => void) {
   const input = createElement<HTMLInputElement>('input');
   input.type = 'number';
+  input.value = init + '';
+
+  const onUpdate = (e: any) => {
+    const n = parseInt(e.target.value, 10);
+    onChange(n);
+  };
+
+  input.addEventListener('change', onUpdate);
+  input.addEventListener('blur', onUpdate);
+
+  return {
+    element: input,
+    free: () => {
+      input.removeEventListener('change', onUpdate);
+      input.removeEventListener('blur', onUpdate);
+    },
+  };
+}
+
+// buttons are a useful control to have
+function createButton(label: string, onClick: () => void) {
+  const element = createElement<HTMLButtonElement>('button');
+  element.innerHTML = label;
+
+  const on = () => onClick();
+
+  element.addEventListener('click', on);
+
+  return {
+    element,
+    free: () => element.removeEventListener('click', on),
+  };
 }
 
 // we'll want to be able to toggle things

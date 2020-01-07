@@ -14,10 +14,10 @@ function throwIfFalsey(thingToTest: unknown, reason: string, Ctor = Error): asse
 //
 // <a name="setupScene"></a>
 // ## setupScene
-function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene) {
+function setupScene(gl: WebGLRenderingContext, context: ProgramContext, scene: Scene, shaderConfig: ConfigShader) {
     const { camera, materials, spheres, triangleNormals, lights } = scene;
     // in typscript we're cheating with an any here
-    const u: any = getUniformSetters(gl, context.program, getUniformDescription());
+    const u: any = getUniformSetters(gl, context.program, getUniformDescription(shaderConfig));
 
     const cameraMatrix = 
     zRotate4_4(yRotate4_4(xRotate4_4(translate4_4(identity4_4(), camera.point[0], camera.point[1], camera.point[2]), camera.rotation[0]), camera.rotation[1]), camera.rotation[2]);

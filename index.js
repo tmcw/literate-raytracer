@@ -441,6 +441,7 @@ function tick() {
 var playing = false;
 
 function play() {
+    if (playing) return;
     playing = true;
     tick();
 }

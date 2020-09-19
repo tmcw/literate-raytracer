@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>vector.js</title>
+  <title>Vector Operations</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta content="width=device-width,minimum-scale=1" name=viewport>
   <link rel="stylesheet" media="all" href="custom.css" />
@@ -42,12 +42,6 @@
     
     <ul class="sections">
         
-          <li id="title">
-              <div class="annotation">
-                  <h1>vector.js</h1>
-              </div>
-          </li>
-        
         
         
         <li id="section-1">
@@ -56,10 +50,226 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              
+              <h1 id="vector-operations">Vector Operations</h1>
+<p>These are general-purpose functions that deal with vectors - in this case,
+three-dimensional vectors represented as objects in the form</p>
+<pre><code>{ x, y, z }</code></pre>
+<p>Since we’re not using traditional object oriented techniques, these
+functions take and return that sort of logic-less object, so you’ll see
+<code>add(a, b)</code> rather than <code>a.add(b)</code>.</p>
+
             </div>
             
-            <div class="content"><div class='highlight'><pre>[object <span class="hljs-built_in">Promise</span>]</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Vector = {};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h1 id="constants">Constants</h1>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.UP = { <span class="hljs-attr">x</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">y</span>: <span class="hljs-number">1</span>, <span class="hljs-attr">z</span>: <span class="hljs-number">0</span> };
+Vector.ZERO = { <span class="hljs-attr">x</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">y</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">z</span>: <span class="hljs-number">0</span> };
+Vector.WHITE = { <span class="hljs-attr">x</span>: <span class="hljs-number">255</span>, <span class="hljs-attr">y</span>: <span class="hljs-number">255</span>, <span class="hljs-attr">z</span>: <span class="hljs-number">255</span> };
+Vector.ZEROcp = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">return</span> { <span class="hljs-attr">x</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">y</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">z</span>: <span class="hljs-number">0</span> };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h1 id="operations">Operations</h1>
+<h2 id="dot-product"><a href="https://en.wikipedia.org/wiki/Dot_product">Dot Product</a></h2>
+<p>is different than the rest of these since it takes two vectors but
+returns a single number value.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.dotProduct = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, b</span>) </span>{
+    <span class="hljs-keyword">return</span> (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h2 id="cross-product"><a href="https://en.wikipedia.org/wiki/Cross_product">Cross Product</a></h2>
+<p>generates a new vector that’s perpendicular to both of the vectors
+given.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.crossProduct = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, b</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">x</span>: (a.y * b.z) - (a.z * b.y),
+        <span class="hljs-attr">y</span>: (a.z * b.x) - (a.x * b.z),
+        <span class="hljs-attr">z</span>: (a.x * b.y) - (a.y * b.x)
+    };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Enlongate or shrink a vector by a factor of <code>t</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.scale = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, t</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">x</span>: a.x * t,
+        <span class="hljs-attr">y</span>: a.y * t,
+        <span class="hljs-attr">z</span>: a.z * t
+    };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h2 id="unit-vector"><a href="http://en.wikipedia.org/wiki/Unit_vector">Unit Vector</a></h2>
+<p>Turn any vector into a vector that has a magnitude of 1.</p>
+<p>If you consider that a <a href="http://en.wikipedia.org/wiki/Unit_sphere">unit sphere</a>
+is a sphere with a radius of 1, a unit vector is like a vector from the
+center point (0, 0, 0) to any point on its surface.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.unitVector = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a</span>) </span>{
+    <span class="hljs-keyword">return</span> Vector.scale(a, <span class="hljs-number">1</span> / Vector.length(a));
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Add two vectors to each other, by simply combining each
+of their components</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.add = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, b</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">x</span>: a.x + b.x,
+        <span class="hljs-attr">y</span>: a.y + b.y,
+        <span class="hljs-attr">z</span>: a.z + b.z
+    };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>A version of <code>add</code> that adds three vectors at the same time. While
+it’s possible to write a clever version of <code>Vector.add</code> that takes
+any number of arguments, it’s not fast, so we’re keeping it simple and
+just making two versions.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.add3 = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, b, c</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">x</span>: a.x + b.x + c.x,
+        <span class="hljs-attr">y</span>: a.y + b.y + c.y,
+        <span class="hljs-attr">z</span>: a.z + b.z + c.z
+    };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Subtract one vector from another, by subtracting each component</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.subtract = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, b</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">x</span>: a.x - b.x,
+        <span class="hljs-attr">y</span>: a.y - b.y,
+        <span class="hljs-attr">z</span>: a.z - b.z
+    };
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>Length, or magnitude, measured by <a href="https://en.wikipedia.org/wiki/Euclidean_vector#Length">Euclidean norm</a></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.length = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">Math</span>.sqrt(Vector.dotProduct(a, a));
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Given a vector <code>a</code>, which is a point in space, and a <code>normal</code>, which is
+the angle the point hits a surface, returna  new vector that is reflect
+off of that surface</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Vector.reflectThrough = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">a, normal</span>) </span>{
+    <span class="hljs-keyword">var</span> d = Vector.scale(normal, Vector.dotProduct(a, normal));
+    <span class="hljs-keyword">return</span> Vector.subtract(Vector.scale(d, <span class="hljs-number">2</span>), a);
+};</pre></div></div>
             
         </li>
         

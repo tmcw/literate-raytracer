@@ -7,71 +7,29 @@ const marked = require("marked");
 const commander = require("commander");
 const highlightjs = require("highlight.js");
 
-function document(options, callback) {
+function document(options) {
   var config;
   if (options == null) {
     options = {};
   }
   config = configure(options);
-  return fs.mkdirs(config.output, function () {
-    var complete, copyAsset, files, nextFile;
-    callback ||
-      (callback = function (error) {
-        if (error) {
-          throw error;
-        }
-      });
-    copyAsset = function (file, callback) {
-      return fs.copy(
-        file,
-        path.join(config.output, path.basename(file)),
-        callback
-      );
-    };
-    complete = function () {
-      return copyAsset(config.css, function (error) {
-        if (error) {
-          return callback(error);
-        } else if (fs.existsSync(config["public"])) {
-          return copyAsset(config["public"], callback);
-        } else {
-          return callback();
-        }
-      });
-    };
-    files = config.sources.slice();
-    nextFile = function () {
-      var source;
-      source = files.shift();
-      const buffer = fs.readFile(source);
-      var code, sections;
-      code = buffer.toString();
-      sections = parse(source, code, config);
-      format(source, sections, config);
-      write(source, sections, config);
-      if (files.length) {
-        return nextFile();
-      } else {
-        return complete();
-      }
-    };
-    return nextFile();
-  });
+  fs.mkdirsSync(config.output);
+  for (let source of config.sources) {
+    const code = fs.readFileSync(source, "utf8");
+    const sections = parse(source, code, config);
+    format(source, sections, config);
+    write(source, sections, config);
+  }
 }
 
 function parse(source, code, config) {
   var codeText,
     docsText,
-    hasCode,
     i,
     isText,
-    lang,
     line,
-    lines,
     match,
     maybeCode,
-    save,
-    sections,
     _i,
     _j,
     _len,
@@ -79,11 +37,11 @@ function parse(source, code, config) {
   if (config == null) {
     config = {};
   }
-  lines = code.split("\n");
-  sections = [];
-  lang = getLanguage(source, config);
-  hasCode = docsText = codeText = "";
-  save = function () {
+  let lines = code.split("\n");
+  let sections = [];
+  let lang = getLanguage(source, config);
+  let hasCode = (docsText = codeText = "");
+  let save = function () {
     sections.push({
       docsText: docsText,
       codeText: codeText,
@@ -124,7 +82,7 @@ function parse(source, code, config) {
 }
 
 const format = function (source, sections, config) {
-  var code, i, language, section, _i, _len, _results;
+  var code, language, _results;
   language = getLanguage(source, config);
   marked.setOptions({
     highlight: function (code, lang) {
@@ -143,8 +101,7 @@ const format = function (source, sections, config) {
     },
   });
   _results = [];
-  for (i = _i = 0, _len = sections.length; _i < _len; i = ++_i) {
-    section = sections[i];
+  for (let section of sections) {
     code = highlightjs.highlight(language.name, section.codeText).value;
     code = code.replace(/\s+$/, "");
     section.codeHtml = "<div class='highlight'><pre>" + code + "</pre></div>";
@@ -154,17 +111,16 @@ const format = function (source, sections, config) {
 };
 
 function write(source, sections, config) {
-  var destination, first, hasTitle, html, title;
-  destination = function (file) {
+  const destination = function (file) {
     return path.join(
       config.output,
       path.basename(file, path.extname(file)) + ".html"
     );
   };
-  first = marked.lexer(sections[0].docsText)[0];
-  hasTitle = first && first.type === "heading" && first.depth === 1;
-  title = hasTitle ? first.text : path.basename(source);
-  html = config.template({
+  const first = marked.lexer(sections[0].docsText)[0];
+  const hasTitle = first && first.type === "heading" && first.depth === 1;
+  const title = hasTitle ? first.text : path.basename(source);
+  const html = config.template({
     sources: config.sources,
     css: path.basename(config.css),
     title: title,
@@ -187,23 +143,14 @@ const defaults = {
 };
 
 function configure(options) {
-  var config, dir;
+  var config;
   config = _.extend(
     {},
     defaults,
     _.pick.apply(_, [options].concat(__slice.call(_.keys(defaults))))
   );
   config.languages = languages;
-  if (options.template) {
-    config.layout = null;
-  } else {
-    dir = config.layout = path.join(__dirname, "resources", config.layout);
-    if (fs.existsSync(path.join(dir, "public"))) {
-      config["public"] = path.join(dir, "public");
-    }
-    config.template = path.join(dir, "docco.jst");
-    config.css = options.css || path.join(dir, "docco.css");
-  }
+  config.layout = null;
   config.template = _.template(fs.readFileSync(config.template).toString());
   config.sources = options.args
     .filter(function (source) {

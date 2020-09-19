@@ -4,7 +4,7 @@
   "description": "a literate raytracer implementation",
   "main": "raytracer.js",
   "scripts": {
-    "doc": "docco -t custom.jst --css=custom.css *.js --output=./"
+    "doc": "node ./docco.js src/*.js --css=template/custom.css --template=template/custom.jst -o ./"
   },
   "keywords": [
     "raytracer",
@@ -13,7 +13,11 @@
   ],
   "author": "",
   "license": "BSD-2-Clause",
-  "devDependencies": {
-    "docco": "~0.6.2"
+  "dependencies": {
+    "commander": "^6.1.0",
+    "fs-extra": "^9.0.1",
+    "highlight.js": "^10.2.0",
+    "marked": "^1.1.1",
+    "underscore": "^1.11.0"
   }
 }

@@ -13,6 +13,11 @@ body {
   height: 100%;
 }
 
+canvas {
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
 #container {
   min-height: 100%;
   margin: 0 auto;
@@ -35,7 +40,7 @@ strong {
 p,
 ul,
 ol {
-  padding: 15px 0 15px 0;
+  margin: 15px 0 15px 0;
 }
 
 h1,
@@ -46,7 +51,6 @@ h5,
 h6 {
   color: #112233;
   line-height: 1em;
-  font-weight: normal;
   margin: 30px 0 15px 0;
 }
 
@@ -61,60 +65,13 @@ hr {
   margin: 20px 0;
 }
 
-pre,
-tt,
-code {
-  font-size: 12px;
-  line-height: 16px;
-  font-family: "M+ 1mn", Menlo, Monaco, Consolas, "Lucida Console", monospace;
-  margin: 0;
-  padding: 0;
-}
-.annotation pre {
-  display: block;
-  margin: 0;
-  padding: 7px 10px;
-  background: #fcfdfc;
-  overflow-x: auto;
-}
-.annotation pre code {
-  border: 0;
-  padding: 0;
-  background: transparent;
+#controls {
+  text-align: center;
 }
 
-blockquote {
-  border-left: 5px solid #ccc;
-  margin: 0;
-  padding: 1px 0 1px 1em;
-}
-.sections blockquote p {
-  font-family: Menlo, Consolas, Monaco, monospace;
-  font-size: 12px;
-  line-height: 16px;
-  color: #999;
-  margin: 10px 0 0;
-  white-space: pre-wrap;
-}
-
-ul.sections {
-  list-style: none;
-  padding: 0 0 5px 0;
-  margin: 0;
-}
-
-/*
-  Force border-box so that % widths fit the parent
-  container without overlap because of margin/padding.
-
-  More Info : http://www.quirksmode.org/css/box.html
-*/
-ul.sections > li > div {
-  -moz-box-sizing: border-box; /* firefox */
-  -ms-box-sizing: border-box; /* ie */
-  -webkit-box-sizing: border-box; /* webkit */
-  -khtml-box-sizing: border-box; /* konqueror */
-  box-sizing: border-box; /* css3 */
+#controls button {
+  font-size: 20px;
+  font-family: inherit;
 }
 
 /*---------------------- Jump Page -----------------------------*/
@@ -183,38 +140,16 @@ ul.sections > li > div {
 }
 
 /*---------------------- Low resolutions (> 320px) ---------------------*/
-.pilwrap {
-  display: none;
-}
-
-ul.sections > li > div {
-  display: block;
-  padding: 5px 10px 0 10px;
-}
-
-ul.sections > li > div.annotation ul,
-ul.sections > li > div.annotation ol {
-  padding-left: 30px;
-}
-
-ul.sections > li > div.content {
-  background: #f5f5f8;
-  overflow-x: auto;
-  margin: 5px 10px 5px 10px;
-  padding-bottom: 5px;
-}
-
-ul.sections > li > div.annotation pre {
-  margin: 7px 0 7px;
-  padding-left: 15px;
-}
-
-ul.sections > li > div.annotation p tt,
-.annotation code {
+div.highlight {
   background: #f8f8ff;
-  border: 1px solid #dedede;
-  font-size: 12px;
-  padding: 0 0.2em;
+  font-family: Menlo, Consolas, Monaco, monospace;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 10px;
+}
+
+pre {
+  margin: 0;
 }
 
 /*---------------------- Syntax Highlighting -----------------------------*/
@@ -227,138 +162,83 @@ span.lineno {
   background-color: #f0f0f0;
   padding: 0 5px 0 5px;
 }
-/*
 
-github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+/**
+ * GitHub Gist Theme
+ * Author : Anthony Attard - https://github.com/AnthonyAttard
+ * Author : Louis Barranqueiro - https://github.com/LouisBarranqueiro
+ */
 
-*/
-
-pre code {
+.hljs {
   display: block;
+  background: white;
   padding: 0.5em;
-  color: #000;
-  background: #f8f8ff;
+  color: #333333;
+  overflow-x: auto;
 }
 
-pre .comment,
-pre .template_comment,
-pre .diff .header,
-pre .javadoc {
-  color: #408080;
-  font-style: italic;
+.hljs-comment,
+.hljs-meta {
+  color: #969896;
 }
 
-pre .keyword,
-pre .assignment,
-pre .literal,
-pre .css .rule .keyword,
-pre .winutils,
-pre .javascript .title,
-pre .lisp .title,
-pre .subst {
-  color: #954121;
-  /*font-weight: bold*/
+.hljs-variable,
+.hljs-template-variable,
+.hljs-strong,
+.hljs-emphasis,
+.hljs-quote {
+  color: #df5000;
 }
 
-pre .number,
-pre .hexcolor {
-  color: #40a070;
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type {
+  color: #d73a49;
 }
 
-pre .string,
-pre .tag .value,
-pre .phpdoc,
-pre .tex .formula {
-  color: #219161;
-}
-
-pre .title,
-pre .id {
-  color: #19469d;
-}
-pre .params {
-  color: #00f;
-}
-
-pre .javascript .title,
-pre .lisp .title,
-pre .subst {
-  font-weight: normal;
-}
-
-pre .class .title,
-pre .haskell .label,
-pre .tex .command {
-  color: #458;
-  font-weight: bold;
-}
-
-pre .tag,
-pre .tag .title,
-pre .rules .property,
-pre .django .tag .keyword {
-  color: #000080;
-  font-weight: normal;
-}
-
-pre .attribute,
-pre .variable,
-pre .instancevar,
-pre .lisp .body {
-  color: #008080;
-}
-
-pre .regexp {
-  color: #b68;
-}
-
-pre .class {
-  color: #458;
-  font-weight: bold;
-}
-
-pre .symbol,
-pre .ruby .symbol .string,
-pre .ruby .symbol .keyword,
-pre .ruby .symbol .keymethods,
-pre .lisp .keyword,
-pre .tex .special,
-pre .input_number {
-  color: #990073;
-}
-
-pre .builtin,
-pre .constructor,
-pre .built_in,
-pre .lisp .title {
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-attribute {
   color: #0086b3;
 }
 
-pre .preprocessor,
-pre .pi,
-pre .doctype,
-pre .shebang,
-pre .cdata {
-  color: #999;
-  font-weight: bold;
+.hljs-section,
+.hljs-name {
+  color: #63a35c;
 }
 
-pre .deletion {
-  background: #fdd;
+.hljs-tag {
+  color: #333333;
 }
 
-pre .addition {
-  background: #dfd;
+.hljs-title,
+.hljs-attr,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #6f42c1;
 }
 
-pre .diff .change {
-  background: #0086b3;
+.hljs-addition {
+  color: #55a532;
+  background-color: #eaffea;
 }
 
-pre .chunk {
-  color: #aaa;
+.hljs-deletion {
+  color: #bd2c00;
+  background-color: #ffecec;
 }
 
-pre .tex .formula {
-  opacity: 0.5;
+.hljs-link {
+  text-decoration: underline;
+}
+
+.hljs-number {
+  color: #005cc5;
+}
+
+.hljs-string {
+  color: #032f62;
 }

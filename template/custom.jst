@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <title><%= title %></title>
@@ -13,10 +12,9 @@
         <a href='https://github.com/tmcw/literate-raytracer'>an open source project by tom macwright</a>
     </div>
     <canvas id='c'></canvas>
-    <center>
-        <button id='play'>play</button>
-        <button id='stop'>stop</button>
-    </center>
+    <div id='controls'>
+        <button id='play'>Play</button>
+    </div>
     <div id="background"></div>
     <% if (sources.length > 1) { %>
       <ul id="jump_to">
@@ -35,30 +33,23 @@
         </li>
       </ul>
     <% } %>
-    <ul class="sections">
+    <div>
         <% if (!hasTitle) { %>
-          <li id="title">
-              <div class="annotation">
-                  <h1><%= title %></h1>
-              </div>
-          </li>
+        <h1><%= title %></h1>
         <% } %>
         <% for (var i=0, l=sections.length; i<l; i++) { %>
         <% var section = sections[i]; %>
-        <li id="section-<%= i + 1 %>">
-            <div class="annotation">
+        <section id="section-<%= i + 1 %>">
+            <div>
               <% heading = section.docsHtml.match(/^\s*<(h\d)>/) %>
-              <div class="pilwrap <%= heading ? 'for-' + heading[1] : '' %>">
-                <a class="pilcrow" href="#section-<%= i + 1 %>">&#182;</a>
-              </div>
               <%= section.docsHtml %>
             </div>
             <% if (section.codeText.replace(/\s/gm, '') != '') { %>
             <div class="content"><%= section.codeHtml %></div>
             <% } %>
-        </li>
+        </section>
         <% } %>
-    </ul>
+    </div>
   </div>
   <script src='src/vector.js'></script>
   <script src='src/index.js'></script>

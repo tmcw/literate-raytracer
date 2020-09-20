@@ -102,7 +102,7 @@ const format = function (source, sections, config) {
   });
   _results = [];
   for (let section of sections) {
-    code = highlightjs.highlight(language.name, section.codeText).value;
+    code = highlightjs.highlight("js", section.codeText).value;
     code = code.replace(/\s+$/, "");
     section.codeHtml = "<div class='highlight'><pre>" + code + "</pre></div>";
     _results.push((section.docsHtml = marked(section.docsText)));

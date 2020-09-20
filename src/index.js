@@ -39,7 +39,6 @@ var c = document.getElementById("c"),
 // raytracer will directly compute pixel data and then put it into an image.
 c.width = width;
 c.height = height;
-c.style.cssText = "width:" + width * 2 + "px;height:" + height * 2 + "px";
 var ctx = c.getContext("2d"),
   data = ctx.getImageData(0, 0, width, height);
 

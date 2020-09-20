@@ -16,12 +16,14 @@ body {
 canvas {
   image-rendering: crisp-edges;
   image-rendering: pixelated;
+  width: 100%;
 }
 
 #container {
   min-height: 100%;
   margin: 0 auto;
-  max-width: 640px;
+  max-width: 680px;
+  padding: 20px;
 }
 
 img {

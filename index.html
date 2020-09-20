@@ -268,9 +268,9 @@ that determines its color by bouncing through the scene.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> camera = scene.camera,
-    objects = scene.objects,
-    lights = scene.lights;</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> camera = scene.camera,
+  objects = scene.objects,
+  lights = scene.lights;</pre></div></div>
             
         </section>
         
@@ -299,9 +299,9 @@ pointing - a unit vector</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> eyeVector = Vector.unitVector(
-      Vector.subtract(camera.vector, camera.point)
-    ),</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> eyeVector = Vector.unitVector(
+    Vector.subtract(camera.vector, camera.point)
+  ),</pre></div></div>
             
         </section>
         
@@ -317,8 +317,8 @@ vector to turn the camera up.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
-    vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),</pre></div></div>
+            <div class="content"><div class='highlight'><pre>vpRight = Vector.unitVector(Vector.crossProduct(eyeVector, Vector.UP)),
+vpUp = Vector.unitVector(Vector.crossProduct(vpRight, eyeVector)),</pre></div></div>
             
         </section>
         
@@ -333,21 +333,21 @@ here are just based on the ratio between them, <code>height/width</code>, and th
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    fovRadians = (<span class="hljs-built_in">Math</span>.PI * (camera.fieldOfView / <span class="hljs-number">2</span>)) / <span class="hljs-number">180</span>,
-    heightWidthRatio = height / width,
-    halfWidth = <span class="hljs-built_in">Math</span>.tan(fovRadians),
-    halfHeight = heightWidthRatio * halfWidth,
-    camerawidth = halfWidth * <span class="hljs-number">2</span>,
-    cameraheight = halfHeight * <span class="hljs-number">2</span>,
-    pixelWidth = camerawidth / (width - <span class="hljs-number">1</span>),
-    pixelHeight = cameraheight / (height - <span class="hljs-number">1</span>);
+            <div class="content"><div class='highlight'><pre>  fovRadians = (<span class="hljs-built_in">Math</span>.PI * (camera.fieldOfView / <span class="hljs-number">2</span>)) / <span class="hljs-number">180</span>,
+  heightWidthRatio = height / width,
+  halfWidth = <span class="hljs-built_in">Math</span>.tan(fovRadians),
+  halfHeight = heightWidthRatio * halfWidth,
+  camerawidth = halfWidth * <span class="hljs-number">2</span>,
+  cameraheight = halfHeight * <span class="hljs-number">2</span>,
+  pixelWidth = camerawidth / (width - <span class="hljs-number">1</span>),
+  pixelHeight = cameraheight / (height - <span class="hljs-number">1</span>);
 
-  <span class="hljs-keyword">var</span> index, color;
-  <span class="hljs-keyword">var</span> ray = {
-    <span class="hljs-attr">point</span>: camera.point,
-  };
-  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> x = <span class="hljs-number">0</span>; x &lt; width; x++) {
-    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> y = <span class="hljs-number">0</span>; y &lt; height; y++) {</pre></div></div>
+<span class="hljs-keyword">var</span> index, color;
+<span class="hljs-keyword">var</span> ray = {
+  <span class="hljs-attr">point</span>: camera.point,
+};
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> x = <span class="hljs-number">0</span>; x &lt; width; x++) {
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> y = <span class="hljs-number">0</span>; y &lt; height; y++) {</pre></div></div>
             
         </section>
         
@@ -362,10 +362,10 @@ skewed in each necessary direction.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">var</span> xcomp = Vector.scale(vpRight, x * pixelWidth - halfWidth),
-        ycomp = Vector.scale(vpUp, y * pixelHeight - halfHeight);
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> xcomp = Vector.scale(vpRight, x * pixelWidth - halfWidth),
+  ycomp = Vector.scale(vpUp, y * pixelHeight - halfHeight);
 
-      ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));</pre></div></div>
+ray.vector = Vector.unitVector(Vector.add3(eyeVector, xcomp, ycomp));</pre></div></div>
             
         </section>
         
@@ -378,13 +378,13 @@ as a <code>{x, y, z}</code> vector of RGB values</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      color = trace(ray, scene, <span class="hljs-number">0</span>);
-      (index = x * <span class="hljs-number">4</span> + y * width * <span class="hljs-number">4</span>), (data.data[index + <span class="hljs-number">0</span>] = color.x);
-      data.data[index + <span class="hljs-number">1</span>] = color.y;
-      data.data[index + <span class="hljs-number">2</span>] = color.z;
-      data.data[index + <span class="hljs-number">3</span>] = <span class="hljs-number">255</span>;
-    }
-  }</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    color = trace(ray, scene, <span class="hljs-number">0</span>);
+    (index = x * <span class="hljs-number">4</span> + y * width * <span class="hljs-number">4</span>), (data.data[index + <span class="hljs-number">0</span>] = color.x);
+    data.data[index + <span class="hljs-number">1</span>] = color.y;
+    data.data[index + <span class="hljs-number">2</span>] = color.z;
+    data.data[index + <span class="hljs-number">3</span>] = <span class="hljs-number">255</span>;
+  }
+}</pre></div></div>
             
         </section>
         
@@ -430,9 +430,9 @@ into a reflection.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (depth &gt; <span class="hljs-number">3</span>) <span class="hljs-keyword">return</span>;
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (depth &gt; <span class="hljs-number">3</span>) <span class="hljs-keyword">return</span>;
 
-  <span class="hljs-keyword">var</span> distObject = intersectScene(ray, scene);</pre></div></div>
+<span class="hljs-keyword">var</span> distObject = intersectScene(ray, scene);</pre></div></div>
             
         </section>
         
@@ -445,12 +445,12 @@ in this case, white.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (distObject[<span class="hljs-number">0</span>] === <span class="hljs-literal">Infinity</span>) {
-    <span class="hljs-keyword">return</span> Vector.WHITE;
-  }
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (distObject[<span class="hljs-number">0</span>] === <span class="hljs-literal">Infinity</span>) {
+  <span class="hljs-keyword">return</span> Vector.WHITE;
+}
 
-  <span class="hljs-keyword">var</span> dist = distObject[<span class="hljs-number">0</span>],
-    object = distObject[<span class="hljs-number">1</span>];</pre></div></div>
+<span class="hljs-keyword">var</span> dist = distObject[<span class="hljs-number">0</span>],
+  object = distObject[<span class="hljs-number">1</span>];</pre></div></div>
             
         </section>
         
@@ -501,7 +501,7 @@ what’s the closest thing it hits.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> closest = [<span class="hljs-literal">Infinity</span>, <span class="hljs-literal">null</span>];</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> closest = [<span class="hljs-literal">Infinity</span>, <span class="hljs-literal">null</span>];</pre></div></div>
             
         </section>
         
@@ -555,7 +555,7 @@ the final side is a right angle.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    v = Vector.dotProduct(eye_to_center, ray.vector),</pre></div></div>
+            <div class="content"><div class='highlight'><pre>v = Vector.dotProduct(eye_to_center, ray.vector),</pre></div></div>
             
         </section>
         
@@ -568,7 +568,7 @@ of the sphere</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    eoDot = Vector.dotProduct(eye_to_center, eye_to_center),</pre></div></div>
+            <div class="content"><div class='highlight'><pre>eoDot = Vector.dotProduct(eye_to_center, eye_to_center),</pre></div></div>
             
         </section>
         
@@ -581,7 +581,7 @@ on the <code>v</code> line that also intersects the circle</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    discriminant = sphere.radius * sphere.radius - eoDot + v * v;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>discriminant = sphere.radius * sphere.radius - eoDot + v * v;</pre></div></div>
             
         </section>
         
@@ -594,9 +594,9 @@ been hit by the ray</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (discriminant &lt; <span class="hljs-number">0</span>) {
-    <span class="hljs-keyword">return</span>;
-  } <span class="hljs-keyword">else</span> {</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (discriminant &lt; <span class="hljs-number">0</span>) {
+  <span class="hljs-keyword">return</span>;
+} <span class="hljs-keyword">else</span> {</pre></div></div>
             
         </section>
         
@@ -662,9 +662,9 @@ the object to the least.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (object.lambert) {
-    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; scene.lights.length; i++) {
-      <span class="hljs-keyword">var</span> lightPoint = scene.lights[i];</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (object.lambert) {
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; scene.lights.length; i++) {
+    <span class="hljs-keyword">var</span> lightPoint = scene.lights[i];</pre></div></div>
             
         </section>
         
@@ -677,7 +677,7 @@ and it gets no light from the lambert shading process.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (!isLightVisible(pointAtTime, scene, lightPoint)) <span class="hljs-keyword">continue</span>;</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (!isLightVisible(pointAtTime, scene, lightPoint)) <span class="hljs-keyword">continue</span>;</pre></div></div>
             
         </section>
         
@@ -692,10 +692,10 @@ beautifully, less light.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">var</span> contribution = Vector.dotProduct(
-        Vector.unitVector(Vector.subtract(lightPoint, pointAtTime)),
-        normal
-      );</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> contribution = Vector.dotProduct(
+  Vector.unitVector(Vector.subtract(lightPoint, pointAtTime)),
+  normal
+);</pre></div></div>
             
         </section>
         
@@ -708,9 +708,9 @@ we only want positive values for lighting.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (contribution &gt; <span class="hljs-number">0</span>) lambertAmount += contribution;
-    }
-  }</pre></div></div>
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">if</span> (contribution &gt; <span class="hljs-number">0</span>) lambertAmount += contribution;
+  }
+}</pre></div></div>
             
         </section>
         
@@ -724,7 +724,7 @@ they bounce into.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">if</span> (object.specular) {</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">if</span> (object.specular) {</pre></div></div>
             
         </section>
         
@@ -739,15 +739,15 @@ and making that part of a reflection.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">var</span> reflectedRay = {
-      <span class="hljs-attr">point</span>: pointAtTime,
-      <span class="hljs-attr">vector</span>: Vector.reflectThrough(ray.vector, normal),
-    };
-    <span class="hljs-keyword">var</span> reflectedColor = trace(reflectedRay, scene, ++depth);
-    <span class="hljs-keyword">if</span> (reflectedColor) {
-      c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
-    }
-  }</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> reflectedRay = {
+    <span class="hljs-attr">point</span>: pointAtTime,
+    <span class="hljs-attr">vector</span>: Vector.reflectThrough(ray.vector, normal),
+  };
+  <span class="hljs-keyword">var</span> reflectedColor = trace(reflectedRay, scene, ++depth);
+  <span class="hljs-keyword">if</span> (reflectedColor) {
+    c = Vector.add(c, Vector.scale(reflectedColor, object.specular));
+  }
+}</pre></div></div>
             
         </section>
         
@@ -760,7 +760,7 @@ even if the ray bounces between a lot of things and hits lights</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  lambertAmount = <span class="hljs-built_in">Math</span>.min(<span class="hljs-number">1</span>, lambertAmount);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>lambertAmount = <span class="hljs-built_in">Math</span>.min(<span class="hljs-number">1</span>, lambertAmount);</pre></div></div>
             
         </section>
         
@@ -851,8 +851,8 @@ effect.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  planet1 += <span class="hljs-number">0.1</span>;
-  planet2 += <span class="hljs-number">0.2</span>;</pre></div></div>
+            <div class="content"><div class='highlight'><pre>planet1 += <span class="hljs-number">0.1</span>;
+planet2 += <span class="hljs-number">0.2</span>;</pre></div></div>
             
         </section>
         
@@ -864,11 +864,11 @@ effect.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  scene.objects[<span class="hljs-number">1</span>].point.x = <span class="hljs-built_in">Math</span>.sin(planet1) * <span class="hljs-number">3.5</span>;
-  scene.objects[<span class="hljs-number">1</span>].point.z = <span class="hljs-number">-3</span> + <span class="hljs-built_in">Math</span>.cos(planet1) * <span class="hljs-number">3.5</span>;
+            <div class="content"><div class='highlight'><pre>scene.objects[<span class="hljs-number">1</span>].point.x = <span class="hljs-built_in">Math</span>.sin(planet1) * <span class="hljs-number">3.5</span>;
+scene.objects[<span class="hljs-number">1</span>].point.z = <span class="hljs-number">-3</span> + <span class="hljs-built_in">Math</span>.cos(planet1) * <span class="hljs-number">3.5</span>;
 
-  scene.objects[<span class="hljs-number">2</span>].point.x = <span class="hljs-built_in">Math</span>.sin(planet2) * <span class="hljs-number">4</span>;
-  scene.objects[<span class="hljs-number">2</span>].point.z = <span class="hljs-number">-3</span> + <span class="hljs-built_in">Math</span>.cos(planet2) * <span class="hljs-number">4</span>;</pre></div></div>
+scene.objects[<span class="hljs-number">2</span>].point.x = <span class="hljs-built_in">Math</span>.sin(planet2) * <span class="hljs-number">4</span>;
+scene.objects[<span class="hljs-number">2</span>].point.z = <span class="hljs-number">-3</span> + <span class="hljs-built_in">Math</span>.cos(planet2) * <span class="hljs-number">4</span>;</pre></div></div>
             
         </section>
         
@@ -880,7 +880,7 @@ effect.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  render(scene);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>render(scene);</pre></div></div>
             
         </section>
         

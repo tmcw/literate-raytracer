@@ -1,6 +1,7 @@
 var __slice = [].slice;
 
 const _ = require("underscore");
+const stripIndent = require("strip-indent");
 const fs = require("fs-extra");
 const path = require("path");
 const marked = require("marked");
@@ -102,7 +103,7 @@ const format = function (source, sections, config) {
   });
   _results = [];
   for (let section of sections) {
-    code = highlightjs.highlight("js", section.codeText).value;
+    code = highlightjs.highlight("js", stripIndent(section.codeText)).value;
     code = code.replace(/\s+$/, "");
     section.codeHtml = "<div class='highlight'><pre>" + code + "</pre></div>";
     _results.push((section.docsHtml = marked(section.docsText)));
